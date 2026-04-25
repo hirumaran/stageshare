@@ -82,8 +82,8 @@ export function Sidebar() {
         className={cn(
           "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
           active
-            ? "bg-sidebar-primary text-sidebar-primary-foreground"
-            : "text-sidebar-foreground hover:bg-sidebar-accent",
+            ? "bg-sidebar-primary text-sidebar-primary-foreground dark:bg-orange-500/10 dark:text-orange-400"
+            : "text-sidebar-foreground hover:bg-sidebar-accent dark:hover:bg-zinc-800",
           sidebarCollapsed && "justify-center px-2"
         )}
       >
@@ -159,6 +159,11 @@ export function Sidebar() {
 
         {/* Main nav */}
         <ScrollArea className="flex-1 py-3">
+          {!sidebarCollapsed && (
+            <p className="px-3 pt-4 pb-1 text-[10px] font-medium uppercase tracking-[0.12em] text-zinc-600 select-none">
+              Platform
+            </p>
+          )}
           <nav className="flex flex-col gap-0.5 px-2">
             {NAV.map((item) => renderItem(item))}
           </nav>
@@ -166,6 +171,11 @@ export function Sidebar() {
 
         {/* Bottom nav */}
         <div className="border-t p-2">
+          {!sidebarCollapsed && (
+            <p className="px-3 pt-4 pb-1 text-[10px] font-medium uppercase tracking-[0.12em] text-zinc-600 select-none">
+              Account
+            </p>
+          )}
           <nav className="flex flex-col gap-0.5">
             {NAV_BOTTOM.map((item) => renderItem(item, true))}
           </nav>
@@ -174,7 +184,7 @@ export function Sidebar() {
           <Button
             variant="ghost"
             size="sm"
-            className="mt-2 hidden w-full justify-center lg:flex"
+            className="mt-3 pt-2 hidden w-full justify-center lg:flex border-t border-border/50 rounded-none"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           >
             {sidebarCollapsed ? (
