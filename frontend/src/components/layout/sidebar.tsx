@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { useUIStore } from "@/stores/ui-store"
 import { useCartStore } from "@/stores/cart-store"
+import { useMessageStore } from "@/features/messages/stores/message-store"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -49,14 +50,14 @@ export function Sidebar() {
     sidebarCollapsed,
     setSidebarOpen,
     setSidebarCollapsed,
-    unreadMessageCount,
     unreadNotificationCount,
   } = useUIStore()
+  const totalUnread = useMessageStore((s) => s.totalUnread())
   const cartCount = useCartStore((s) => s.getItemCount())
 
   function getBadge(type?: "cart" | "messages" | "notifications"): number {
     if (type === "cart") return cartCount
-    if (type === "messages") return unreadMessageCount
+    if (type === "messages") return totalUnread
     if (type === "notifications") return unreadNotificationCount
     return 0
   }
