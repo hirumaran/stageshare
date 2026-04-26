@@ -39,7 +39,7 @@ export function MessageBubble({ message, mine, isHead, isTail, avatarInfo }: Mes
     >
       <div
         className={cn(
-          "group flex max-w-[85%] gap-3 sm:max-w-[80%] lg:max-w-[70%]",
+          "group flex max-w-[85%] gap-3",
           mine ? "flex-row-reverse" : "flex-row",
         )}
       >
@@ -63,7 +63,7 @@ export function MessageBubble({ message, mine, isHead, isTail, avatarInfo }: Mes
         <div className={cn("flex flex-col gap-0.5", mine ? "items-end" : "items-start")}>
           <div
             className={cn(
-              "relative px-4 py-2.5 text-[14px] leading-[1.45] shadow-sm",
+              "relative px-4 py-2.5 text-[15px] leading-[1.5] shadow-sm",
               mine
                 ? "bg-[var(--accent)] text-[var(--accent-text)]"
                 : "bg-[var(--bg-muted)] text-foreground",

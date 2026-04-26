@@ -11,6 +11,7 @@ import { useMessages } from "./hooks/use-messages"
 import { useSendMessage } from "./hooks/use-send-message"
 import { useMessageSubscription } from "./hooks/use-message-subscription"
 import { useMessageStore } from "./stores/message-store"
+import { useUIStore } from "@/stores/ui-store"
 import { cn } from "@/lib/utils"
 
 export default function MessagesPage() {
@@ -25,6 +26,7 @@ export default function MessagesPage() {
   } = useConversations()
   const { grouped } = useMessages(activeConversationId)
   const sendMessage = useSendMessage()
+  const { sidebarCollapsed } = useUIStore()
 
   useMessageSubscription()
 
@@ -55,11 +57,12 @@ export default function MessagesPage() {
   }, [urlConversationId, activeConversationId, setActiveConversation])
 
   return (
-    <div className="absolute inset-0 flex overflow-hidden">
+    <div className="flex h-full w-full overflow-hidden">
       {/* Left: Conversation list */}
       <div
         className={cn(
           "flex flex-col border-r border-border/50 bg-[var(--bg-surface)] transition-all duration-300 ease-in-out",
+          sidebarCollapsed && "lg:pl-10",
           activeConversationId
             ? "hidden md:flex md:w-[340px]"
             : "flex w-full md:w-[340px]",

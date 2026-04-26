@@ -6,7 +6,6 @@ import type { MessageGroup } from "../hooks/use-messages"
 import type { Conversation } from "../types"
 import { appCurrentUser } from "../lib/seed-data"
 import { getAvatarPalette, getInitials } from "../lib/avatar"
-import { cn } from "@/lib/utils"
 
 interface ChatThreadProps {
   conversation: Conversation
@@ -25,11 +24,11 @@ export function ChatThread({ conversation, groups, typingUserName }: ChatThreadP
   return (
     <div
       ref={scrollContainerRef}
-      className="flex-1 overflow-y-auto px-4 pb-4 pt-2"
+      className="flex-1 overflow-y-auto px-4 pb-4 pt-2 md:px-8 lg:px-16 xl:px-24"
       aria-live="polite"
       aria-label={`Messages in ${conversation.title}`}
     >
-      <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col justify-end">
+      <div className="mx-auto flex min-h-full w-full flex-col justify-end">
         {groups.map((group) => (
           <section key={group.dayKey} className="flex flex-col">
             <DateSeparator label={group.label} />

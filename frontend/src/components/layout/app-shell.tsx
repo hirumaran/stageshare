@@ -5,7 +5,7 @@ import { useUIStore } from "@/stores/ui-store"
 import { cn } from "@/lib/utils"
 
 export default function AppShell() {
-  const { sidebarOpen, sidebarCollapsed } = useUIStore()
+  const { sidebarCollapsed } = useUIStore()
   const { pathname } = useLocation()
 
   const isMessages = pathname.startsWith("/messages")
@@ -17,12 +17,7 @@ export default function AppShell() {
       <div
         className={cn(
           "flex flex-1 flex-col transition-[margin] duration-300 ease-in-out",
-          isMessages
-            ? "lg:ml-0"
-            : [
-                sidebarOpen && !sidebarCollapsed && "lg:ml-60",
-                sidebarOpen && sidebarCollapsed && "lg:ml-0",
-              ],
+          !sidebarCollapsed ? "lg:ml-60" : "lg:ml-0",
         )}
       >
         {!isMessages && <Header />}
