@@ -4,8 +4,8 @@ interface DateSeparatorProps {
 
 export function DateSeparator({ label }: DateSeparatorProps) {
   return (
-    <div className="flex items-center justify-center py-5" role="separator" aria-label={label}>
-      <span className="rounded-full bg-[var(--bg-muted)]/50 px-3 py-1 text-[11px] font-medium text-muted-foreground/60">
+    <div className="flex justify-center my-6" role="separator" aria-label={label}>
+      <span className="px-3 py-1 rounded-full bg-white/5 text-xs text-gray-400 font-medium tracking-wide">
         {label}
       </span>
     </div>

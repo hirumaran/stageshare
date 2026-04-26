@@ -36,7 +36,7 @@ export function MessageInput({ onSend, disabled, placeholder = "Message" }: Mess
   const canSend = value.trim().length > 0 && !disabled
 
   return (
-    <div className="shrink-0 border-t border-border/15 bg-[var(--bg-base)] px-3 py-2.5">
+    <div className="shrink-0 border-t border-white/5 bg-[var(--bg-base)] px-3 py-2.5">
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -52,7 +52,7 @@ export function MessageInput({ onSend, disabled, placeholder = "Message" }: Mess
           <Image className="h-5 w-5" />
         </button>
 
-        <div className="flex flex-1 items-end gap-1 rounded-2xl border border-border/20 bg-[var(--bg-muted)]/40 px-3 py-2 transition-colors focus-within:border-[var(--accent)]/30 focus-within:bg-[var(--bg-muted)]/60">
+        <div className="flex flex-1 items-end gap-1 rounded-full border border-border/20 bg-[var(--bg-muted)]/40 px-3 py-2 transition-colors focus-within:border-[var(--accent)]/30 focus-within:bg-[var(--bg-muted)]/60">
           <textarea
             ref={textareaRef}
             value={value}

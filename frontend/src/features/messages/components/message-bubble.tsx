@@ -45,7 +45,7 @@ export function MessageBubble({ message, mine, isHead, isTail, avatarInfo }: Mes
       >
         {/* Avatar for received messages — only on head */}
         {!mine && avatarInfo && isHead ? (
-          <div className="mt-auto shrink-0">
+          <div className="shrink-0 self-start pt-0.5">
             <div
               className={cn(
                 "flex h-7 w-7 items-center justify-center rounded-full text-[9px] font-semibold",
@@ -63,7 +63,7 @@ export function MessageBubble({ message, mine, isHead, isTail, avatarInfo }: Mes
         <div className={cn("flex flex-col gap-0.5", mine ? "items-end" : "items-start")}>
           <div
             className={cn(
-              "relative px-4 py-2.5 text-[15px] leading-[1.5] shadow-sm",
+              "relative px-4 py-3 text-[15px] leading-[1.5] shadow-sm",
               mine
                 ? "bg-[var(--accent)] text-[var(--accent-text)]"
                 : "bg-[var(--bg-muted)] text-foreground",

@@ -16,12 +16,12 @@ export function ChatHeader({ conversation, onBack }: ChatHeaderProps) {
   const palette = getAvatarPalette(counterpart?.id ?? conversation.id)
   const initials = getInitials(counterpart?.name ?? conversation.title)
 
-  const presenceLabel =
+  const presenceConfig =
     presence === "online"
-      ? "Active now"
+      ? { label: "Active now", dot: "bg-emerald-500" }
       : presence === "away"
-        ? "Away"
-        : "Offline"
+        ? { label: "Away", dot: "bg-amber-500" }
+        : { label: "Offline", dot: "bg-gray-500" }
 
   return (
     <header className="flex items-center gap-3 border-b border-border/20 bg-[var(--bg-base)] px-4 py-3">
@@ -53,9 +53,12 @@ export function ChatHeader({ conversation, onBack }: ChatHeaderProps) {
           <p className="text-[14px] font-semibold leading-tight text-foreground">
             {conversation.title}
           </p>
-          <p className="text-[12px] leading-tight text-muted-foreground/70">
-            {presenceLabel}
-          </p>
+          <div className="flex items-center gap-1.5">
+            <span className={cn("h-2 w-2 rounded-full", presenceConfig.dot)} />
+            <p className="text-[12px] leading-tight text-muted-foreground/70">
+              {presenceConfig.label}
+            </p>
+          </div>
         </div>
       </div>
 
