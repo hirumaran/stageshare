@@ -62,7 +62,6 @@ export default function MessagesPage() {
       <div
         className={cn(
           "flex flex-col border-r border-border/50 bg-[var(--bg-surface)] transition-all duration-300 ease-in-out",
-          sidebarCollapsed && "lg:pl-10",
           activeConversationId
             ? "hidden md:flex md:w-[340px]"
             : "flex w-full md:w-[340px]",

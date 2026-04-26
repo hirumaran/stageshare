@@ -77,19 +77,39 @@ export function Sidebar() {
         to={item.to}
         onClick={closeMobile}
         className={cn(
-          "group relative flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+          "group relative flex items-center text-sm font-medium transition-all duration-200",
+          sidebarCollapsed
+            ? "justify-center rounded-xl w-9 mx-auto py-2.5"
+            : "gap-3 rounded-lg px-3 py-2.5 whitespace-nowrap",
           active
             ? "bg-sidebar-primary text-sidebar-primary-foreground dark:bg-[var(--accent-subtle)] dark:text-[var(--accent)]"
             : "text-sidebar-foreground hover:bg-sidebar-accent dark:hover:bg-[var(--bg-muted)]",
         )}
         title={item.label}
       >
-        <Icon className="h-[18px] w-[18px] shrink-0" />
-        <span className="flex-1 truncate">{item.label}</span>
+        <Icon
+          className={cn("shrink-0", sidebarCollapsed ? "h-5 w-5" : "h-[18px] w-[18px]")}
+        />
+        <span
+          className={cn(
+            "truncate transition-all duration-200",
+            sidebarCollapsed ? "max-w-0 opacity-0" : "flex-1 opacity-100",
+          )}
+        >
+          {item.label}
+        </span>
         {count > 0 && (
-          <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-accent px-1.5 text-xs font-semibold text-accent-foreground">
+          <span
+            className={cn(
+              "flex h-5 min-w-[20px] items-center justify-center rounded-full bg-accent px-1.5 text-xs font-semibold text-accent-foreground transition-all duration-200",
+              sidebarCollapsed ? "max-w-0 opacity-0" : "opacity-100",
+            )}
+          >
             {count}
           </span>
+        )}
+        {sidebarCollapsed && count > 0 && (
+          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent" />
         )}
       </NavLink>
     )
@@ -109,84 +129,100 @@ export function Sidebar() {
         />
       )}
 
-      {/* Floating Skēnē logo — visible only when sidebar is collapsed on desktop */}
-      <div
-        className={cn(
-          "fixed top-3 left-3 z-[60] hidden transition-all duration-300 ease-in-out lg:flex",
-          sidebarCollapsed
-            ? "translate-x-0 opacity-100"
-            : "pointer-events-none -translate-x-3 opacity-0",
-        )}
-      >
-        <button
-          type="button"
-          onClick={() => setSidebarCollapsed(false)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-primary transition-colors hover:bg-[var(--bg-muted)]"
-          aria-label="Open sidebar"
-          title="Open sidebar"
-        >
-          <Theater className="h-5 w-5" />
-        </button>
-      </div>
-
       {/* Sidebar */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden bg-sidebar transition-all duration-300 ease-in-out",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
           sidebarCollapsed
-            ? "w-0 border-r-0"
+            ? "w-16 border-r border-border/30"
             : "w-60 border-r border-border/30",
           "lg:translate-x-0",
         )}
       >
         {/* Brand header */}
-        <div className="flex h-14 shrink-0 items-center border-b border-border/30 px-3">
-          <NavLink
-            to="/dashboard"
-            className="flex min-w-0 flex-1 items-center gap-2.5"
-          >
-            <Theater className="h-5 w-5 shrink-0 text-primary" />
-            <span className="truncate whitespace-nowrap text-base font-semibold tracking-tight text-sidebar-foreground">
-              Skēnē
-            </span>
-          </NavLink>
+        <div
+          className={cn(
+            "flex h-14 shrink-0 items-center",
+            sidebarCollapsed
+              ? "justify-center px-2"
+              : "border-b border-border/30 px-3",
+          )}
+        >
+          {sidebarCollapsed ? (
+            <button
+              type="button"
+              onClick={() => setSidebarCollapsed(false)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-primary transition-colors hover:bg-[var(--bg-muted)]"
+              aria-label="Open sidebar"
+              title="Open sidebar"
+            >
+              <Theater className="h-5 w-5" />
+            </button>
+          ) : (
+            <>
+              <NavLink
+                to="/dashboard"
+                className="flex min-w-0 flex-1 items-center gap-2.5"
+              >
+                <Theater className="h-5 w-5 shrink-0 text-primary" />
+                <span className="truncate whitespace-nowrap text-base font-semibold tracking-tight text-sidebar-foreground">
+                  Skēnē
+                </span>
+              </NavLink>
 
-          {/* Collapse button — PanelLeftClose (no arrows/chevrons) */}
-          <button
-            type="button"
-            onClick={() => setSidebarCollapsed(true)}
-            className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-[var(--bg-muted)] hover:text-foreground"
-            aria-label="Collapse sidebar"
-            title="Collapse sidebar"
-          >
-            <PanelLeftClose className="h-4 w-4" />
-          </button>
+              {/* Collapse button */}
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(true)}
+                className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-[var(--bg-muted)] hover:text-foreground"
+                aria-label="Collapse sidebar"
+                title="Collapse sidebar"
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </button>
 
-          {/* Mobile close button */}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="ml-2 shrink-0 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+              {/* Mobile close button */}
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="ml-2 shrink-0 lg:hidden"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Main nav */}
         <ScrollArea className="flex-1 py-3">
-          <p className="select-none whitespace-nowrap px-3 pb-1 pt-4 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+          <p
+            className={cn(
+              "select-none whitespace-nowrap px-3 pb-1 pt-4 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60 transition-all duration-200",
+              sidebarCollapsed && "max-h-0 opacity-0 py-0",
+            )}
+          >
             Platform
           </p>
-          <nav className="flex flex-col gap-0.5 px-2">
+          <nav
+            className={cn(
+              "flex flex-col gap-0.5",
+              sidebarCollapsed ? "" : "px-2",
+            )}
+          >
             {NAV.map((item) => renderItem(item))}
           </nav>
         </ScrollArea>
 
         {/* Bottom nav */}
-        <div className="border-t border-border/30 p-2">
-          <p className="select-none whitespace-nowrap px-3 pb-1 pt-4 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60">
+        <div className={cn("p-2", sidebarCollapsed && "px-0")}>
+          <p
+            className={cn(
+              "select-none whitespace-nowrap px-3 pb-1 pt-4 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/60 transition-all duration-200",
+              sidebarCollapsed && "max-h-0 opacity-0 py-0",
+            )}
+          >
             Account
           </p>
           <nav className="flex flex-col gap-0.5">
@@ -195,20 +231,35 @@ export function Sidebar() {
               to="/profile"
               onClick={closeMobile}
               className={cn(
-                "group relative flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                "group relative flex items-center text-sm font-medium transition-all duration-200",
+                sidebarCollapsed
+                  ? "justify-center rounded-xl w-9 mx-auto py-2.5"
+                  : "gap-3 rounded-lg px-3 py-2.5 whitespace-nowrap",
                 profileActive
                   ? "bg-sidebar-primary text-sidebar-primary-foreground dark:bg-[var(--accent-subtle)] dark:text-[var(--accent)]"
                   : "text-sidebar-foreground hover:bg-sidebar-accent dark:hover:bg-[var(--bg-muted)]",
               )}
               title="Profile"
             >
-              <Avatar className="h-[18px] w-[18px] shrink-0 rounded-full">
+              <Avatar
+                className={cn(
+                  "shrink-0 rounded-full",
+                  sidebarCollapsed ? "h-6 w-6" : "h-[18px] w-[18px]",
+                )}
+              >
                 <AvatarImage src={user?.avatar} alt={user?.name} />
                 <AvatarFallback className="bg-primary text-[9px] text-primary-foreground">
                   {user?.name ? getInitials(user.name) : "U"}
                 </AvatarFallback>
               </Avatar>
-              <span className="flex-1 truncate">Profile</span>
+              <span
+                className={cn(
+                  "truncate transition-all duration-200",
+                  sidebarCollapsed ? "max-w-0 opacity-0" : "flex-1 opacity-100",
+                )}
+              >
+                Profile
+              </span>
             </NavLink>
 
             {/* Notifications */}
@@ -216,19 +267,42 @@ export function Sidebar() {
               to="/notifications"
               onClick={closeMobile}
               className={cn(
-                "group relative flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                "group relative flex items-center text-sm font-medium transition-all duration-200",
+                sidebarCollapsed
+                  ? "justify-center rounded-xl w-9 mx-auto py-2.5"
+                  : "gap-3 rounded-lg px-3 py-2.5 whitespace-nowrap",
                 notificationsActive
                   ? "bg-sidebar-primary text-sidebar-primary-foreground dark:bg-[var(--accent-subtle)] dark:text-[var(--accent)]"
                   : "text-sidebar-foreground hover:bg-sidebar-accent dark:hover:bg-[var(--bg-muted)]",
               )}
               title="Notifications"
             >
-              <Bell className="h-[18px] w-[18px] shrink-0" />
-              <span className="flex-1 truncate">Notifications</span>
+              <Bell
+                className={cn(
+                  "shrink-0",
+                  sidebarCollapsed ? "h-5 w-5" : "h-[18px] w-[18px]",
+                )}
+              />
+              <span
+                className={cn(
+                  "truncate transition-all duration-200",
+                  sidebarCollapsed ? "max-w-0 opacity-0" : "flex-1 opacity-100",
+                )}
+              >
+                Notifications
+              </span>
               {notificationCount > 0 && (
-                <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-semibold text-destructive-foreground">
+                <span
+                  className={cn(
+                    "flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-semibold text-destructive-foreground transition-all duration-200",
+                    sidebarCollapsed ? "max-w-0 opacity-0" : "opacity-100",
+                  )}
+                >
                   {notificationCount}
                 </span>
+              )}
+              {sidebarCollapsed && notificationCount > 0 && (
+                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
               )}
             </NavLink>
           </nav>

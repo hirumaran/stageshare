@@ -17,7 +17,7 @@ export default function AppShell() {
       <div
         className={cn(
           "flex flex-1 flex-col transition-[margin] duration-300 ease-in-out",
-          !sidebarCollapsed ? "lg:ml-60" : "lg:ml-0",
+          !sidebarCollapsed ? "lg:ml-60" : "lg:ml-16",
         )}
       >
         {!isMessages && <Header />}
