@@ -9,6 +9,33 @@ export interface User {
   joinedAt: string
   resourcesShared: number
   resourcesBorrowed: number
+  matrixUserId?: string
+  matrixAccessToken?: string
+  matrixDeviceId?: string
+}
+
+// Matrix / Messaging types
+export interface MatrixMessage {
+  id: string
+  roomId: string
+  senderId: string
+  senderName: string
+  content: string
+  timestamp: Date
+  isMe: boolean
+  type: "text" | "image" | "file"
+}
+
+export interface MatrixConversation {
+  roomId: string
+  name: string
+  avatarInitials: string
+  schoolName: string
+  lastMessage: string
+  lastMessageAt: Date | null
+  unreadCount: number
+  isDM: boolean
+  linkedRequestId?: number
 }
 
 // Resource types
@@ -64,6 +91,7 @@ export interface BorrowRequest {
   returnedAt?: string
   message?: string
   ownerResponse?: string
+  ownerMatrixUserId?: string
 }
 
 // Cart types

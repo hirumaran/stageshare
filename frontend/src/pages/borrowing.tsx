@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import {
   ArrowLeftRight,
   Check,
@@ -7,9 +7,11 @@ import {
   Clock,
   Calendar,
   AlertCircle,
+  MessageSquare,
 } from "lucide-react"
 import { useUIStore } from "@/stores/ui-store"
 import { useAuthStore } from "@/stores/auth-store"
+import { useMatrixStore } from "@/stores/matrix-store"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -54,10 +56,33 @@ const statusConfig: Record<
 export default function BorrowingPage() {
   const { user } = useAuthStore()
   const { borrowRequests, fetchBorrowRequests, updateBorrowRequest } = useUIStore()
+  const { createOrGetDMRoom, setActiveRoom, sendMessage } = useMatrixStore()
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetchBorrowRequests()
   }, [fetchBorrowRequests])
+
+  const handleMessageAboutRequest = async (request: BorrowRequest) => {
+    if (!request.ownerMatrixUserId) {
+      toast.error("This user is not yet on the messaging system.")
+      return
+    }
+
+    try {
+      const roomId = await createOrGetDMRoom(request.ownerMatrixUserId)
+      await sendMessage(
+        roomId,
+        `Hi! Following up on my borrow request for **${request.resource.title}** ` +
+          `(${formatDate(request.startDate)} – ${formatDate(request.endDate)}).`
+      )
+      setActiveRoom(roomId)
+      navigate("/messages")
+    } catch (err) {
+      console.error("[Messages] Failed to start conversation:", err)
+      toast.error("Could not start conversation. Please try again.")
+    }
+  }
 
   // Requests where I am the borrower
   const myRequests = borrowRequests.filter((r) => r.borrowerId === user?.id)
@@ -198,6 +223,19 @@ export default function BorrowingPage() {
                     </Button>
                   </div>
                 )}
+
+              {request.status === "approved" && !isIncoming && (
+                <div className="flex gap-2 mt-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleMessageAboutRequest(request)}
+                  >
+                    <MessageSquare className="h-4 w-4 mr-1" />
+                    Message {request.owner.name.split(" ")[0]}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>

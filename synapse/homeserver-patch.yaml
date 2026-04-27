@@ -1,0 +1,37 @@
+# ── PASTE THESE INTO synapse/data/homeserver.yaml ──
+
+# Disable public registration — only your backend provisions users
+enable_registration: false
+
+# Shared secret your Express backend uses to create Matrix accounts
+# Generate with: python3 -c "import secrets; print(secrets.token_hex(32))"
+registration_shared_secret: "REPLACE_WITH_YOUR_SECRET"
+
+# Use Postgres (replace the default sqlite config entirely)
+database:
+  name: psycopg2
+  txn_limit: 10000
+  args:
+    user: synapse
+    password: REPLACE_WITH_SYNAPSE_DB_PASSWORD
+    database: synapse
+    host: synapse-db
+    port: 5432
+    cp_min: 5
+    cp_max: 10
+
+# Disable federation (closed BSD network — no external Matrix servers)
+federation_domain_whitelist: []
+
+# Retention: keep messages for 1 year
+retention:
+  enabled: true
+  default_policy:
+    min_lifetime: 1d
+    max_lifetime: 365d
+
+# Media store (for file attachments)
+media_store_path: /data/media_store
+
+# Logging
+log_config: /data/matrix.stageshare.bsd405.org.log.config

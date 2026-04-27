@@ -6,6 +6,7 @@ import type { MessageGroup } from "../hooks/use-messages"
 import type { Conversation } from "../types"
 import { appCurrentUser } from "../lib/seed-data"
 import { getAvatarPalette, getInitials } from "../lib/avatar"
+import { useAuthStore } from "@/stores/auth-store"
 
 interface ChatThreadProps {
   conversation: Conversation
@@ -16,6 +17,7 @@ interface ChatThreadProps {
 export function ChatThread({ conversation, groups, typingUserName }: ChatThreadProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const myMatrixId = useAuthStore((s) => s.user?.matrixUserId)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
@@ -37,7 +39,7 @@ export function ChatThread({ conversation, groups, typingUserName }: ChatThreadP
               const next = group.messages[idx + 1]
               const isHead = !prev || prev.senderId !== message.senderId
               const isTail = !next || next.senderId !== message.senderId
-              const mine = message.senderId === appCurrentUser.id
+              const mine = message.senderId === (myMatrixId ?? appCurrentUser.id)
 
               // Avatar info for received messages
               let avatarInfo: { initials: string; palette: ReturnType<typeof getAvatarPalette> } | null = null

@@ -9,4 +9,13 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  define: {
+    global: "globalThis",
+  },
+  optimizeDeps: {
+    include: [
+      "matrix-js-sdk",
+      "matrix-js-sdk/src/rust-crypto/index",
+    ],
+  },
 })
