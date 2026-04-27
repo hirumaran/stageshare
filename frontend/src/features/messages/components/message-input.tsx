@@ -1,5 +1,4 @@
-import { cn } from "@/lib/utils"
-import { Send, Image, Plus } from "lucide-react"
+import { Image, Plus } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
 interface MessageInputProps {
@@ -33,8 +32,6 @@ export function MessageInput({ onSend, disabled, placeholder = "Message" }: Mess
     }
   }
 
-  const canSend = value.trim().length > 0 && !disabled
-
   return (
     <div className="shrink-0 border-t border-white/5 bg-[var(--bg-base)] px-3 py-2.5">
       <form
@@ -62,7 +59,7 @@ export function MessageInput({ onSend, disabled, placeholder = "Message" }: Mess
             placeholder={placeholder}
             disabled={disabled}
             aria-label="Type a message"
-            className="max-h-40 min-h-[24px] flex-1 resize-none bg-transparent px-0 py-0 text-[14px] leading-snug text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="scrollbar-hide max-h-40 min-h-[24px] flex-1 resize-none bg-transparent px-0 py-0 text-[14px] leading-snug text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
 
           <button
@@ -73,21 +70,6 @@ export function MessageInput({ onSend, disabled, placeholder = "Message" }: Mess
             <Plus className="h-4 w-4" />
           </button>
         </div>
-
-        <button
-          type="submit"
-          disabled={!canSend}
-          title="Send"
-          className={cn(
-            "shrink-0 rounded-full p-2.5 transition-all",
-            canSend
-              ? "bg-[var(--accent)] text-[var(--accent-text)] hover:opacity-90 active:scale-95 shadow-sm"
-              : "text-muted-foreground/20 cursor-default",
-          )}
-          aria-label="Send"
-        >
-          <Send className={cn("h-4 w-4", canSend && "-rotate-45")} />
-        </button>
       </form>
     </div>
   )

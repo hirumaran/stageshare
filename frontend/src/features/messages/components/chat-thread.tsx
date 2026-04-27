@@ -7,6 +7,7 @@ import type { Conversation } from "../types"
 import { appCurrentUser } from "../lib/seed-data"
 import { getAvatarPalette, getInitials } from "../lib/avatar"
 import { useAuthStore } from "@/stores/auth-store"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface ChatThreadProps {
   conversation: Conversation
@@ -16,7 +17,6 @@ interface ChatThreadProps {
 
 export function ChatThread({ conversation, groups, typingUserName }: ChatThreadProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const myMatrixId = useAuthStore((s) => s.user?.matrixUserId)
 
   useEffect(() => {
@@ -24,11 +24,8 @@ export function ChatThread({ conversation, groups, typingUserName }: ChatThreadP
   }, [groups, typingUserName])
 
   return (
-    <div
-      ref={scrollContainerRef}
-      className="flex-1 overflow-y-auto px-4 pb-4 pt-2 md:px-8 lg:px-16 xl:px-24"
-      aria-live="polite"
-      aria-label={`Messages in ${conversation.title}`}
+    <ScrollArea
+      className="flex-1 px-4 pb-4 pt-2 md:px-8 lg:px-16 xl:px-24"
     >
       <div className="mx-auto flex min-h-full w-full flex-col justify-end">
         {groups.map((group) => (
@@ -86,6 +83,6 @@ export function ChatThread({ conversation, groups, typingUserName }: ChatThreadP
 
         <div ref={bottomRef} className="h-1 shrink-0" />
       </div>
-    </div>
+    </ScrollArea>
   )
 }
