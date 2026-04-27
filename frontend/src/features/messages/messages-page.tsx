@@ -12,6 +12,7 @@ import { useSendMessage } from "./hooks/use-send-message"
 import { useMessageSubscription } from "./hooks/use-message-subscription"
 import { useMessageStore } from "./stores/message-store"
 import { useUIStore } from "@/stores/ui-store"
+import { useMatrixStore } from "@/stores/matrix-store"
 import { cn } from "@/lib/utils"
 
 export default function MessagesPage() {
@@ -27,25 +28,26 @@ export default function MessagesPage() {
   const { grouped } = useMessages(activeConversationId)
   const sendMessage = useSendMessage()
   const { sidebarCollapsed } = useUIStore()
+  const matrixIsSyncing = useMatrixStore((s) => s.isSyncing)
+  const matrixIsReady = useMatrixStore((s) => s.isReady)
 
   useMessageSubscription()
 
   const typingIndicators = useMessageStore((s) => s.typingIndicators)
-  const allConversations = useMessageStore((s) => s.conversations)
 
   const totalUnread = useMemo(
-    () => allConversations.reduce((sum, c) => sum + c.unreadCount, 0),
-    [allConversations],
+    () => conversations.reduce((sum, c) => sum + c.unreadCount, 0),
+    [conversations]
   )
 
   const typingUserName = useMemo(() => {
     if (!activeConversation) return null
     const indicator = typingIndicators.find(
-      (t) => t.conversationId === activeConversation.id,
+      (t) => t.conversationId === activeConversation.id
     )
     if (!indicator) return null
     const p = activeConversation.participants.find(
-      (p) => p.id === indicator.userId,
+      (p) => p.id === indicator.userId
     )
     return p?.name ?? null
   }, [typingIndicators, activeConversation])
@@ -64,7 +66,7 @@ export default function MessagesPage() {
           "flex flex-col border-r border-border/50 bg-[var(--bg-surface)] transition-all duration-300 ease-in-out",
           activeConversationId
             ? "hidden md:flex md:w-[340px]"
-            : "flex w-full md:w-[340px]",
+            : "flex w-full md:w-[340px]"
         )}
       >
         <ConversationListPane
@@ -81,11 +83,26 @@ export default function MessagesPage() {
       <div
         className={cn(
           "relative flex h-full min-w-0 flex-1 flex-col bg-[var(--bg-base)]",
-          activeConversationId ? "flex" : "hidden md:flex",
+          activeConversationId ? "flex" : "hidden md:flex"
         )}
       >
         <AnimatePresence mode="wait">
-          {activeConversation ? (
+          {matrixIsSyncing ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex h-full items-center justify-center"
+            >
+              <div className="text-center space-y-2">
+                <div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto" />
+                <p className="text-xs text-[var(--text-muted)]">
+                  Connecting to secure chat...
+                </p>
+              </div>
+            </motion.div>
+          ) : activeConversation ? (
             <motion.div
               key="thread"
               initial={{ opacity: 0, x: 16 }}
@@ -108,6 +125,7 @@ export default function MessagesPage() {
                   sendMessage(activeConversation.id, content)
                 }
                 placeholder={`Message ${activeConversation.title.split(" ")[0]}`}
+                disabled={matrixIsSyncing}
               />
             </motion.div>
           ) : (

@@ -1,12 +1,13 @@
 import { useMemo } from "react"
 import { useMessageStore } from "../stores/message-store"
+import { useMatrixStore } from "@/stores/matrix-store"
+import { mapMatrixMessage } from "../lib/matrix-adapter"
+import type { Message } from "../types"
 
 export interface MessageGroup {
-  /** ISO date string for the day boundary (YYYY-MM-DD) */
   dayKey: string
-  /** Human-readable label like "Today", "Yesterday", or "Mar 14" */
   label: string
-  messages: import("../types").Message[]
+  messages: Message[]
 }
 
 function dayKeyOf(iso: string) {
@@ -19,7 +20,9 @@ function dayLabel(iso: string) {
   const now = new Date()
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate())
-  const diffDays = Math.round((startOfToday.getTime() - startOfDay.getTime()) / (24 * 60 * 60 * 1000))
+  const diffDays = Math.round(
+    (startOfToday.getTime() - startOfDay.getTime()) / (24 * 60 * 60 * 1000)
+  )
   if (diffDays === 0) return "Today"
   if (diffDays === 1) return "Yesterday"
   if (diffDays < 7) {
@@ -29,7 +32,17 @@ function dayLabel(iso: string) {
 }
 
 export function useMessages(conversationId: string | null) {
-  const messages = useMessageStore((s) => (conversationId ? s.messages[conversationId] ?? [] : []))
+  const matrixReady = useMatrixStore((s) => s.isReady)
+  const matrixMessages = useMatrixStore((s) => s.messages)
+  const mockMessages = useMessageStore((s) => s.messages)
+
+  const messages = useMemo(() => {
+    if (matrixReady && conversationId) {
+      const msgs = matrixMessages[conversationId] ?? []
+      return msgs.map((m) => mapMatrixMessage(m))
+    }
+    return conversationId ? mockMessages[conversationId] ?? [] : []
+  }, [matrixReady, matrixMessages, mockMessages, conversationId])
 
   const grouped = useMemo(() => {
     if (!messages.length) return []
@@ -40,7 +53,11 @@ export function useMessages(conversationId: string | null) {
       if (existing && existing.dayKey === key) {
         existing.messages.push(m)
       } else {
-        groups.push({ dayKey: key, label: dayLabel(m.sentAt), messages: [m] })
+        groups.push({
+          dayKey: key,
+          label: dayLabel(m.sentAt),
+          messages: [m],
+        })
       }
     }
     return groups

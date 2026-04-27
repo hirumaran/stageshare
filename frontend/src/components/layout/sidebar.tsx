@@ -14,6 +14,7 @@ import {
 import { useUIStore } from "@/stores/ui-store"
 import { useCartStore } from "@/stores/cart-store"
 import { useMessageStore } from "@/features/messages/stores/message-store"
+import { useMatrixStore } from "@/stores/matrix-store"
 import { useAuthStore } from "@/stores/auth-store"
 import { cn, getInitials } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -86,12 +87,14 @@ export function Sidebar() {
     setSidebarCollapsed,
     unreadNotificationCount,
   } = useUIStore()
-  const totalUnread = useMessageStore((s) => s.totalUnread())
+  const mockTotalUnread = useMessageStore((s) => s.totalUnread())
+  const matrixUnread = useMatrixStore((s) => s.getUnreadCount())
+  const matrixReady = useMatrixStore((s) => s.isReady)
   const cartCount = useCartStore((s) => s.getItemCount())
 
   function getBadge(type?: BadgeType): number {
     if (type === "cart") return cartCount
-    if (type === "messages") return totalUnread
+    if (type === "messages") return matrixReady ? matrixUnread : mockTotalUnread
     if (type === "notifications") return unreadNotificationCount
     return 0
   }
