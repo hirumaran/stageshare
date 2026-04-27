@@ -2,6 +2,7 @@ import { ConversationListItem } from "./conversation-list-item"
 import { SearchInput } from "./search-input"
 import type { Conversation } from "../types"
 import { Plus } from "lucide-react"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface ConversationListPaneProps {
   conversations: Conversation[]
@@ -52,7 +53,7 @@ export function ConversationListPane({
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto">
+      <ScrollArea className="flex-1">
         {conversations.length === 0 ? (
           <div className="px-3 py-12 text-center">
             <p className="text-sm text-muted-foreground">No conversations match</p>
@@ -70,7 +71,7 @@ export function ConversationListPane({
             ))}
           </ul>
         )}
-      </div>
+      </ScrollArea>
     </aside>
   )
 }
