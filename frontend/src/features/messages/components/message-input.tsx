@@ -52,7 +52,7 @@ export function MessageInput({ onSend, disabled, placeholder = "Message" }: Mess
           <Image className="h-5 w-5" />
         </button>
 
-        <div className="flex flex-1 items-end gap-1 rounded-full border border-border/20 bg-[var(--bg-muted)]/40 px-3 py-2 transition-colors focus-within:border-[var(--accent)]/30 focus-within:bg-[var(--bg-muted)]/60">
+        <div className="flex flex-1 items-end gap-1 rounded-full border border-border/20 bg-[var(--bg-muted)]/40 px-3 py-2 transition-colors focus-within:bg-[var(--bg-muted)]/60">
           <textarea
             ref={textareaRef}
             value={value}
@@ -62,7 +62,7 @@ export function MessageInput({ onSend, disabled, placeholder = "Message" }: Mess
             placeholder={placeholder}
             disabled={disabled}
             aria-label="Type a message"
-            className="max-h-40 min-h-[24px] flex-1 resize-none bg-transparent px-0 py-0 text-[14px] leading-snug text-foreground placeholder:text-muted-foreground/50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="max-h-40 min-h-[24px] flex-1 resize-none bg-transparent px-0 py-0 text-[14px] leading-snug text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
 
           <button

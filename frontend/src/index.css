@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'M PLUS 1', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'M PLUS 1', ui-sans-serif, system-ui, sans-serif;
 
   /* OffBrand-inspired palette — light */
   --bg-base:        #D5D3CE;
@@ -142,7 +142,6 @@
 
   :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px var(--bg-base), 0 0 0 4px var(--accent);
   }
 }
 
@@ -202,7 +201,7 @@
   user-select: none;
   pointer-events: none;
   line-height: 1.0;
-  font-family: 'Sanchez', serif;
+  font-family: 'M PLUS 1', ui-sans-serif, system-ui, sans-serif;
   font-weight: 400;
 }
 
