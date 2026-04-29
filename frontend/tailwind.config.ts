@@ -24,6 +24,7 @@ const config: Config = {
       fontFamily: {
         sans: ["'M PLUS 1'", "ui-sans-serif", "system-ui", "sans-serif"],
         display: ["'M PLUS 1'", "ui-sans-serif", "system-ui", "sans-serif"],
+        honk: ["'Honk'", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       colors: {
         // shadcn bridge

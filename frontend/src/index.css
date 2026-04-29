@@ -202,16 +202,15 @@
 
 .footer-bg-text {
   position: absolute;
-  font-size: 25vw;
+  font-size: 20vw;
   white-space: nowrap;
-  -webkit-text-stroke: 2px color-mix(in srgb, var(--text-primary) 25%, transparent);
-  color: color-mix(in srgb, var(--text-primary) 6%, transparent);
+  color: color-mix(in srgb, var(--text-primary) 25%, transparent);
   z-index: 1;
   user-select: none;
   pointer-events: none;
   line-height: 1.0;
-  font-family: 'M PLUS 1', ui-sans-serif, system-ui, sans-serif;
-  font-weight: 400;
+  font-family: 'Lexend Zetta', ui-sans-serif, system-ui, sans-serif;
+  font-weight: 500;
 }
 
 /* Spotlight glow for CTA section */

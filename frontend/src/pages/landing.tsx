@@ -386,14 +386,6 @@ const CATEGORIES = [
 export default function LandingPage() {
   const beliefRef = useRef(null)
 
-  /* Scroll-driven background text opacity for "SHARING" */
-  const { scrollYProgress: beliefProgress } = useScroll({
-    target: beliefRef,
-    offset: ["start end", "end start"],
-  })
-  const sharingOpacity = useTransform(beliefProgress, [0, 0.3, 0.7, 1], [0, 0.12, 0.12, 0])
-  const sharingY = useTransform(beliefProgress, [0, 1], [80, -80])
-
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <ScrollProgress />
@@ -507,16 +499,6 @@ export default function LandingPage() {
 
       {/* Belief — "SHARING" as focal point with scroll-linked parallax */}
       <section id="belief" ref={beliefRef} className="relative border-t border-border">
-        {/* Scroll-driven ghost text */}
-        <motion.div
-          className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
-          style={{ y: sharingY, opacity: sharingOpacity }}
-        >
-          <span className="font-display text-[25vw] leading-[1.0] whitespace-nowrap text-outline-stroke">
-            SHARING
-          </span>
-        </motion.div>
-
         <div className="container py-24 md:py-32 text-center relative z-10">
           {/* Eyebrow */}
           <motion.p
@@ -536,7 +518,7 @@ export default function LandingPage() {
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
           >
-            <h2 className="font-display text-[clamp(4rem,18vw,14rem)] leading-[1.0] tracking-tighter text-outline-stroke pb-[0.1em]">
+            <h2 className="font-honk text-[clamp(4rem,18vw,14rem)] leading-[1.0]">
               SHARING
             </h2>
           </motion.div>

@@ -226,7 +226,7 @@ const hoverSpring = {
 } as const
 
 const panelClass =
-  "relative overflow-hidden rounded-[2rem] bg-[#0F1117] text-[#E8EAED] ring-1 ring-white/[0.03] backdrop-blur-xl transition-colors duration-300 hover:bg-[#141920] focus-within:bg-[#141920]"
+  "relative overflow-hidden rounded-[2rem] bg-[#0F1117] text-[#E8EAED] backdrop-blur-xl transition-colors duration-300 hover:bg-[#141920] focus-within:bg-[#141920]"
 
 const labelClass =
   "text-[clamp(0.68rem,0.7vw,0.78rem)] font-semibold uppercase tracking-widest text-white/[0.36]"
