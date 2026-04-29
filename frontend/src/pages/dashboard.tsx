@@ -1,42 +1,206 @@
-import { useEffect } from "react"
+import type { ComponentType, SVGProps } from "react"
 import { Link } from "react-router-dom"
-import { motion } from "framer-motion"
+import { motion, useReducedMotion, type Variants } from "framer-motion"
 import {
-  ArrowUpRight,
-  FolderOpen,
   ArrowLeftRight,
-  BookOpen,
-  TrendingUp,
   Bell,
-  Star,
-  Zap,
-  Clock,
-  CheckCircle2,
-  Camera,
-  Mic,
-  Monitor,
-  Video,
+  BookOpen,
+  CalendarClock,
+  Check,
   ChevronRight,
+  ClipboardList,
+  Clock,
+  FolderOpen,
+  LibraryBig,
+  LucideIcon,
+  MessageSquare,
+  Plus,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  X,
 } from "lucide-react"
 import {
   Area,
   AreaChart,
   ResponsiveContainer,
-  XAxis,
   Tooltip,
+  XAxis,
 } from "recharts"
-import { useAuthStore } from "@/stores/auth-store"
-import { useCatalogueStore } from "@/stores/catalogue-store"
-import { useUIStore } from "@/stores/ui-store"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { formatDate, getInitials, truncate, formatRelativeTime } from "@/lib/utils"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
-// ------------------------------------------------------------------
-// Animation Variants
-// ------------------------------------------------------------------
-const containerVariants = {
+const ACCENT = "#F5B84C"
+const SILVER = "#E8EAED"
+const GRAPHITE = "#69717F"
+
+const mockDashboardData = {
+  user: { firstName: "Sarah", lastName: "Johnson" },
+  stats: [
+    {
+      id: "shared",
+      label: "Resources Shared",
+      value: 24,
+      trend: "+12%",
+      sparkline: [8, 12, 10, 15, 14, 18, 20, 24],
+      icon: "FolderOpen",
+    },
+    {
+      id: "borrowed",
+      label: "Resources Borrowed",
+      value: 12,
+      trend: "+8%",
+      sparkline: [3, 5, 4, 7, 8, 9, 11, 12],
+      icon: "ArrowLeftRight",
+    },
+    {
+      id: "requests",
+      label: "Pending Requests",
+      value: 1,
+      trend: "3 new",
+      sparkline: [0, 2, 1, 3, 2, 1, 2, 1],
+      icon: "ClipboardList",
+    },
+    {
+      id: "alerts",
+      label: "Unread Alerts",
+      value: 2,
+      trend: "2 urgent",
+      sparkline: [0, 0, 1, 0, 2, 1, 0, 2],
+      icon: "Bell",
+    },
+  ],
+  velocityData: [
+    { day: "Mon", borrowed: 3, shared: 1 },
+    { day: "Tue", borrowed: 7, shared: 3 },
+    { day: "Wed", borrowed: 5, shared: 4 },
+    { day: "Thu", borrowed: 12, shared: 6 },
+    { day: "Fri", borrowed: 18, shared: 9 },
+    { day: "Sat", borrowed: 14, shared: 8 },
+    { day: "Sun", borrowed: 10, shared: 5 },
+  ],
+  pendingRequests: [
+    {
+      id: 1,
+      requesterName: "Michael Chen",
+      schoolName: "Newport HS",
+      itemName: "Stage Makeup Kit",
+      requestedDate: "2025-05-17",
+      returnDate: "2025-05-31",
+    },
+    {
+      id: 2,
+      requesterName: "James Martinez",
+      schoolName: "Sammamish HS",
+      itemName: "Victorian Costume",
+      requestedDate: "2025-05-20",
+      returnDate: "2025-06-03",
+    },
+  ],
+  recentResources: [
+    {
+      id: 1,
+      name: "Complete Romeo & Juliet Scripts",
+      addedBy: "Sarah Johnson",
+      category: "Scripts",
+      rating: 4.8,
+    },
+    {
+      id: 2,
+      name: "Pro Stage Lighting Kit",
+      addedBy: "Michael Chen",
+      category: "Lighting",
+      rating: 4.5,
+    },
+  ],
+  activities: [
+    {
+      id: 1,
+      type: "request",
+      description: "Michael Chen wants to borrow your Stage Makeup Kit",
+      time: "23m ago",
+    },
+    {
+      id: 2,
+      type: "approved",
+      description: "James Martinez approved your request",
+      time: "6h ago",
+    },
+    {
+      id: 3,
+      type: "due_soon",
+      description: "Victorian Costume is due in 3 days",
+      time: "1d ago",
+    },
+  ],
+}
+
+type IconName = (typeof mockDashboardData.stats)[number]["icon"]
+type ActivityType = (typeof mockDashboardData.activities)[number]["type"]
+
+type SparkPoint = {
+  index: string
+  value: number
+}
+
+type DashboardTooltipPayload = {
+  dataKey?: string | number
+  name?: string | number
+  value?: string | number
+}
+
+type DashboardTooltipProps = {
+  active?: boolean
+  label?: string | number
+  payload?: DashboardTooltipPayload[]
+}
+
+const iconMap: Record<IconName, LucideIcon> = {
+  FolderOpen,
+  ArrowLeftRight,
+  ClipboardList,
+  Bell,
+}
+
+const activityTone: Record<ActivityType, string> = {
+  request: "bg-blue-400",
+  approved: "bg-emerald-400",
+  due_soon: "bg-amber-400",
+}
+
+const categoryIconMap: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
+  Scripts: BookOpen,
+  Lighting: Sparkles,
+}
+
+const quickActions = [
+  {
+    title: "Add Resource",
+    description: "List a new asset",
+    to: "/my-resources",
+    icon: Plus,
+  },
+  {
+    title: "Search Catalogue",
+    description: "Find costumes & gear",
+    to: "/catalogue",
+    icon: Search,
+  },
+  {
+    title: "Borrowing",
+    description: "Review active loans",
+    to: "/borrowing",
+    icon: CalendarClock,
+  },
+  {
+    title: "Messages",
+    description: "Coordinate handoffs",
+    to: "/messages",
+    icon: MessageSquare,
+  },
+]
+
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -47,642 +211,518 @@ const containerVariants = {
   },
 }
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   show: {
     opacity: 1,
     y: 0,
-    transition: { type: "spring" as const, stiffness: 100, damping: 20 },
+    transition: { type: "spring", stiffness: 100, damping: 20 },
   },
 }
 
-const cardHover = {
-  scale: 1.01,
-  transition: { type: "spring" as const, stiffness: 300, damping: 25 },
+const hoverSpring = {
+  scale: 0.98,
+  transition: { type: "spring", stiffness: 100, damping: 20 },
+} as const
+
+const panelClass =
+  "relative overflow-hidden rounded-[2rem] bg-[#0F1117] text-[#E8EAED] ring-1 ring-white/[0.03] backdrop-blur-xl transition-colors duration-300 hover:bg-[#141920] focus-within:bg-[#141920]"
+
+const labelClass =
+  "text-[clamp(0.68rem,0.7vw,0.78rem)] font-semibold uppercase tracking-widest text-white/[0.36]"
+
+const titleClass =
+  "text-[clamp(1.1rem,1.35vw,1.45rem)] font-semibold tracking-tighter text-white"
+
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+})
+
+const requestDateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+})
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
 }
 
-// ------------------------------------------------------------------
-// Hyper-Realistic Mock Data
-// ------------------------------------------------------------------
-const DEMO_RESOURCES = [
-  {
-    id: "r1",
-    title: "Canon EOS R5 Cinema Kit with RF 24-70mm f/2.8L",
-    category: "photography",
-    rating: 4.9,
-    owner: { name: "Maya Chen" },
-    images: ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=400&fit=crop"],
-  },
-  {
-    id: "r2",
-    title: "RODE NT1-A Anniversary Edition Microphone",
-    category: "audio",
-    rating: 4.7,
-    owner: { name: "Jordan Blake" },
-    images: ["https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=400&h=400&fit=crop"],
-  },
-  {
-    id: "r3",
-    title: "Wacom Cintiq Pro 24 Creative Pen Display",
-    category: "design",
-    rating: 4.8,
-    owner: { name: "Alex Rivera" },
-    images: ["https://images.unsplash.com/photo-1585792180666-f7347f490e08?w=400&h=400&fit=crop"],
-  },
-  {
-    id: "r4",
-    title: "DJI RS 3 Pro Handheld Gimbal Stabilizer",
-    category: "videography",
-    rating: 4.6,
-    owner: { name: "Sam Park" },
-    images: ["https://images.unsplash.com/photo-1471341971476-ae15ff5dd4ea?w=400&h=400&fit=crop"],
-  },
-]
+function formatRange(startDate: string, endDate: string) {
+  const start = requestDateFormatter.format(new Date(startDate))
+  const end = requestDateFormatter.format(new Date(endDate))
+  return `${start} - ${end}`
+}
 
-const DEMO_REQUESTS = [
-  {
-    id: "br1",
-    borrower: { name: "Taylor Nguyen", avatar: "" },
-    resource: { title: "Canon EOS R5 Cinema Kit with RF 24-70mm f/2.8L" },
-    requestedAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    status: "pending",
-  },
-  {
-    id: "br2",
-    borrower: { name: "Casey O'Brien", avatar: "" },
-    resource: { title: "Wacom Cintiq Pro 24 Creative Pen Display" },
-    requestedAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-    status: "pending",
-  },
-  {
-    id: "br3",
-    borrower: { name: "Riley Santos", avatar: "" },
-    resource: { title: "RODE NT1-A Anniversary Edition Microphone" },
-    requestedAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
-    status: "pending",
-  },
-]
+function sparklineData(values: number[]): SparkPoint[] {
+  return values.map((value, index) => ({
+    index: `${index + 1}`,
+    value,
+  }))
+}
 
-const DEMO_NOTIFICATIONS = [
-  {
-    id: "n1",
-    title: "Request Approved",
-    message: "Your request for Sony A7S III was approved by Alex Rivera",
-    createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-    read: false,
-    type: "request_approved" as const,
-  },
-  {
-    id: "n2",
-    title: "Item Returned",
-    message: "Maya Chen returned the DJI Mavic 3 Pro drone",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    read: false,
-    type: "item_returned" as const,
-  },
-  {
-    id: "n3",
-    title: "New Resource",
-    message: "Aputure 600x LED Kit was added to the catalogue",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-    read: true,
-    type: "review_received" as const,
-  },
-  {
-    id: "n4",
-    title: "Return Reminder",
-    message: "Return Blackmagic Pocket 6K by tomorrow to avoid late fees",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
-    read: true,
-    type: "reminder" as const,
-  },
-]
-
-const CHART_DATA = [
-  { day: "Mon", borrowed: 12, shared: 8 },
-  { day: "Tue", borrowed: 18, shared: 11 },
-  { day: "Wed", borrowed: 15, shared: 14 },
-  { day: "Thu", borrowed: 22, shared: 9 },
-  { day: "Fri", borrowed: 28, shared: 16 },
-  { day: "Sat", borrowed: 20, shared: 12 },
-  { day: "Sun", borrowed: 14, shared: 7 },
-]
-
-// ------------------------------------------------------------------
-// Helpers
-// ------------------------------------------------------------------
-const categoryIcon = (cat: string) => {
-  switch (cat) {
-    case "photography":
-      return Camera
-    case "audio":
-      return Mic
-    case "design":
-      return Monitor
-    case "videography":
-      return Video
-    default:
-      return Zap
+function ChartTooltip({
+  active,
+  label,
+  payload,
+}: DashboardTooltipProps) {
+  if (!active || !payload?.length) {
+    return null
   }
-}
-
-const categoryLabel = (cat: string) =>
-  cat.replace("-", " ").replace(/\b\w/g, (l) => l.toUpperCase())
-
-const glassCard =
-  "relative overflow-hidden rounded-3xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl transition-colors hover:border-white/[0.12]"
-
-const sectionTitle =
-  "text-[clamp(0.875rem,1.4vw,1.125rem)] font-medium tracking-tight text-white/90"
-
-const metricValue =
-  "text-[clamp(1.75rem,2.8vw,2.75rem)] font-bold tracking-tighter text-white"
-
-const metricLabel =
-  "text-[clamp(0.65rem,0.9vw,0.75rem)] font-medium uppercase tracking-[0.15em] text-white/40"
-
-// ------------------------------------------------------------------
-// Component
-// ------------------------------------------------------------------
-export default function DashboardPage() {
-  const { user } = useAuthStore()
-  const { resources, fetchResources } = useCatalogueStore()
-  const { notifications, borrowRequests, fetchNotifications, fetchBorrowRequests } = useUIStore()
-
-  useEffect(() => {
-    fetchResources()
-    fetchNotifications()
-    fetchBorrowRequests()
-  }, [fetchResources, fetchNotifications, fetchBorrowRequests])
-
-  const firstName = user?.name?.split(" ")[0] ?? "Creator"
-
-  const recentResources = resources.length > 0 ? resources.slice(0, 4) : DEMO_RESOURCES
-  const pendingRequests = borrowRequests.filter((r) => r.status === "pending")
-  const displayRequests = pendingRequests.length > 0 ? pendingRequests : DEMO_REQUESTS
-  const unreadNotifications = notifications.filter((n) => !n.read)
-  const displayNotifications = notifications.length > 0 ? notifications : DEMO_NOTIFICATIONS
-
-  const stats = [
-    {
-      label: "Resources Shared",
-      value: user?.resourcesShared || 24,
-      icon: FolderOpen,
-      accent: "text-amber-400",
-      bg: "bg-amber-400/10",
-      trend: "+12%",
-    },
-    {
-      label: "Resources Borrowed",
-      value: user?.resourcesBorrowed || 18,
-      icon: ArrowLeftRight,
-      accent: "text-emerald-400",
-      bg: "bg-emerald-400/10",
-      trend: "+8%",
-    },
-    {
-      label: "Pending Requests",
-      value: pendingRequests.length || displayRequests.length,
-      icon: BookOpen,
-      accent: "text-violet-400",
-      bg: "bg-violet-400/10",
-      trend: "3 new",
-    },
-    {
-      label: "Unread Alerts",
-      value: unreadNotifications.length || 2,
-      icon: Bell,
-      accent: "text-rose-400",
-      bg: "bg-rose-400/10",
-      trend: "2 urgent",
-    },
-  ]
 
   return (
-    <div className="-m-4 lg:-m-6 min-h-full bg-[#000000] text-[#F8FAFC] selection:bg-white/20">
-      <motion.div
-        className="p-6 lg:p-10 space-y-8 lg:space-y-10"
-        variants={containerVariants}
-        initial="hidden"
-        animate="show"
-      >
-        {/* ── Hero ── */}
-        <motion.section
-          variants={itemVariants}
-          className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between"
-        >
-          <div className="space-y-2">
-            <p className="text-[clamp(0.75rem,1vw,0.875rem)] font-medium uppercase tracking-[0.2em] text-white/40">
-              {new Date().toLocaleDateString("en-US", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
-            <h1 className="text-[clamp(1.75rem,4vw,3.25rem)] font-semibold tracking-tighter leading-[1.1]">
-              Welcome back,{" "}
-              <span className="text-white/50">{firstName}</span>
-            </h1>
-            <p className="text-[clamp(0.875rem,1.2vw,1rem)] leading-relaxed text-white/40 max-w-md">
-              Here is what is happening across your creative toolkit today.
-            </p>
+    <div className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-white shadow-2xl shadow-black/50 ring-1 ring-white/10 backdrop-blur-xl">
+      <p className="mb-2 text-[clamp(0.68rem,0.7vw,0.75rem)] font-semibold uppercase tracking-widest text-white/[0.45]">
+        {label}
+      </p>
+      <div className="space-y-1.5">
+        {payload.map((entry) => (
+          <div
+            key={entry.dataKey}
+            className="flex min-w-36 items-center justify-between gap-5"
+          >
+            <span className="text-white/50">{entry.name}</span>
+            <span className="font-semibold tabular-nums text-white">
+              {entry.value}
+            </span>
           </div>
-
-          <motion.div whileHover={{ scale: 0.97 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              asChild
-              className="rounded-full bg-white text-black hover:bg-white/90 px-6 py-5 text-sm font-semibold tracking-tight transition-colors"
-            >
-              <Link to="/catalogue">
-                Browse Catalogue
-                <ArrowUpRight className="ml-2 h-4 w-4" strokeWidth={1.5} />
-              </Link>
-            </Button>
-          </motion.div>
-        </motion.section>
-
-        {/* ── Stats Bento ── */}
-        <motion.section
-          variants={itemVariants}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 lg:gap-5"
-        >
-          {stats.map((stat) => {
-            const Icon = stat.icon
-            return (
-              <motion.div
-                key={stat.label}
-                className={`${glassCard} p-6 lg:p-7 lg:col-span-3`}
-                whileHover={cardHover}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`rounded-2xl p-3 ${stat.bg}`}>
-                    <Icon className={`h-5 w-5 ${stat.accent}`} strokeWidth={1.5} />
-                  </div>
-                  <span className="text-[clamp(0.65rem,0.85vw,0.75rem)] font-medium text-white/30">
-                    {stat.trend}
-                  </span>
-                </div>
-                <p className={metricValue}>{stat.value}</p>
-                <p className={`${metricLabel} mt-1`}>{stat.label}</p>
-              </motion.div>
-            )
-          })}
-        </motion.section>
-
-        {/* ── Main Bento ── */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
-          {/* Recent Resources (large) */}
-          <motion.div
-            variants={itemVariants}
-            initial="hidden"
-            animate="show"
-            className={`${glassCard} lg:col-span-8 p-6 lg:p-8`}
-            whileHover={cardHover}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className={sectionTitle}>Recent Resources</h2>
-                <p className="text-[clamp(0.75rem,1vw,0.875rem)] text-white/30 mt-1">
-                  Latest additions to the shared catalogue
-                </p>
-              </div>
-              <motion.div whileHover={{ scale: 0.95 }} whileTap={{ scale: 0.92 }}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  asChild
-                  className="text-white/40 hover:text-white hover:bg-white/5 rounded-full px-4"
-                >
-                  <Link to="/catalogue">
-                    View all
-                    <ChevronRight className="ml-1 h-4 w-4" strokeWidth={1.5} />
-                  </Link>
-                </Button>
-              </motion.div>
-            </div>
-
-            <div className="space-y-3">
-              {recentResources.map((resource) => {
-                const CatIcon = categoryIcon(resource.category)
-                return (
-                  <motion.div
-                    key={resource.id}
-                    whileHover={{ scale: 1.005 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                  >
-                    <Link
-                      to={`/resource/${resource.id}`}
-                      className="group flex items-center gap-4 rounded-2xl p-3 transition-colors hover:bg-white/[0.04]"
-                    >
-                      <div className="relative h-[4.5rem] w-[4.5rem] rounded-xl overflow-hidden flex-shrink-0 bg-white/[0.04] border border-white/[0.06]">
-                        {resource.images[0] ? (
-                          <img
-                            src={resource.images[0]}
-                            alt={resource.title}
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="h-full w-full flex items-center justify-center">
-                            <CatIcon
-                              className="h-6 w-6 text-white/20"
-                              strokeWidth={1.5}
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-[clamp(0.8rem,1.1vw,0.95rem)] font-medium leading-snug text-white/90 truncate">
-                          {truncate(resource.title, 48)}
-                        </h4>
-                        <p className="text-[clamp(0.7rem,0.95vw,0.8rem)] text-white/30 mt-0.5">
-                          {resource.owner.name}
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge
-                            variant="secondary"
-                            className="rounded-full px-2.5 py-0.5 text-[clamp(0.6rem,0.85vw,0.7rem)] font-medium bg-white/[0.06] text-white/50 hover:bg-white/[0.1] border-0"
-                          >
-                            {categoryLabel(resource.category)}
-                          </Badge>
-                          <div className="flex items-center text-[clamp(0.65rem,0.85vw,0.75rem)] text-white/30">
-                            <Star
-                              className="h-3 w-3 mr-1 fill-amber-400 text-amber-400"
-                              strokeWidth={1.5}
-                            />
-                            {(resource.rating || 4.5).toFixed(1)}
-                          </div>
-                        </div>
-                      </div>
-
-                      <ArrowUpRight
-                        className="h-5 w-5 text-white/10 group-hover:text-white/40 transition-colors flex-shrink-0"
-                        strokeWidth={1.5}
-                      />
-                    </Link>
-                  </motion.div>
-                )
-              })}
-            </div>
-          </motion.div>
-
-          {/* Right stack: Pending Requests + Activity */}
-          <div className="lg:col-span-4 flex flex-col gap-4 lg:gap-5">
-            {/* Pending Requests */}
-            <motion.div
-              variants={itemVariants}
-              initial="hidden"
-              animate="show"
-              className={`${glassCard} p-6 lg:p-7 flex-1`}
-              whileHover={cardHover}
-            >
-              <div className="flex items-center justify-between mb-5">
-                <h2 className={sectionTitle}>Pending Requests</h2>
-                <motion.div whileHover={{ scale: 0.95 }} whileTap={{ scale: 0.92 }}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    asChild
-                    className="text-white/40 hover:text-white hover:bg-white/5 rounded-full px-4"
-                  >
-                    <Link to="/borrowing">
-                      Review
-                      <ChevronRight className="ml-1 h-4 w-4" strokeWidth={1.5} />
-                    </Link>
-                  </Button>
-                </motion.div>
-              </div>
-
-              <div className="space-y-3">
-                {displayRequests.slice(0, 3).map((request) => (
-                  <motion.div
-                    key={request.id}
-                    className="flex items-start gap-3 rounded-2xl p-3 bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] transition-colors"
-                    whileHover={{ scale: 1.01 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                  >
-                    <Avatar className="h-9 w-9 border border-white/[0.08]">
-                      <AvatarImage src={request.borrower.avatar} />
-                      <AvatarFallback className="bg-white/[0.06] text-white/60 text-xs font-medium">
-                        {getInitials(request.borrower.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[clamp(0.8rem,1.05vw,0.9rem)] font-medium text-white/80 truncate">
-                        {request.borrower.name}
-                      </p>
-                      <p className="text-[clamp(0.65rem,0.9vw,0.75rem)] text-white/30 truncate">
-                        wants to borrow{" "}
-                        <span className="text-white/50">
-                          {truncate(request.resource.title, 24)}
-                        </span>
-                      </p>
-                      <p className="text-[clamp(0.6rem,0.8vw,0.7rem)] text-white/20 mt-1 flex items-center gap-1">
-                        <Clock className="h-3 w-3" strokeWidth={1.5} />
-                        {formatRelativeTime(request.requestedAt)}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Activity Feed */}
-            <motion.div
-              variants={itemVariants}
-              initial="hidden"
-              animate="show"
-              className={`${glassCard} p-6 lg:p-7`}
-              whileHover={cardHover}
-            >
-              <h2 className={`${sectionTitle} mb-5`}>Activity</h2>
-              <div className="space-y-4">
-                {displayNotifications.slice(0, 4).map((n) => (
-                  <div key={n.id} className="flex items-start gap-3">
-                    <div
-                      className={`mt-0.5 h-2 w-2 rounded-full flex-shrink-0 ${
-                        n.type === "request_approved"
-                          ? "bg-emerald-400"
-                          : n.type === "reminder"
-                          ? "bg-amber-400"
-                          : "bg-white/20"
-                      }`}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[clamp(0.75rem,1vw,0.85rem)] text-white/60 leading-snug">
-                        {n.message}
-                      </p>
-                      <p className="text-[clamp(0.6rem,0.8vw,0.7rem)] text-white/20 mt-1">
-                        {formatRelativeTime(n.createdAt)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* ── Bottom Bento ── */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
-          {/* Analytics Chart */}
-          <motion.div
-            variants={itemVariants}
-            initial="hidden"
-            animate="show"
-            className={`${glassCard} lg:col-span-8 p-6 lg:p-8`}
-            whileHover={cardHover}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className={sectionTitle}>Borrowing Velocity</h2>
-                <p className="text-[clamp(0.75rem,1vw,0.875rem)] text-white/30 mt-1">
-                  Weekly resource circulation across the network
-                </p>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-amber-400" />
-                  <span className="text-[clamp(0.65rem,0.85vw,0.75rem)] text-white/30">
-                    Borrowed
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-white/20" />
-                  <span className="text-[clamp(0.65rem,0.85vw,0.75rem)] text-white/30">
-                    Shared
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="h-[220px] lg:h-[260px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={CHART_DATA} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="borrowGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#FBBF24" stopOpacity={0.25} />
-                      <stop offset="100%" stopColor="#FBBF24" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="shareGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#FFFFFF" stopOpacity={0.12} />
-                      <stop offset="100%" stopColor="#FFFFFF" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis
-                    dataKey="day"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "rgba(255,255,255,0.2)", fontSize: 12 }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: "rgba(10,10,10,0.9)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: "12px",
-                      backdropFilter: "blur(12px)",
-                      color: "#F8FAFC",
-                      fontSize: 12,
-                    }}
-                    itemStyle={{ color: "#F8FAFC" }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="borrowed"
-                    stroke="#FBBF24"
-                    strokeWidth={2}
-                    fill="url(#borrowGrad)"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="shared"
-                    stroke="rgba(255,255,255,0.3)"
-                    strokeWidth={2}
-                    fill="url(#shareGrad)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </motion.div>
-
-          {/* Quick Actions */}
-          <motion.div
-            variants={itemVariants}
-            initial="hidden"
-            animate="show"
-            className={`${glassCard} lg:col-span-4 p-6 lg:p-8`}
-            whileHover={cardHover}
-          >
-            <h2 className={`${sectionTitle} mb-6`}>Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                {
-                  to: "/my-resources",
-                  icon: FolderOpen,
-                  label: "Add Resource",
-                },
-                {
-                  to: "/catalogue",
-                  icon: BookOpen,
-                  label: "Browse",
-                },
-                {
-                  to: "/borrowing",
-                  icon: ArrowLeftRight,
-                  label: "Borrowing",
-                },
-                {
-                  to: "/messages",
-                  icon: Zap,
-                  label: "Messages",
-                },
-              ].map((action) => {
-                const Icon = action.icon
-                return (
-                  <motion.div
-                    key={action.label}
-                    whileHover={{ scale: 0.97 }}
-                    whileTap={{ scale: 0.94 }}
-                  >
-                    <Link
-                      to={action.to}
-                      className="flex flex-col items-center justify-center gap-3 rounded-2xl p-5 bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.12] transition-colors group"
-                    >
-                      <Icon
-                        className="h-6 w-6 text-white/30 group-hover:text-white/60 transition-colors"
-                        strokeWidth={1.5}
-                      />
-                      <span className="text-[clamp(0.7rem,0.95vw,0.8rem)] font-medium text-white/50 group-hover:text-white/80 transition-colors">
-                        {action.label}
-                      </span>
-                    </Link>
-                  </motion.div>
-                )
-              })}
-            </div>
-
-            <div className="mt-6 pt-6 border-t border-white/[0.06]">
-              <div className="flex items-center gap-3">
-                <div className="rounded-full bg-emerald-500/10 p-2">
-                  <CheckCircle2
-                    className="h-4 w-4 text-emerald-400"
-                    strokeWidth={1.5}
-                  />
-                </div>
-                <div>
-                  <p className="text-[clamp(0.75rem,1vw,0.875rem)] font-medium text-white/70">
-                    System Status
-                  </p>
-                  <p className="text-[clamp(0.65rem,0.85vw,0.75rem)] text-white/30">
-                    All services operational
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </section>
-      </motion.div>
+        ))}
+      </div>
     </div>
   )
 }
+
+function DashboardPage() {
+  const shouldReduceMotion = useReducedMotion()
+  const hover = shouldReduceMotion ? undefined : hoverSpring
+  const currentDate = dateFormatter.format(new Date()).toUpperCase()
+
+  return (
+    <div className="-m-4 min-h-dvh overflow-x-hidden bg-[#080A0A] text-[#E8EAED] selection:bg-[#F5B84C]/30 lg:-m-6">
+      <motion.main
+        variants={containerVariants}
+        initial={shouldReduceMotion ? false : "hidden"}
+        animate="show"
+        className="grid grid-cols-12 gap-4 p-8"
+      >
+        <motion.section
+          variants={itemVariants}
+          className={`${panelClass} col-span-12 p-10`}
+        >
+          <div className="pointer-events-none absolute right-8 top-8 h-44 w-44 rounded-full bg-white/5 blur-3xl" />
+          <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-4xl space-y-5">
+              <p className={labelClass}>{currentDate}</p>
+              <h1 className="text-balance font-display text-[clamp(2rem,3vw,2.75rem)] font-semibold leading-[0.98] tracking-tighter text-white">
+                Welcome back,{" "}
+                <span className="text-[#F5B84C]">
+                  {mockDashboardData.user.firstName}
+                </span>
+              </h1>
+              <p className="max-w-2xl text-[clamp(1rem,1.1vw,1.12rem)] leading-relaxed text-white/[0.45]">
+                Your theatre resource network is quiet, liquid, and ready for
+                the next handoff.
+              </p>
+            </div>
+
+            <motion.div whileHover={hover} whileTap={{ scale: 0.96 }}>
+              <Link
+                to="/catalogue"
+                className="inline-flex min-h-12 items-center justify-center gap-3 rounded-full bg-[#F5B84C] px-7 py-4 text-[clamp(0.82rem,0.9vw,0.95rem)] font-semibold text-[#080A0A] shadow-[0_0_48px_rgba(245,184,76,0.26)] transition-colors duration-200 hover:bg-[#ffd479] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B84C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#080A0A]"
+              >
+                Browse Catalogue
+                <ChevronRight aria-hidden="true" className="h-4 w-4" />
+              </Link>
+            </motion.div>
+          </div>
+        </motion.section>
+
+        {mockDashboardData.stats.map((stat) => {
+          const Icon = iconMap[stat.icon]
+          const isAlert = stat.id === "alerts"
+
+          return (
+            <motion.article
+              key={stat.id}
+              variants={itemVariants}
+              whileHover={hover}
+              className={`${panelClass} group col-span-12 min-h-64 p-8 sm:col-span-6 lg:col-span-3`}
+            >
+              <div className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-[radial-gradient(circle_at_center,rgba(245,184,76,0.24),transparent_62%)] opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100" />
+              <div className="relative z-10 flex h-full flex-col justify-between gap-8">
+                <div className="flex items-start justify-between gap-5">
+                  <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white/5 backdrop-blur-xl">
+                    <Icon
+                      aria-hidden="true"
+                      className={isAlert ? "h-5 w-5 text-[#F5B84C]" : "h-5 w-5 text-white/[0.55]"}
+                      strokeWidth={1.5}
+                    />
+                  </div>
+                  <span
+                    className={`rounded-full px-3 py-1 text-[clamp(0.68rem,0.7vw,0.76rem)] font-semibold uppercase tracking-widest ${
+                      isAlert
+                        ? "bg-[#F5B84C]/15 text-[#F5B84C]"
+                        : "bg-white/5 text-white/[0.42]"
+                    }`}
+                  >
+                    {stat.trend}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="font-display text-[clamp(2rem,3vw,3.25rem)] font-semibold leading-none tracking-tighter text-white tabular-nums">
+                    {stat.value}
+                  </p>
+                  <h2 className={labelClass}>{stat.label}</h2>
+                </div>
+              </div>
+
+              <div className="absolute inset-x-0 bottom-0 h-24 opacity-55">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={sparklineData(stat.sparkline)}
+                    margin={{ top: 8, right: 0, bottom: 0, left: 0 }}
+                  >
+                    <defs>
+                      <linearGradient
+                        id={`spark-${stat.id}`}
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor={isAlert ? ACCENT : SILVER}
+                          stopOpacity={isAlert ? 0.3 : 0.14}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor={isAlert ? ACCENT : SILVER}
+                          stopOpacity={0}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke={isAlert ? ACCENT : "rgba(232,234,237,0.34)"}
+                      strokeWidth={1.8}
+                      fill={`url(#spark-${stat.id})`}
+                      dot={false}
+                      isAnimationActive={!shouldReduceMotion}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.article>
+          )
+        })}
+
+        <motion.section
+          variants={itemVariants}
+          whileHover={hover}
+          className={`${panelClass} col-span-12 min-h-[34rem] p-10 lg:col-span-7`}
+        >
+          <div className="mb-12 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-3">
+              <p className={labelClass}>Circulation</p>
+              <h2 className={titleClass}>Borrowing Velocity</h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 text-[clamp(0.72rem,0.75vw,0.8rem)] text-white/[0.55] backdrop-blur-xl">
+                <span className="h-2 w-2 rounded-full bg-[#E8EAED]" />
+                Borrowed
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 text-[clamp(0.72rem,0.75vw,0.8rem)] text-white/[0.55] backdrop-blur-xl">
+                <span className="h-2 w-2 rounded-full bg-[#69717F]" />
+                Shared
+              </span>
+            </div>
+          </div>
+
+          <div className="h-[25rem]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={mockDashboardData.velocityData}
+                margin={{ top: 18, right: 8, bottom: 10, left: 0 }}
+              >
+                <defs>
+                  <linearGradient id="borrowed-fill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={SILVER} stopOpacity={0.22} />
+                    <stop offset="100%" stopColor={SILVER} stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="shared-fill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={GRAPHITE} stopOpacity={0.28} />
+                    <stop offset="100%" stopColor={GRAPHITE} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="day"
+                  axisLine={false}
+                  tickLine={false}
+                  tickMargin={18}
+                  tick={{ fill: "rgba(232,234,237,0.32)", fontSize: 12 }}
+                />
+                <Tooltip
+                  cursor={false}
+                  content={(props) => <ChartTooltip {...props} />}
+                  isAnimationActive={!shouldReduceMotion}
+                />
+                <Area
+                  name="Borrowed"
+                  type="monotone"
+                  dataKey="borrowed"
+                  stroke={SILVER}
+                  strokeWidth={2.4}
+                  fill="url(#borrowed-fill)"
+                  dot={false}
+                  activeDot={{ r: 4, fill: SILVER, strokeWidth: 0 }}
+                  isAnimationActive={!shouldReduceMotion}
+                />
+                <Area
+                  name="Shared"
+                  type="monotone"
+                  dataKey="shared"
+                  stroke={GRAPHITE}
+                  strokeWidth={2.4}
+                  fill="url(#shared-fill)"
+                  dot={false}
+                  activeDot={{ r: 4, fill: GRAPHITE, strokeWidth: 0 }}
+                  isAnimationActive={!shouldReduceMotion}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.section>
+
+        <motion.section
+          variants={itemVariants}
+          className={`${panelClass} col-span-12 p-8 lg:col-span-5`}
+        >
+          <div className="mb-8 flex items-start justify-between gap-5">
+            <div className="space-y-3">
+              <p className={labelClass}>Queue</p>
+              <h2 className={titleClass}>Pending Requests</h2>
+            </div>
+            <div className="rounded-full bg-[#F5B84C]/15 px-3 py-1 text-[clamp(0.68rem,0.7vw,0.76rem)] font-semibold uppercase tracking-widest text-[#F5B84C]">
+              Active
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {mockDashboardData.pendingRequests.map((request) => (
+              <motion.article
+                key={request.id}
+                variants={itemVariants}
+                whileHover={hover}
+                className="group rounded-[1.5rem] bg-white/5 p-5 backdrop-blur-xl transition-colors duration-300 hover:bg-white/[0.07] focus-within:bg-white/[0.07]"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="rounded-full ring-2 ring-emerald-400/70 ring-offset-4 ring-offset-[#11151B]">
+                    <Avatar className="h-12 w-12 bg-[#141920]">
+                      <AvatarFallback className="bg-white/5 text-[clamp(0.78rem,0.8vw,0.86rem)] font-semibold text-white/[0.72]">
+                        {getInitials(request.requesterName)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-[clamp(0.96rem,1vw,1.05rem)] font-semibold tracking-tight text-white">
+                        {request.requesterName}
+                      </h3>
+                      <p className="truncate text-[clamp(0.78rem,0.82vw,0.88rem)] text-white/[0.42]">
+                        {request.schoolName} / {request.itemName}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 text-[clamp(0.72rem,0.75vw,0.8rem)] text-white/[0.38]">
+                      <Clock aria-hidden="true" className="h-3.5 w-3.5" />
+                      <span>{formatRange(request.requestedDate, request.returnDate)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex translate-y-1 gap-2 opacity-100 transition-opacity duration-200 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                    <motion.button
+                      type="button"
+                      whileHover={hover}
+                      whileTap={{ scale: 0.94 }}
+                      aria-label={`Approve ${request.requesterName}'s request`}
+                      className="grid h-11 w-11 place-items-center rounded-full bg-emerald-400/[0.12] text-emerald-300 transition-colors duration-200 hover:bg-emerald-400/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#11151B]"
+                    >
+                      <Check aria-hidden="true" className="h-4 w-4" />
+                    </motion.button>
+                    <motion.button
+                      type="button"
+                      whileHover={hover}
+                      whileTap={{ scale: 0.94 }}
+                      aria-label={`Decline ${request.requesterName}'s request`}
+                      className="grid h-11 w-11 place-items-center rounded-full bg-red-400/10 text-red-300 transition-colors duration-200 hover:bg-red-400/[0.18] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#11151B]"
+                    >
+                      <X aria-hidden="true" className="h-4 w-4" />
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.article>
+            ))}
+          </div>
+        </motion.section>
+
+        <motion.section
+          variants={itemVariants}
+          className={`${panelClass} col-span-12 p-8 lg:col-span-5`}
+        >
+          <div className="mb-8 flex items-start justify-between gap-5">
+            <div className="space-y-3">
+              <p className={labelClass}>Catalogue</p>
+              <h2 className={titleClass}>Recent Resources</h2>
+            </div>
+            <LibraryBig aria-hidden="true" className="h-5 w-5 text-white/30" />
+          </div>
+
+          <div className="space-y-4">
+            {mockDashboardData.recentResources.map((resource) => {
+              const ResourceIcon = categoryIconMap[resource.category] ?? FolderOpen
+
+              return (
+                <motion.div
+                  key={resource.id}
+                  variants={itemVariants}
+                  whileHover={hover}
+                >
+                  <Link
+                    to={`/resource/${resource.id}`}
+                    className="group flex min-h-28 items-center gap-5 rounded-[1.5rem] bg-white/5 p-4 backdrop-blur-xl transition-colors duration-300 hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/[0.35] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F1117]"
+                  >
+                    <div className="grid h-20 w-20 shrink-0 place-items-center rounded-[1.25rem] bg-white/5">
+                      <ResourceIcon
+                        aria-hidden="true"
+                        className="h-7 w-7 text-white/[0.35]"
+                        strokeWidth={1.5}
+                      />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate text-[clamp(0.96rem,1vw,1.06rem)] font-semibold tracking-tight text-white">
+                        {resource.name}
+                      </h3>
+                      <p className="mt-1 truncate text-[clamp(0.78rem,0.82vw,0.88rem)] text-white/40">
+                        Added by {resource.addedBy}
+                      </p>
+                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-white/5 px-3 py-1 text-[clamp(0.68rem,0.7vw,0.76rem)] font-semibold uppercase tracking-widest text-white/[0.45]">
+                          {resource.category}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-[clamp(0.68rem,0.7vw,0.76rem)] text-white/[0.45]">
+                          <Star
+                            aria-hidden="true"
+                            className="h-3.5 w-3.5 fill-white/[0.35] text-white/[0.35]"
+                          />
+                          {resource.rating.toFixed(1)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <ChevronRight
+                      aria-hidden="true"
+                      className="h-5 w-5 shrink-0 translate-x-1 text-white/0 transition-[color,transform] duration-200 group-hover:translate-x-0 group-hover:text-white/[0.42] group-focus-visible:translate-x-0 group-focus-visible:text-white/[0.42]"
+                    />
+                  </Link>
+                </motion.div>
+              )
+            })}
+          </div>
+        </motion.section>
+
+        <motion.section
+          variants={itemVariants}
+          className={`${panelClass} col-span-12 p-8 lg:col-span-3`}
+        >
+          <div className="mb-8 space-y-3">
+            <p className={labelClass}>Signal</p>
+            <h2 className={titleClass}>Activity Feed</h2>
+          </div>
+
+          <div className="relative space-y-8">
+            <div className="absolute left-[0.3125rem] top-2 h-[calc(100%-1rem)] w-px bg-white/10" />
+            {mockDashboardData.activities.map((activity, index) => (
+              <motion.article
+                key={activity.id}
+                variants={itemVariants}
+                className={`relative pl-8 ${index > 1 ? "opacity-50" : "opacity-100"}`}
+              >
+                <span
+                  className={`absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full ${activityTone[activity.type]}`}
+                />
+                <h3 className="text-[clamp(0.9rem,0.95vw,1rem)] font-medium leading-snug text-white/80">
+                  {activity.description}
+                </h3>
+                <p className="mt-2 text-[clamp(0.72rem,0.75vw,0.8rem)] text-white/[0.34]">
+                  {activity.time}
+                </p>
+              </motion.article>
+            ))}
+          </div>
+        </motion.section>
+
+        <motion.section
+          variants={itemVariants}
+          className={`${panelClass} col-span-12 p-8 lg:col-span-4`}
+        >
+          <div className="mb-8 flex items-start justify-between gap-5">
+            <div className="space-y-3">
+              <p className={labelClass}>Command</p>
+              <h2 className={titleClass}>Quick Actions</h2>
+            </div>
+            <ShieldCheck aria-hidden="true" className="h-5 w-5 text-white/30" />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {quickActions.map((action) => {
+              const Icon = action.icon
+
+              return (
+                <motion.div
+                  key={action.title}
+                  variants={itemVariants}
+                  whileHover={hover}
+                  whileTap={{ scale: 0.96 }}
+                >
+                  <Link
+                    to={action.to}
+                    className="group flex min-h-44 flex-col justify-between rounded-[1.5rem] bg-white/5 p-6 backdrop-blur-xl transition-colors duration-300 hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/[0.35] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F1117]"
+                  >
+                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white/5">
+                      <Icon
+                        aria-hidden="true"
+                        className="h-5 w-5 text-white/[0.48] transition-colors duration-200 group-hover:text-white/[0.72]"
+                        strokeWidth={1.5}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <h3 className="text-[clamp(0.96rem,1vw,1.08rem)] font-semibold tracking-tight text-white">
+                        {action.title}
+                      </h3>
+                      <p className="text-[clamp(0.76rem,0.8vw,0.86rem)] leading-relaxed text-white/[0.38]">
+                        {action.description}
+                      </p>
+                    </div>
+                  </Link>
+                </motion.div>
+              )
+            })}
+          </div>
+        </motion.section>
+      </motion.main>
+    </div>
+  )
+}
+
+export default DashboardPage
