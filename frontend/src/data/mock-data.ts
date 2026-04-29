@@ -228,7 +228,7 @@ export const mockBorrowRequests: BorrowRequest[] = [
     startDate: "2024-03-10T00:00:00Z",
     endDate: "2024-04-10T00:00:00Z",
     message: "We're doing a production of Oliver! and these costumes would be perfect.",
-    ownerMatrixUserId: "@james_martinez:matrix.stageshare.bsd405.org",
+    ownerMatrixUserId: "@james_martinez:matrix.skene.bsd405.org",
   },
   {
     id: "req-2",
@@ -243,7 +243,7 @@ export const mockBorrowRequests: BorrowRequest[] = [
     startDate: "2024-04-01T00:00:00Z",
     endDate: "2024-04-15T00:00:00Z",
     message: "Need this for our spring production makeup workshops.",
-    ownerMatrixUserId: "@james_martinez:matrix.stageshare.bsd405.org",
+    ownerMatrixUserId: "@james_martinez:matrix.skene.bsd405.org",
   },
   {
     id: "req-3",
@@ -259,7 +259,7 @@ export const mockBorrowRequests: BorrowRequest[] = [
     endDate: "2024-02-20T00:00:00Z",
     returnedAt: "2024-02-18T00:00:00Z",
     message: "Would love to use the modernized version for my students.",
-    ownerMatrixUserId: "@sarah_johnson:matrix.stageshare.bsd405.org",
+    ownerMatrixUserId: "@sarah_johnson:matrix.skene.bsd405.org",
   },
 ]
 

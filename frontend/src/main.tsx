@@ -20,7 +20,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="system" storageKey="stageshare-theme">
+        <ThemeProvider defaultTheme="system" storageKey="skene-theme">
           <App />
           <Toaster position="top-right" richColors />
         </ThemeProvider>

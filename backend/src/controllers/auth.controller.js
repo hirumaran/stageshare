@@ -62,7 +62,7 @@ async function register(req, res) {
       console.error('[Matrix] Account provisioning failed:', matrixErr.message);
     }
 
-    const token = signToken({ userId: user.id, email: user.email, role: user.role });
+    const token = signToken({ userId: user.id, email: user.email, role: user.role, schoolId: user.school_id });
 
     res.status(201).json({
       token,
@@ -116,7 +116,7 @@ async function login(req, res) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = signToken({ userId: user.id, email: user.email, role: user.role });
+    const token = signToken({ userId: user.id, email: user.email, role: user.role, schoolId: user.school_id });
 
     res.status(200).json({
       token,

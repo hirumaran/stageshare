@@ -66,7 +66,7 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: "stageshare-cart",
+      name: "skene-cart",
     }
   )
 )

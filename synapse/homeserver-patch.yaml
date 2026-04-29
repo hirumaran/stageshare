@@ -34,4 +34,4 @@ retention:
 media_store_path: /data/media_store
 
 # Logging
-log_config: /data/matrix.stageshare.bsd405.org.log.config
+log_config: /data/matrix.skene.bsd405.org.log.config

@@ -4,7 +4,7 @@
 
 docker run --rm \
   -v "$(pwd)/synapse/data:/data" \
-  -e SYNAPSE_SERVER_NAME=matrix.stageshare.bsd405.org \
+  -e SYNAPSE_SERVER_NAME=matrix.skene.bsd405.org \
   -e SYNAPSE_REPORT_STATS=no \
   matrixdotorg/synapse:latest generate
 
