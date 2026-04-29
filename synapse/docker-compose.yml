@@ -3,7 +3,7 @@ version: '3.8'
 services:
   synapse:
     image: matrixdotorg/synapse:latest
-    container_name: stageshare-synapse
+    container_name: skene-synapse
     restart: unless-stopped
     environment:
       - SYNAPSE_CONFIG_PATH=/data/homeserver.yaml
@@ -15,11 +15,11 @@ services:
       synapse-db:
         condition: service_healthy
     networks:
-      - stageshare-matrix
+      - skene-matrix
 
   synapse-db:
     image: postgres:16-alpine
-    container_name: stageshare-synapse-db
+    container_name: skene-synapse-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: synapse
@@ -34,10 +34,10 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - stageshare-matrix
+      - skene-matrix
 
 networks:
-  stageshare-matrix:
+  skene-matrix:
     driver: bridge
 
 volumes:

@@ -9,7 +9,7 @@ ALTER TABLE users
 CREATE INDEX IF NOT EXISTS idx_users_matrix_id ON users(matrix_user_id);
 
 COMMENT ON COLUMN users.matrix_user_id IS
-  'Matrix user ID e.g. @rebecca_davis:matrix.stageshare.bsd405.org';
+  'Matrix user ID e.g. @rebecca_davis:matrix.skene.bsd405.org';
 COMMENT ON COLUMN users.matrix_access_token IS
   'Synapse access token — returned to frontend on login for matrix-js-sdk init';
 COMMENT ON COLUMN users.matrix_device_id IS

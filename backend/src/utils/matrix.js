@@ -27,7 +27,7 @@ function toMatrixLocalpart(firstName, lastName) {
 
 /**
  * Returns the full Matrix user ID.
- * "rebecca_davis" → "@rebecca_davis:matrix.stageshare.bsd405.org"
+ * "rebecca_davis" → "@rebecca_davis:matrix.skene.bsd405.org"
  */
 function toMatrixUserId(firstName, lastName) {
   return `@${toMatrixLocalpart(firstName, lastName)}:${MATRIX_DOMAIN}`;
@@ -116,8 +116,8 @@ async function refreshMatrixToken(localpart, password) {
         type:       'm.login.password',
         identifier: { type: 'm.id.user', user: localpart },
         password,
-        device_id:  'STAGESHARE_SERVER',
-        initial_device_display_name: 'StageShare',
+        device_id:  'SKENE_SERVER',
+        initial_device_display_name: 'Skene',
       }),
     }
   );
