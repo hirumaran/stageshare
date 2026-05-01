@@ -1,7 +1,7 @@
 import { ConversationListItem } from "./conversation-list-item"
 import { SearchInput } from "./search-input"
 import type { Conversation } from "../types"
-import { Plus } from "lucide-react"
+import { MessageCirclePlus, Radio, Sparkles } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface ConversationListPaneProps {
@@ -22,44 +22,67 @@ export function ConversationListPane({
   totalUnread,
 }: ConversationListPaneProps) {
   return (
-    <aside className="flex h-full w-full flex-col bg-[var(--bg-surface)]">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-5 pb-3">
-        <div className="flex items-baseline gap-2">
-          <h2 className="text-[22px] font-semibold tracking-tight text-foreground">
-            Messages
-          </h2>
-          {totalUnread > 0 && (
-            <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[var(--accent)] px-1.5 text-[11px] font-semibold text-[var(--accent-text)]">
-              {totalUnread}
-            </span>
-          )}
+    <aside className="flex h-full w-full flex-col bg-[#fbfaf7]">
+      <div className="border-b-[4px] border-black px-5 py-5">
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <div className="mb-2 inline-flex items-center gap-2 border-2 border-black bg-white px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.18em]">
+              <Radio className="h-3.5 w-3.5" />
+              Live chatter
+            </div>
+            <h2 className="text-[clamp(2.35rem,4.5vw,4.3rem)] font-black uppercase leading-[0.82] text-black">
+              Messages
+            </h2>
+          </div>
+          <button
+            type="button"
+            className="group grid h-14 w-14 shrink-0 place-items-center border-[3px] border-black bg-[#ffc425] text-black shadow-[4px_4px_0_#000] transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbfaf7]"
+            aria-label="Start new chat"
+            title="Start new chat"
+          >
+            <MessageCirclePlus className="h-6 w-6 transition-transform group-hover:rotate-6" />
+          </button>
         </div>
-        <button
-          type="button"
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--bg-muted)] text-[var(--accent)] transition-colors hover:bg-[var(--border-strong)]"
-          aria-label="New message"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
-      </div>
 
-      <div className="px-4 pb-3">
         <SearchInput
           value={searchQuery}
           onChange={onSearchChange}
-          placeholder="Search"
+          placeholder="Find a person, prop, pickup..."
         />
+
+        <div className="mt-4 grid grid-cols-3 gap-2 text-[0.66rem] font-black uppercase tracking-[0.12em]">
+          <span className="border-2 border-black bg-black px-2 py-2 text-center text-white">
+            All chats
+          </span>
+          <span className="border-2 border-black bg-white px-2 py-2 text-center">
+            Fittings
+          </span>
+          <span className="border-2 border-black bg-white px-2 py-2 text-center">
+            Hand-offs
+          </span>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between border-2 border-black bg-[#e9e6dc] px-3 py-2 text-xs font-black uppercase tracking-[0.12em]">
+          <span className="inline-flex items-center gap-2">
+            <Sparkles className="h-4 w-4" />
+            Costume comms
+          </span>
+          <span className="bg-black px-2 py-1 text-white">{totalUnread} new</span>
+        </div>
       </div>
 
-      {/* List */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="min-h-0 flex-1">
         {conversations.length === 0 ? (
-          <div className="px-3 py-12 text-center">
-            <p className="text-sm text-muted-foreground">No conversations match</p>
+          <div className="px-5 py-14 text-center">
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center border-[3px] border-black bg-[#ffc425] shadow-[4px_4px_0_#000]">
+              <Sparkles className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-black uppercase tracking-[0.12em] text-black">
+              No chats match
+            </p>
           </div>
         ) : (
-          <ul className="flex flex-col">
+          <ul className="flex flex-col border-t-[4px] border-black">
             {conversations.map((c) => (
               <li key={c.id}>
                 <ConversationListItem

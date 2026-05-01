@@ -24,10 +24,9 @@ export function ChatThread({ conversation, groups, typingUserName }: ChatThreadP
   }, [groups, typingUserName])
 
   return (
-    <ScrollArea
-      className="flex-1 px-4 pb-4 pt-2 md:px-8 lg:px-16 xl:px-24"
-    >
-      <div className="mx-auto flex min-h-full w-full flex-col justify-end">
+    <ScrollArea className="relative min-h-0 flex-1 bg-[#f4f1ea] px-4 pb-6 pt-2 md:px-8 lg:px-12 xl:px-16">
+      <div className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:radial-gradient(#000_1.2px,transparent_1.2px)] [background-size:18px_18px]" />
+      <div className="relative mx-auto flex min-h-full w-full max-w-[1180px] flex-col justify-end">
         {groups.map((group) => (
           <section key={group.dayKey} className="flex flex-col">
             <DateSeparator label={group.label} />
@@ -39,11 +38,16 @@ export function ChatThread({ conversation, groups, typingUserName }: ChatThreadP
               const mine = message.senderId === (myMatrixId ?? appCurrentUser.id)
 
               // Avatar info for received messages
-              let avatarInfo: { initials: string; palette: ReturnType<typeof getAvatarPalette> } | null = null
+              let avatarInfo: {
+                name: string
+                initials: string
+                palette: ReturnType<typeof getAvatarPalette>
+              } | null = null
               if (!mine) {
                 const sender = conversation.participants.find((p) => p.id === message.senderId)
                 if (sender) {
                   avatarInfo = {
+                    name: sender.name,
                     initials: getInitials(sender.name),
                     palette: getAvatarPalette(sender.id),
                   }
@@ -70,13 +74,20 @@ export function ChatThread({ conversation, groups, typingUserName }: ChatThreadP
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.15 }}
-            className="mt-4 flex items-center gap-2 pl-1"
+            className="mt-6 flex items-center gap-3 pl-1"
             aria-label={`${typingUserName} is typing`}
           >
-            <div className="flex items-center gap-1 rounded-[18px] bg-[var(--bg-muted)]/70 px-3.5 py-2.5">
-              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:-0.3s]" />
-              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:-0.15s]" />
-              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60" />
+            <div className="grid h-9 w-9 place-items-center border-2 border-black bg-white text-[0.62rem] font-black">
+              {typingUserName
+                .split(" ")
+                .map((part) => part[0])
+                .join("")
+                .slice(0, 2)}
+            </div>
+            <div className="flex items-center gap-1 border-[3px] border-black bg-white px-4 py-3 shadow-[4px_4px_0_#000]">
+              <span className="h-2 w-2 animate-bounce bg-black [animation-delay:-0.3s]" />
+              <span className="h-2 w-2 animate-bounce bg-black [animation-delay:-0.15s]" />
+              <span className="h-2 w-2 animate-bounce bg-black" />
             </div>
           </motion.div>
         ) : null}

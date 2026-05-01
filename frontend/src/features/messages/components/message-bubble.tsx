@@ -9,7 +9,11 @@ interface MessageBubbleProps {
   mine: boolean
   isTail: boolean
   isHead: boolean
-  avatarInfo: { initials: string; palette: ReturnType<typeof getAvatarPalette> } | null
+  avatarInfo: {
+    name: string
+    initials: string
+    palette: ReturnType<typeof getAvatarPalette>
+  } | null
 }
 
 function StatusIcon({ message }: { message: Message }) {
@@ -21,7 +25,7 @@ function StatusIcon({ message }: { message: Message }) {
     case "delivered":
       return <CheckCheck className="h-3 w-3 opacity-70" aria-label="Delivered" />
     case "read":
-      return <CheckCheck className="h-3 w-3 text-[var(--accent)]" aria-label="Read" />
+      return <CheckCheck className="h-3 w-3 text-black" aria-label="Read" />
     case "failed":
       return <CircleAlert className="h-3 w-3 text-red-500" aria-label="Failed" />
     default:
@@ -39,16 +43,15 @@ export function MessageBubble({ message, mine, isHead, isTail, avatarInfo }: Mes
     >
       <div
         className={cn(
-          "group flex max-w-[85%] gap-3",
+          "group flex max-w-[92%] gap-3 sm:max-w-[82%] xl:max-w-[72%]",
           mine ? "flex-row-reverse" : "flex-row",
         )}
       >
-        {/* Avatar for received messages — only on head */}
         {!mine && avatarInfo && isHead ? (
-          <div className="shrink-0 self-start pt-0.5">
+          <div className="shrink-0 self-start pt-7">
             <div
               className={cn(
-                "flex h-7 w-7 items-center justify-center rounded-full text-[9px] font-semibold",
+                "flex h-9 w-9 items-center justify-center border-2 border-black text-[0.68rem] font-black shadow-[3px_3px_0_#000]",
                 avatarInfo.palette.bg,
                 avatarInfo.palette.text,
               )}
@@ -57,22 +60,33 @@ export function MessageBubble({ message, mine, isHead, isTail, avatarInfo }: Mes
             </div>
           </div>
         ) : !mine ? (
-          <div className="w-7 shrink-0" aria-hidden="true" />
+          <div className="w-9 shrink-0" aria-hidden="true" />
         ) : null}
 
-        <div className={cn("flex flex-col gap-0.5", mine ? "items-end" : "items-start")}>
+        <div className={cn("flex flex-col gap-1.5", mine ? "items-end" : "items-start")}>
+          {isHead ? (
+            <div
+              className={cn(
+                "flex items-center gap-2 px-1 text-[0.7rem] font-black uppercase tracking-[0.18em]",
+                mine ? "justify-end text-black" : "justify-start text-black/70",
+              )}
+            >
+              <span>{mine ? "You" : (avatarInfo?.name ?? "Teammate")}</span>
+              {!mine && <span className="h-2 w-2 bg-[#ffc425]" aria-hidden="true" />}
+            </div>
+          ) : null}
+
           <div
             className={cn(
-              "relative px-4 py-3 text-[15px] leading-[1.5] shadow-sm",
+              "relative border-[3px] px-5 py-4 text-[1rem] leading-relaxed shadow-[6px_6px_0_#000]",
               mine
-                ? "bg-[var(--accent)] text-[var(--accent-text)]"
-                : "bg-[var(--bg-muted)] text-foreground",
-              // Smooth radii: pill-like when single, tighter when grouped
-              "rounded-[18px]",
-              mine && !isHead && "rounded-tr-[6px]",
-              mine && !isTail && "rounded-br-[6px]",
-              !mine && !isHead && "rounded-tl-[6px]",
-              !mine && !isTail && "rounded-bl-[6px]",
+                ? "border-black bg-[#ffc425] text-black"
+                : "border-black bg-[#fbfaf7] text-black",
+              "rounded-[6px]",
+              mine && !isHead && "rounded-tr-none",
+              mine && !isTail && "rounded-br-none",
+              !mine && !isHead && "rounded-tl-none",
+              !mine && !isTail && "rounded-bl-none",
               message.pending && "opacity-70",
             )}
           >
@@ -82,8 +96,7 @@ export function MessageBubble({ message, mine, isHead, isTail, avatarInfo }: Mes
           {isTail ? (
             <div
               className={cn(
-                "flex items-center gap-1.5 px-1 text-[11px] tabular-nums",
-                mine ? "text-muted-foreground/50" : "text-muted-foreground/50",
+                "flex items-center gap-1.5 px-1 text-[0.68rem] font-black uppercase tracking-[0.12em] text-black/55 tabular-nums",
               )}
             >
               <span>{formatChatTime(message.sentAt)}</span>

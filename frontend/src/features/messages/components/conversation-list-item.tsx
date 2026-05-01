@@ -1,7 +1,8 @@
-import { Pin } from "lucide-react"
+import { Box, Pin } from "lucide-react"
 import { cn, relativeTimeShort } from "@/lib/utils"
 import type { Conversation } from "../types"
 import { getAvatarPalette, getInitials } from "../lib/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface ConversationListItemProps {
   conversation: Conversation
@@ -18,6 +19,13 @@ export function ConversationListItem({ conversation, active, onClick }: Conversa
   const initials = getInitials(counterpart?.name ?? conversation.title)
 
   const isUnread = conversation.unreadCount > 0
+  const presence = counterpart?.presence ?? "offline"
+  const presenceClass =
+    presence === "online"
+      ? "bg-[#35c76f]"
+      : presence === "away"
+        ? "bg-[#ffc425]"
+        : "bg-[#9a9a9a]"
 
   return (
     <button
@@ -25,71 +33,98 @@ export function ConversationListItem({ conversation, active, onClick }: Conversa
       onClick={onClick}
       aria-current={active ? "true" : undefined}
       className={cn(
-        "group relative flex w-full items-center gap-3 px-4 py-3 text-left transition-colors",
+        "group relative flex w-full items-stretch gap-3 border-b-[3px] border-black px-4 py-4 text-left transition-colors",
         active
-          ? "bg-white/[0.03] border-l-[3px] border-[var(--accent)]"
-          : "hover:bg-white/[0.04]",
+          ? "bg-black text-white"
+          : "bg-[#fbfaf7] text-black hover:bg-[#fff3c4]",
       )}
     >
-      {/* Avatar */}
       <div className="relative shrink-0">
-        <div
+        <Avatar className="h-14 w-14 rounded-none border-[3px] border-current bg-white">
+          <AvatarImage
+            src={counterpart?.avatar}
+            alt={counterpart?.name ?? conversation.title}
+            className="object-cover grayscale"
+          />
+          <AvatarFallback
+            className={cn(
+              "rounded-none text-sm font-black",
+              active ? "bg-white text-black" : `${palette.bg} ${palette.text}`,
+            )}
+          >
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+        <span
           className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-full text-[13px] font-semibold transition-colors",
-            active ? "bg-white/10 text-white" : palette.bg,
-            active ? "" : palette.text,
+            "absolute -bottom-1 -right-1 h-4 w-4 border-2 border-current",
+            presenceClass,
           )}
-        >
-          {initials}
-        </div>
+          aria-label={`${presence} status`}
+        />
       </div>
 
-      {/* Body */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-2">
+      <div className="min-w-0 flex-1 self-center">
+        <div className="mb-1 flex items-start justify-between gap-3">
           <p
             className={cn(
-              "truncate text-[14px] font-semibold leading-tight",
-              active ? "text-foreground" : isUnread ? "text-foreground" : "text-foreground/80",
+              "truncate text-base font-black leading-tight",
+              active ? "text-white" : "text-black",
             )}
           >
             {conversation.title}
           </p>
           <time
             className={cn(
-              "shrink-0 text-[11px] tabular-nums",
-              active
-                ? "text-muted-foreground/60"
-                : isUnread
-                  ? "text-[var(--accent)]"
-                  : "text-muted-foreground/60",
+              "shrink-0 border-2 px-1.5 py-0.5 text-[0.66rem] font-black uppercase tabular-nums",
+              active ? "border-white text-white" : "border-black text-black",
             )}
           >
             {relativeTimeShort(conversation.lastMessageAt)}
           </time>
         </div>
-        <div className="mt-1 flex items-center justify-between gap-2">
+
+        {conversation.resource ? (
+          <div
+            className={cn(
+              "mb-2 inline-flex max-w-full items-center gap-1.5 border-2 px-2 py-1 text-[0.62rem] font-black uppercase",
+              active ? "border-white bg-white text-black" : "border-black bg-[#e9e6dc] text-black",
+            )}
+          >
+            <Box className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{conversation.resource.title}</span>
+          </div>
+        ) : null}
+
+        <div className="flex items-center justify-between gap-3">
           <p
             className={cn(
-              "truncate text-[13px] leading-snug",
+              "truncate text-sm leading-snug",
               active
-                ? "text-muted-foreground/70"
+                ? "text-white/80"
                 : isUnread
-                  ? "font-medium text-foreground"
-                  : "text-muted-foreground/70",
+                  ? "font-black text-black"
+                  : "text-black/62",
             )}
           >
             {conversation.lastMessagePreview}
           </p>
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex shrink-0 items-center gap-1">
             {isUnread && (
-              <span className="flex h-2.5 w-2.5 rounded-full bg-[var(--accent)]" />
+              <span
+                className={cn(
+                  "grid h-7 min-w-7 place-items-center border-2 px-1 text-xs font-black",
+                  active ? "border-white bg-[#ffc425] text-black" : "border-black bg-black text-white",
+                )}
+              >
+                {conversation.unreadCount}
+              </span>
             )}
             {conversation.pinned && (
               <Pin
                 className={cn(
-                  "h-3 w-3 -rotate-45",
-                  active ? "text-white/40" : "text-muted-foreground/30",
+                  "h-4 w-4 -rotate-45",
+                  active ? "text-[#ffc425]" : "text-black/55",
                 )}
                 aria-label="Pinned"
               />
