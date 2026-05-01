@@ -19,6 +19,7 @@ import CartPage from "./pages/cart"
 import MessagesPage from "./pages/messages"
 import ProfilePage from "./pages/profile"
 import NotificationsPage from "./pages/notifications"
+import SettingsPage from "./pages/settings"
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
@@ -65,6 +66,7 @@ export default function App() {
         <Route path="/messages/:conversationId" element={<MessagesPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
       
       {/* Catch all */}
