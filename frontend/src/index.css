@@ -6,22 +6,22 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  --dash-bg: #0f1115;
-  --dash-bg-elevated: #111318;
-  --dash-surface: #14171d;
-  --dash-surface-raised: #181b22;
-  --dash-surface-muted: #101218;
-  --dash-text: #e6e8eb;
-  --dash-text-secondary: #a9aeb8;
-  --dash-text-muted: #747b88;
-  --dash-border: rgba(255, 255, 255, 0.1);
-  --dash-border-soft: rgba(255, 255, 255, 0.07);
-  --dash-border-hover: rgba(255, 255, 255, 0.16);
-  --dash-accent: #8b96ff;
-  --dash-accent-muted: rgba(139, 150, 255, 0.12);
-  --dash-alert-bg: #201c14;
-  --dash-alert-border: rgba(219, 184, 104, 0.24);
-  --dash-alert-text: #d8c28a;
+  --dash-bg: #080810;
+  --dash-bg-elevated: #0a0a12;
+  --dash-surface: rgba(255, 255, 255, 0.03);
+  --dash-surface-raised: rgba(255, 255, 255, 0.05);
+  --dash-surface-muted: rgba(255, 255, 255, 0.02);
+  --dash-text: #f0f0f5;
+  --dash-text-secondary: #a0a5b0;
+  --dash-text-muted: #505560;
+  --dash-border: rgba(255, 255, 255, 0.07);
+  --dash-border-soft: rgba(255, 255, 255, 0.05);
+  --dash-border-hover: rgba(255, 255, 255, 0.14);
+  --dash-accent: #C9A84C;
+  --dash-accent-muted: rgba(201, 168, 76, 0.12);
+  --dash-alert-bg: rgba(201, 168, 76, 0.08);
+  --dash-alert-border: rgba(201, 168, 76, 0.24);
+  --dash-alert-text: #C9A84C;
   --dash-radius-sm: 8px;
   --dash-radius-md: 10px;
   --dash-radius-lg: 12px;
@@ -208,6 +208,37 @@
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+.dash-noise {
+  position: relative;
+}
+.dash-noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+}
+
+.dash-glow-indigo {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(120px);
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.10) 0%, transparent 70%);
+}
+
+.dash-glow-blue {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(100px);
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
 }
 
 .footer-graphic {

@@ -28,16 +28,19 @@ const recentActivity = [
     type: "Borrow Request",
     time: "10 min ago",
     message: "Michael Chen requested your Stage Makeup Kit.",
+    accent: "gold" as const,
   },
   {
     type: "Approved",
     time: "1 hr ago",
     message: "Victorian Costume Set approved for pickup.",
+    accent: "muted" as const,
   },
   {
     type: "Message",
     time: "2 hrs ago",
     message: "James Martinez sent pickup details.",
+    accent: "white" as const,
   },
 ]
 
@@ -58,8 +61,11 @@ const itemVariants: Variants = {
   },
 }
 
-const blockClass =
-  "relative rounded-[var(--dash-radius-lg)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] shadow-none transition-colors hover:border-[color:var(--dash-border-hover)]"
+const accentDotClass = {
+  gold: "bg-[var(--dash-accent)]",
+  white: "bg-[var(--dash-text)]",
+  muted: "bg-[var(--dash-text-muted)]",
+}
 
 function DashboardPage() {
   const { setSidebarOpen } = useUIStore()
@@ -80,15 +86,16 @@ function DashboardPage() {
       value: profile.resourcesShared.toString(),
       to: "/my-resources",
       className: "lg:col-span-8",
-      valueClassName: "text-[clamp(6.5rem,11vw,11rem)]",
+      valueClassName: "text-[clamp(5rem,10vw,10rem)]",
+      icon: undefined,
     },
     {
       label: "Unread Alerts",
       value: unreadAlerts.toString().padStart(2, "0"),
       to: "/notifications",
       className:
-        "border-[color:var(--dash-alert-border)] bg-[var(--dash-alert-bg)] text-[var(--dash-alert-text)] lg:col-span-4",
-      valueClassName: "text-[clamp(5.5rem,8.5vw,8.75rem)]",
+        "border-t-[color:var(--dash-alert-border)] bg-[var(--dash-alert-bg)] text-[var(--dash-alert-text)] lg:col-span-4",
+      valueClassName: "text-[clamp(4.5rem,8vw,8rem)]",
       icon: AlertTriangle,
     },
     {
@@ -96,7 +103,7 @@ function DashboardPage() {
       value: pendingRequests.toString().padStart(2, "0"),
       to: "/borrowing",
       className: "lg:col-span-4",
-      valueClassName: "text-[clamp(4rem,6.5vw,6.25rem)]",
+      valueClassName: "text-[clamp(3.5rem,6vw,5.5rem)]",
       icon: ClipboardList,
     },
     {
@@ -104,32 +111,33 @@ function DashboardPage() {
       value: activeBorrowing.toString(),
       to: "/borrowing",
       className: "lg:col-span-4",
-      valueClassName: "text-[clamp(4rem,6.5vw,6.25rem)]",
+      valueClassName: "text-[clamp(3.5rem,6vw,5.5rem)]",
+      icon: undefined,
     },
     {
       label: "Unread Messages",
       value: unreadMessages.toString().padStart(2, "0"),
       to: "/messages",
       className:
-        "bg-[var(--dash-surface-muted)] text-[var(--dash-text)] lg:col-span-4",
-      valueClassName: "text-[clamp(4rem,6.5vw,6.25rem)]",
+        "bg-[var(--dash-surface-muted)] text-[var(--dash-text-secondary)] lg:col-span-4",
+      valueClassName: "text-[clamp(3.5rem,6vw,5.5rem)]",
       icon: MessageSquare,
     },
   ]
 
   return (
     <div className="min-h-dvh overflow-x-hidden bg-[var(--dash-bg)] text-[var(--dash-text)] selection:bg-[var(--dash-accent-muted)] selection:text-[var(--dash-text)]">
-      <header className="sticky top-0 z-30 flex h-[6.25rem] items-center justify-between border-b border-[color:var(--dash-border)] bg-[var(--dash-bg-elevated)] px-5 sm:px-8 lg:px-14">
+      <header className="sticky top-0 z-30 flex h-[6.25rem] items-center justify-between border-b border-[color:var(--dash-border)] bg-[var(--dash-bg-elevated)]/80 px-5 backdrop-blur-xl sm:px-8 lg:px-14">
         <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="grid h-10 w-10 place-items-center rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] text-[var(--dash-text-secondary)] transition-colors hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)] lg:hidden"
+            className="grid h-10 w-10 place-items-center rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] text-[var(--dash-text-secondary)] transition-all duration-150 hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)] lg:hidden"
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
           </button>
-          <h1 className="text-[clamp(1.35rem,2vw,2rem)] font-semibold uppercase leading-none tracking-[0.04em] text-[var(--dash-text)]">
+          <h1 className="bg-gradient-to-r from-[var(--dash-text)] to-[var(--dash-text-secondary)] bg-clip-text text-[clamp(1.5rem,2.2vw,2.25rem)] font-light uppercase leading-none tracking-[0.04em] text-transparent">
             Dashboard
           </h1>
         </div>
@@ -138,16 +146,16 @@ function DashboardPage() {
           <Link
             to="/notifications"
             aria-label="Notifications"
-            className="hidden text-[var(--dash-text-muted)] transition-colors hover:text-[var(--dash-text)] sm:block"
+            className="hidden text-[var(--dash-text-muted)] transition-colors duration-150 hover:text-[var(--dash-text)] sm:block"
           >
-            <Bell className="h-5 w-5" strokeWidth={2} />
+            <Bell className="h-5 w-5" strokeWidth={1.5} />
           </Link>
           <button
             type="button"
             aria-label="Refresh dashboard"
-            className="hidden text-[var(--dash-text-muted)] transition-colors hover:text-[var(--dash-text)] md:block"
+            className="hidden text-[var(--dash-text-muted)] transition-colors duration-150 hover:text-[var(--dash-text)] md:block"
           >
-            <RotateCcw className="h-6 w-6" strokeWidth={2} />
+            <RotateCcw className="h-6 w-6" strokeWidth={1.5} />
           </button>
           <Link to="/profile" aria-label="Profile">
             <Avatar className="h-11 w-11 rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface-raised)]">
@@ -164,12 +172,16 @@ function DashboardPage() {
         variants={containerVariants}
         initial={shouldReduceMotion ? false : "hidden"}
         animate="show"
-        className="relative px-5 py-10 sm:px-8 lg:px-12 lg:py-14 2xl:px-16"
+        className="dash-noise relative px-5 py-10 sm:px-8 lg:px-12 lg:py-14 2xl:px-16"
       >
-        <div className="pointer-events-none absolute right-[-6rem] top-2 h-[24rem] w-[24rem] rounded-full border border-[color:var(--dash-border-soft)]" />
-        <div className="pointer-events-none absolute inset-0 opacity-[0.18] [background-image:linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px)] [background-size:24px_24px]" />
+        {/* Ambient glow spots */}
+        <div className="pointer-events-none absolute left-[20%] top-[10%] h-[32rem] w-[32rem] rounded-full bg-[radial-gradient(circle,rgba(99,102,241,0.09)_0%,transparent_70%)] blur-3xl" />
+        <div className="pointer-events-none absolute right-[-4rem] top-[-6rem] h-[20rem] w-[20rem] rounded-full bg-[radial-gradient(circle,rgba(59,130,246,0.07)_0%,transparent_70%)] blur-2xl" />
 
-        <div className="relative max-w-[1480px]">
+        {/* Subtle grid */}
+        <div className="pointer-events-none absolute inset-0 opacity-[0.12] [background-image:linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px)] [background-size:24px_24px]" />
+
+        <div className="relative z-[2] max-w-[1480px]">
           <motion.section
             variants={itemVariants}
             className="mb-12 flex flex-col gap-6 border-b border-[color:var(--dash-border)] pb-4 md:flex-row md:items-center md:justify-between"
@@ -178,21 +190,21 @@ function DashboardPage() {
               <h2 className="text-[clamp(1.4rem,2.2vw,2rem)] font-semibold uppercase tracking-[-0.02em] text-[var(--dash-text)]">
                 Overview
               </h2>
-              <p className="text-sm font-medium uppercase tracking-[0.1em] text-[var(--dash-text-muted)]">
+              <p className="text-xs font-medium uppercase tracking-[0.15em] text-[var(--dash-text-muted)]">
                 / Data sourced live / Resource network
               </p>
             </div>
 
             <Link
               to="/catalogue"
-              className="inline-flex min-h-14 items-center justify-center gap-3 rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface-raised)] px-6 text-sm font-semibold uppercase tracking-[0.1em] text-[var(--dash-text)] transition-colors hover:bg-[var(--dash-accent-muted)] focus-visible:ring-2 focus-visible:ring-[var(--dash-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--dash-bg)]"
+              className="group inline-flex min-h-14 items-center justify-center gap-3 rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface-raised)] px-6 text-xs font-semibold uppercase tracking-[0.15em] text-[var(--dash-text)] transition-all duration-150 hover:border-[color:var(--dash-border-hover)] hover:bg-[var(--dash-accent-muted)] focus-visible:ring-2 focus-visible:ring-[var(--dash-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--dash-bg)]"
             >
               Browse Catalogue
-              <ArrowRight className="h-5 w-5" />
+              <ArrowRight className="h-5 w-5 transition-transform duration-150 group-hover:translate-x-[3px]" strokeWidth={1.5} />
             </Link>
           </motion.section>
 
-          <section className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+          <section className="grid grid-cols-1 gap-6 lg:grid-cols-12">
             {dashboardMetrics.map((metric) => {
               const Icon = metric.icon
 
@@ -200,20 +212,28 @@ function DashboardPage() {
                 <motion.article
                   key={metric.label}
                   variants={itemVariants}
-                  className={`${blockClass} ${metric.className} min-h-[17rem] p-6 sm:p-8 xl:min-h-[18.5rem]`}
+                  className={`${metric.className} group relative min-h-[17rem] overflow-hidden rounded-[var(--dash-radius-lg)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] p-6 backdrop-blur-xl transition-all duration-150 hover:-translate-y-[1px] hover:border-[color:var(--dash-border-hover)] sm:p-8 xl:min-h-[18.5rem]`}
                 >
+                  {/* Top border highlight */}
+                  <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.12)_20%,rgba(255,255,255,0.12)_80%,transparent_100%)]" />
+
                   <Link
                     to={metric.to}
                     className="flex h-full flex-col justify-between rounded-[var(--dash-radius-md)] focus-visible:ring-2 focus-visible:ring-[var(--dash-accent)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--dash-bg)]"
                   >
                     <div className="mb-8 flex items-center justify-between gap-4">
-                      <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-current opacity-70">
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-current opacity-50">
                         {metric.label}
                       </h3>
-                      {Icon && <Icon className="h-6 w-6 opacity-75" strokeWidth={1.9} />}
+                      {Icon && (
+                        <Icon
+                          className="h-5 w-5 opacity-50 transition-opacity duration-150 group-hover:opacity-75"
+                          strokeWidth={1.5}
+                        />
+                      )}
                     </div>
                     <p
-                      className={`${metric.valueClassName} font-semibold leading-[0.9] tracking-[-0.05em] text-current`}
+                      className={`${metric.valueClassName} font-bold leading-[0.85] tracking-[-0.04em] text-current`}
                     >
                       {metric.value}
                     </p>
@@ -228,29 +248,34 @@ function DashboardPage() {
             className="mt-24 border-t border-[color:var(--dash-border)] pt-8"
           >
             <div className="mb-8 flex items-center gap-3">
-              <History className="h-5 w-5 text-[var(--dash-text-muted)]" />
-              <h2 className="text-[clamp(1.25rem,1.9vw,1.65rem)] font-semibold uppercase tracking-[-0.02em] text-[var(--dash-text)]">
+              <History className="h-5 w-5 text-[var(--dash-text-muted)]" strokeWidth={1.5} />
+              <h2 className="text-[clamp(1.1rem,1.6vw,1.4rem)] font-semibold uppercase tracking-[0.04em] text-[var(--dash-text)]">
                 Recent Activity
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div className="space-y-0 divide-y divide-[color:var(--dash-border)]">
               {recentActivity.map((activity) => (
                 <motion.article
                   key={`${activity.type}-${activity.time}`}
                   variants={itemVariants}
-                  className="rounded-[var(--dash-radius-lg)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] p-5"
+                  className="group flex items-start gap-4 py-5 transition-colors duration-150 hover:bg-[var(--dash-surface-muted)] sm:gap-5 sm:px-4"
                 >
-                  <div className="mb-4 flex items-center justify-between gap-4 text-sm uppercase tracking-[0.08em] text-[var(--dash-text-muted)]">
-                    <span>{activity.type}</span>
-                    <span className="inline-flex items-center gap-2 whitespace-nowrap">
-                      <Clock3 className="h-4 w-4" />
-                      {activity.time}
-                    </span>
+                  <div className={`mt-2 h-2 w-2 shrink-0 rounded-full ${accentDotClass[activity.accent]}`} />
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--dash-text-secondary)]">
+                        {activity.type}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.1em] text-[var(--dash-text-muted)] opacity-60">
+                        <Clock3 className="h-3 w-3" strokeWidth={1.5} />
+                        {activity.time}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium leading-snug tracking-[-0.01em] text-[var(--dash-text)] transition-colors duration-150 group-hover:text-[var(--dash-text-secondary)]">
+                      {activity.message}
+                    </p>
                   </div>
-                  <p className="text-base font-medium leading-snug tracking-[-0.01em] text-[var(--dash-text-secondary)]">
-                    {activity.message}
-                  </p>
                 </motion.article>
               ))}
             </div>

@@ -64,7 +64,7 @@ function RailItem({
       title={label}
       onClick={onClick}
       className={cn(
-        "relative grid h-12 w-12 place-items-center rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] transition-colors",
+        "relative grid h-12 w-12 place-items-center rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] transition-all duration-150",
         active
           ? "bg-[var(--dash-accent-muted)] text-[var(--dash-text)]"
           : "bg-transparent text-[var(--dash-text-muted)] hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)]",
@@ -121,14 +121,14 @@ export function Sidebar() {
     <>
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-[rgba(15,17,21,0.72)] lg:hidden"
+          className="fixed inset-0 z-40 bg-[rgba(8,8,16,0.8)] backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden border-r border-[color:var(--dash-border)] bg-[var(--dash-bg-elevated)] text-[var(--dash-text)] transition-all duration-300 ease-in-out",
+          "fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden border-r border-[color:var(--dash-border)] bg-[var(--dash-surface-muted)] text-[var(--dash-text)] transition-all duration-300 ease-in-out",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
           sidebarCollapsed ? "w-20" : "w-72",
           "lg:translate-x-0",
@@ -139,10 +139,10 @@ export function Sidebar() {
             <button
               type="button"
               onClick={() => setSidebarCollapsed(false)}
-              className="mb-8 grid h-12 w-12 place-items-center rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] text-[var(--dash-text-secondary)] transition-colors hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)]"
+              className="mb-8 grid h-12 w-12 place-items-center rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] text-[var(--dash-text-secondary)] transition-all duration-150 hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)]"
               aria-label="Open sidebar"
             >
-              <PanelLeftOpen className="h-5 w-5" />
+              <PanelLeftOpen className="h-5 w-5" strokeWidth={1.5} />
             </button>
 
             <nav className="flex flex-1 flex-col items-center gap-4">
@@ -160,7 +160,7 @@ export function Sidebar() {
                     badge={count}
                     onClick={closeMobile}
                   >
-                    <Icon className="h-5 w-5" strokeWidth={1.9} />
+                    <Icon className="h-5 w-5" strokeWidth={1.5} />
                   </RailItem>
                 )
               })}
@@ -187,10 +187,10 @@ export function Sidebar() {
             <div className="px-6 pb-8 pt-6">
               <div className="mb-12 flex items-start justify-between gap-4">
                 <NavLink to="/dashboard" onClick={closeMobile} className="block">
-                  <span className="block text-[2rem] font-semibold uppercase leading-none tracking-[-0.06em] text-[var(--dash-text)]">
+                  <span className="block text-[2rem] font-bold uppercase leading-none tracking-[0.08em] text-[var(--dash-text)]">
                     SKĒNĒ
                   </span>
-                  <span className="mt-4 block text-sm font-medium uppercase tracking-[0.08em] text-[var(--dash-text-muted)]">
+                  <span className="mt-3 block text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--dash-text-muted)]">
                     System v.2.4
                   </span>
                 </NavLink>
@@ -199,18 +199,18 @@ export function Sidebar() {
                   <button
                     type="button"
                     onClick={() => setSidebarCollapsed(true)}
-                    className="hidden h-9 w-9 place-items-center rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] text-[var(--dash-text-muted)] transition-colors hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)] lg:grid"
+                    className="hidden h-9 w-9 place-items-center rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] text-[var(--dash-text-muted)] transition-all duration-150 hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)] lg:grid"
                     aria-label="Collapse sidebar"
                   >
-                    <PanelLeftClose className="h-4 w-4" />
+                    <PanelLeftClose className="h-4 w-4" strokeWidth={1.5} />
                   </button>
                   <button
                     type="button"
                     onClick={() => setSidebarOpen(false)}
-                    className="grid h-9 w-9 place-items-center rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] text-[var(--dash-text-muted)] transition-colors hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)] lg:hidden"
+                    className="grid h-9 w-9 place-items-center rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] text-[var(--dash-text-muted)] transition-all duration-150 hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)] lg:hidden"
                     aria-label="Close sidebar"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-4 w-4" strokeWidth={1.5} />
                   </button>
                 </div>
               </div>
@@ -218,13 +218,13 @@ export function Sidebar() {
               <NavLink
                 to="/my-resources"
                 onClick={closeMobile}
-                className="mb-8 flex min-h-14 items-center justify-between rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] px-4 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--dash-text)] transition-colors hover:bg-[var(--dash-surface-raised)]"
+                className="mb-10 flex min-h-12 items-center justify-center gap-2 rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-accent)] bg-[var(--dash-accent-muted)] px-4 text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--dash-accent)] transition-all duration-150 hover:bg-[var(--dash-accent)] hover:text-[var(--dash-bg)]"
               >
                 New Production
-                <Plus className="h-5 w-5" />
+                <Plus className="h-4 w-4" strokeWidth={2} />
               </NavLink>
 
-              <nav className="space-y-2">
+              <nav className="space-y-1">
                 {NAV.map((item) => {
                   const Icon = item.icon
                   const active = isActive(item.to)
@@ -236,22 +236,25 @@ export function Sidebar() {
                       to={item.to}
                       onClick={closeMobile}
                       className={cn(
-                        "group flex min-h-12 items-center gap-3 rounded-[var(--dash-radius-sm)] px-3 text-[0.9rem] font-semibold uppercase tracking-[-0.01em] transition-colors",
+                        "group relative flex min-h-11 items-center gap-3 rounded-[var(--dash-radius-sm)] px-3 text-[0.8rem] font-medium uppercase tracking-[0.08em] transition-all duration-150",
                         active
-                          ? "bg-[var(--dash-accent-muted)] text-[var(--dash-text)]"
-                          : "text-[var(--dash-text-muted)] hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)]",
+                          ? "bg-[var(--dash-surface)] text-[var(--dash-text)]"
+                          : "text-[var(--dash-text-muted)] hover:bg-[var(--dash-surface)] hover:text-[var(--dash-text)]",
                       )}
                       title={item.label}
                     >
-                      <Icon className="h-5 w-5 shrink-0" strokeWidth={1.9} />
+                      {active && (
+                        <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-r-full bg-[var(--dash-accent)]" />
+                      )}
+                      <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} />
                       <span className="min-w-0 flex-1 truncate">{item.label}</span>
                       {count > 0 && (
                         <span
                           className={cn(
-                            "grid h-6 min-w-6 place-items-center rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] px-1.5 text-xs font-semibold",
+                            "grid h-5 min-w-5 place-items-center rounded-[var(--dash-radius-sm)] px-1 text-[10px] font-semibold",
                             active
-                              ? "bg-[var(--dash-surface-raised)] text-[var(--dash-text)]"
-                              : "bg-[var(--dash-surface)] text-[var(--dash-text-secondary)] group-hover:bg-[var(--dash-surface-raised)] group-hover:text-[var(--dash-text)]",
+                              ? "bg-[var(--dash-accent-muted)] text-[var(--dash-accent)]"
+                              : "bg-[var(--dash-surface-raised)] text-[var(--dash-text-muted)] group-hover:bg-[var(--dash-accent-muted)] group-hover:text-[var(--dash-accent)]",
                           )}
                         >
                           {count}
@@ -268,17 +271,17 @@ export function Sidebar() {
                 <NavLink
                   to="/messages"
                   onClick={closeMobile}
-                  className="flex min-h-11 items-center gap-3 rounded-[var(--dash-radius-sm)] px-2 text-sm font-medium uppercase tracking-[0.08em] text-[var(--dash-text-muted)] transition-colors hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)]"
+                  className="flex min-h-10 items-center gap-3 rounded-[var(--dash-radius-sm)] px-2 text-xs font-medium uppercase tracking-[0.1em] text-[var(--dash-text-muted)] transition-all duration-150 hover:bg-[var(--dash-surface)] hover:text-[var(--dash-text)]"
                 >
-                  <CircleHelp className="h-4 w-4" />
+                  <CircleHelp className="h-4 w-4" strokeWidth={1.5} />
                   Support
                 </NavLink>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="mt-2 flex min-h-11 w-full items-center gap-3 rounded-[var(--dash-radius-sm)] px-2 text-left text-sm font-medium uppercase tracking-[0.08em] text-[var(--dash-text-muted)] transition-colors hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)]"
+                  className="mt-1 flex min-h-10 w-full items-center gap-3 rounded-[var(--dash-radius-sm)] px-2 text-left text-xs font-medium uppercase tracking-[0.1em] text-[var(--dash-text-muted)] transition-all duration-150 hover:bg-[var(--dash-surface)] hover:text-[var(--dash-text)]"
                 >
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-4 w-4" strokeWidth={1.5} />
                   Logout
                 </button>
               </div>
@@ -286,7 +289,7 @@ export function Sidebar() {
               <NavLink
                 to="/profile"
                 onClick={closeMobile}
-                className="flex items-center gap-3 rounded-[var(--dash-radius-md)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] p-2 transition-colors hover:bg-[var(--dash-surface-raised)]"
+                className="flex items-center gap-3 rounded-[var(--dash-radius-md)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] p-2 transition-all duration-150 hover:bg-[var(--dash-surface-raised)]"
               >
                 <Avatar className="h-10 w-10 rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface-raised)]">
                   <AvatarImage src={user?.avatar} alt={user?.name} />
@@ -295,10 +298,10 @@ export function Sidebar() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold uppercase tracking-[-0.01em] text-[var(--dash-text)]">
+                  <p className="truncate text-sm font-semibold uppercase tracking-[0.04em] text-[var(--dash-text)]">
                     {user?.name ?? "Operator"}
                   </p>
-                  <p className="text-xs uppercase tracking-[0.08em] text-[var(--dash-text-muted)]">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-[var(--dash-text-muted)]">
                     Profile
                   </p>
                 </div>
