@@ -3,8 +3,28 @@
 @tailwind utilities;
 
 :root {
-  --font-sans: 'M PLUS 1', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'M PLUS 1', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --dash-bg: #0f1115;
+  --dash-bg-elevated: #111318;
+  --dash-surface: #14171d;
+  --dash-surface-raised: #181b22;
+  --dash-surface-muted: #101218;
+  --dash-text: #e6e8eb;
+  --dash-text-secondary: #a9aeb8;
+  --dash-text-muted: #747b88;
+  --dash-border: rgba(255, 255, 255, 0.1);
+  --dash-border-soft: rgba(255, 255, 255, 0.07);
+  --dash-border-hover: rgba(255, 255, 255, 0.16);
+  --dash-accent: #8b96ff;
+  --dash-accent-muted: rgba(139, 150, 255, 0.12);
+  --dash-alert-bg: #201c14;
+  --dash-alert-border: rgba(219, 184, 104, 0.24);
+  --dash-alert-text: #d8c28a;
+  --dash-radius-sm: 8px;
+  --dash-radius-md: 10px;
+  --dash-radius-lg: 12px;
 
   /* OffBrand-inspired palette — light */
   --bg-base:        #D5D3CE;
@@ -38,9 +58,9 @@
   --school-newport:     #4A5080;
   --school-sammamish:   #4A7C59;
 
-  --radius-sm:  4px;
-  --radius-md:  6px;
-  --radius-lg:  8px;
+  --radius-sm:  6px;
+  --radius-md:  8px;
+  --radius-lg:  10px;
   --radius-xl:  12px;
   --radius-full: 9999px;
 

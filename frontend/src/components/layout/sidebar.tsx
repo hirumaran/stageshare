@@ -64,13 +64,15 @@ function RailItem({
       title={label}
       onClick={onClick}
       className={cn(
-        "relative grid h-12 w-12 place-items-center border-2 border-black transition-colors",
-        active ? "bg-black text-white" : "bg-white text-black hover:bg-black hover:text-white",
+        "relative grid h-12 w-12 place-items-center rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] transition-colors",
+        active
+          ? "bg-[var(--dash-accent-muted)] text-[var(--dash-text)]"
+          : "bg-transparent text-[var(--dash-text-muted)] hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)]",
       )}
     >
       {children}
       {!!badge && badge > 0 && (
-        <span className="absolute -right-1 -top-1 h-3 w-3 border-2 border-white bg-[#ffc425]" />
+        <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border border-[color:var(--dash-bg-elevated)] bg-[var(--dash-accent)]" />
       )}
     </NavLink>
   )
@@ -119,14 +121,14 @@ export function Sidebar() {
     <>
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-[rgba(15,17,21,0.72)] lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden border-r-[5px] border-black bg-[#fbfaf7] text-black transition-all duration-300 ease-in-out",
+          "fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden border-r border-[color:var(--dash-border)] bg-[var(--dash-bg-elevated)] text-[var(--dash-text)] transition-all duration-300 ease-in-out",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
           sidebarCollapsed ? "w-20" : "w-72",
           "lg:translate-x-0",
@@ -137,7 +139,7 @@ export function Sidebar() {
             <button
               type="button"
               onClick={() => setSidebarCollapsed(false)}
-              className="mb-8 grid h-12 w-12 place-items-center border-2 border-black bg-black text-white transition-colors hover:bg-white hover:text-black"
+              className="mb-8 grid h-12 w-12 place-items-center rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] text-[var(--dash-text-secondary)] transition-colors hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)]"
               aria-label="Open sidebar"
             >
               <PanelLeftOpen className="h-5 w-5" />
@@ -158,7 +160,7 @@ export function Sidebar() {
                     badge={count}
                     onClick={closeMobile}
                   >
-                    <Icon className="h-5 w-5" strokeWidth={2.2} />
+                    <Icon className="h-5 w-5" strokeWidth={1.9} />
                   </RailItem>
                 )
               })}
@@ -171,9 +173,9 @@ export function Sidebar() {
                 label="Profile"
                 onClick={closeMobile}
               >
-                <Avatar className="h-8 w-8 rounded-none">
+                <Avatar className="h-8 w-8 rounded-[var(--dash-radius-sm)]">
                   <AvatarImage src={user?.avatar} alt={user?.name} />
-                  <AvatarFallback className="rounded-none bg-transparent text-xs font-black text-current">
+                  <AvatarFallback className="rounded-[var(--dash-radius-sm)] bg-transparent text-xs font-medium text-current">
                     {profileInitials}
                   </AvatarFallback>
                 </Avatar>
@@ -185,10 +187,10 @@ export function Sidebar() {
             <div className="px-6 pb-8 pt-6">
               <div className="mb-12 flex items-start justify-between gap-4">
                 <NavLink to="/dashboard" onClick={closeMobile} className="block">
-                  <span className="block text-[2rem] font-black uppercase leading-none tracking-[-0.12em]">
+                  <span className="block text-[2rem] font-semibold uppercase leading-none tracking-[-0.06em] text-[var(--dash-text)]">
                     SKĒNĒ
                   </span>
-                  <span className="mt-4 block text-sm font-medium uppercase tracking-[0.08em] text-black/80">
+                  <span className="mt-4 block text-sm font-medium uppercase tracking-[0.08em] text-[var(--dash-text-muted)]">
                     System v.2.4
                   </span>
                 </NavLink>
@@ -197,7 +199,7 @@ export function Sidebar() {
                   <button
                     type="button"
                     onClick={() => setSidebarCollapsed(true)}
-                    className="hidden h-9 w-9 place-items-center border-2 border-black bg-white transition-colors hover:bg-black hover:text-white lg:grid"
+                    className="hidden h-9 w-9 place-items-center rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] text-[var(--dash-text-muted)] transition-colors hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)] lg:grid"
                     aria-label="Collapse sidebar"
                   >
                     <PanelLeftClose className="h-4 w-4" />
@@ -205,7 +207,7 @@ export function Sidebar() {
                   <button
                     type="button"
                     onClick={() => setSidebarOpen(false)}
-                    className="grid h-9 w-9 place-items-center border-2 border-black bg-white transition-colors hover:bg-black hover:text-white lg:hidden"
+                    className="grid h-9 w-9 place-items-center rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] text-[var(--dash-text-muted)] transition-colors hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)] lg:hidden"
                     aria-label="Close sidebar"
                   >
                     <X className="h-4 w-4" />
@@ -216,13 +218,13 @@ export function Sidebar() {
               <NavLink
                 to="/my-resources"
                 onClick={closeMobile}
-                className="mb-9 flex min-h-14 items-center justify-between bg-black px-5 text-xs font-black uppercase tracking-[0.12em] text-white shadow-[4px_4px_0_#000] transition-transform hover:-translate-y-0.5"
+                className="mb-8 flex min-h-14 items-center justify-between rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] px-4 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--dash-text)] transition-colors hover:bg-[var(--dash-surface-raised)]"
               >
                 New Production
-                <Plus className="h-7 w-7" />
+                <Plus className="h-5 w-5" />
               </NavLink>
 
-              <nav className="space-y-2.5">
+              <nav className="space-y-2">
                 {NAV.map((item) => {
                   const Icon = item.icon
                   const active = isActive(item.to)
@@ -234,18 +236,22 @@ export function Sidebar() {
                       to={item.to}
                       onClick={closeMobile}
                       className={cn(
-                        "group flex min-h-12 items-center gap-4 px-4 text-[0.95rem] font-black uppercase tracking-[-0.05em] transition-colors",
-                        active ? "bg-black text-white" : "text-black/62 hover:bg-black hover:text-white",
+                        "group flex min-h-12 items-center gap-3 rounded-[var(--dash-radius-sm)] px-3 text-[0.9rem] font-semibold uppercase tracking-[-0.01em] transition-colors",
+                        active
+                          ? "bg-[var(--dash-accent-muted)] text-[var(--dash-text)]"
+                          : "text-[var(--dash-text-muted)] hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)]",
                       )}
                       title={item.label}
                     >
-                      <Icon className="h-6 w-6 shrink-0" strokeWidth={2.2} />
+                      <Icon className="h-5 w-5 shrink-0" strokeWidth={1.9} />
                       <span className="min-w-0 flex-1 truncate">{item.label}</span>
                       {count > 0 && (
                         <span
                           className={cn(
-                            "grid h-7 min-w-7 place-items-center px-1.5 text-xs font-black",
-                            active ? "bg-white text-black" : "bg-black text-white group-hover:bg-white group-hover:text-black",
+                            "grid h-6 min-w-6 place-items-center rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] px-1.5 text-xs font-semibold",
+                            active
+                              ? "bg-[var(--dash-surface-raised)] text-[var(--dash-text)]"
+                              : "bg-[var(--dash-surface)] text-[var(--dash-text-secondary)] group-hover:bg-[var(--dash-surface-raised)] group-hover:text-[var(--dash-text)]",
                           )}
                         >
                           {count}
@@ -258,11 +264,11 @@ export function Sidebar() {
             </div>
 
             <div className="mt-auto px-6 pb-6">
-              <div className="mb-5 border-t-[3px] border-black pt-5">
+              <div className="mb-5 border-t border-[color:var(--dash-border)] pt-5">
                 <NavLink
                   to="/messages"
                   onClick={closeMobile}
-                  className="flex min-h-11 items-center gap-4 text-sm font-medium uppercase tracking-[0.12em] text-black/70 transition-colors hover:text-black"
+                  className="flex min-h-11 items-center gap-3 rounded-[var(--dash-radius-sm)] px-2 text-sm font-medium uppercase tracking-[0.08em] text-[var(--dash-text-muted)] transition-colors hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)]"
                 >
                   <CircleHelp className="h-4 w-4" />
                   Support
@@ -270,7 +276,7 @@ export function Sidebar() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="mt-3 flex min-h-11 w-full items-center gap-4 text-left text-sm font-medium uppercase tracking-[0.12em] text-black/70 transition-colors hover:text-black"
+                  className="mt-2 flex min-h-11 w-full items-center gap-3 rounded-[var(--dash-radius-sm)] px-2 text-left text-sm font-medium uppercase tracking-[0.08em] text-[var(--dash-text-muted)] transition-colors hover:bg-[var(--dash-surface-raised)] hover:text-[var(--dash-text)]"
                 >
                   <LogOut className="h-4 w-4" />
                   Logout
@@ -280,19 +286,19 @@ export function Sidebar() {
               <NavLink
                 to="/profile"
                 onClick={closeMobile}
-                className="flex items-center gap-3 border-2 border-black p-2 transition-colors hover:bg-black hover:text-white"
+                className="flex items-center gap-3 rounded-[var(--dash-radius-md)] border border-[color:var(--dash-border)] bg-[var(--dash-surface)] p-2 transition-colors hover:bg-[var(--dash-surface-raised)]"
               >
-                <Avatar className="h-10 w-10 rounded-none border-2 border-current bg-[#d8d8d4]">
+                <Avatar className="h-10 w-10 rounded-[var(--dash-radius-sm)] border border-[color:var(--dash-border)] bg-[var(--dash-surface-raised)]">
                   <AvatarImage src={user?.avatar} alt={user?.name} />
-                  <AvatarFallback className="rounded-none bg-transparent text-xs font-black text-current">
+                  <AvatarFallback className="rounded-[var(--dash-radius-sm)] bg-transparent text-xs font-medium text-current">
                     {profileInitials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-black uppercase tracking-[-0.04em]">
+                  <p className="truncate text-sm font-semibold uppercase tracking-[-0.01em] text-[var(--dash-text)]">
                     {user?.name ?? "Operator"}
                   </p>
-                  <p className="text-xs uppercase tracking-[0.1em] opacity-70">
+                  <p className="text-xs uppercase tracking-[0.08em] text-[var(--dash-text-muted)]">
                     Profile
                   </p>
                 </div>
