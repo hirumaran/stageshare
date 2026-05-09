@@ -1,35 +1,23 @@
 import { Outlet, useLocation } from "react-router-dom"
 import { Sidebar } from "./sidebar"
-import { Header } from "./header"
-import { useUIStore } from "@/stores/ui-store"
+import { TopBar } from "./top-bar"
 import { cn } from "@/lib/utils"
 
 export default function AppShell() {
-  const { sidebarCollapsed } = useUIStore()
   const { pathname } = useLocation()
 
   const isMessages = pathname.startsWith("/messages")
-  const isDashboard = pathname.startsWith("/dashboard")
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="h-screen overflow-hidden bg-[var(--bg-base)] text-[var(--text-primary)] md:pl-[3.05rem]">
       <Sidebar />
 
-      <div
-        className={cn(
-          "flex flex-1 flex-col transition-[margin] duration-300 ease-in-out",
-          !sidebarCollapsed ? "lg:ml-72" : "lg:ml-20",
-        )}
-      >
-        {!isMessages && !isDashboard && <Header />}
+      <div className="flex h-full min-w-0 flex-col pb-16 md:pb-0">
+        {!isMessages && <TopBar />}
         <main
           className={cn(
-            "flex-1",
-            isMessages
-              ? "relative overflow-hidden"
-              : isDashboard
-                ? "overflow-auto"
-              : "overflow-auto p-4 lg:p-6",
+            "min-h-0 flex-1",
+            isMessages ? "relative overflow-hidden" : "overflow-auto",
           )}
         >
           <Outlet />

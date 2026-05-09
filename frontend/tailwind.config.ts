@@ -22,8 +22,16 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        sans: ["'M PLUS 1'", "ui-sans-serif", "system-ui", "sans-serif"],
-        display: ["'M PLUS 1'", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-body)", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Georgia", "serif"],
+        serif: ["var(--font-serif)", "Georgia", "serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
+        label: [
+          "var(--font-label)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
         honk: ["'Honk'", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       colors: {
@@ -68,6 +76,13 @@ const config: Config = {
           DEFAULT: "var(--warning)",
           foreground: "var(--warning-foreground)",
         },
+        chart: {
+          1: "var(--chart-1)",
+          2: "var(--chart-2)",
+          3: "var(--chart-3)",
+          4: "var(--chart-4)",
+          5: "var(--chart-5)",
+        },
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",
@@ -106,22 +121,22 @@ const config: Config = {
       },
       keyframes: {
         fadeUp: {
-          "0%":   { opacity: "0", transform: "translateY(6px)" },
+          "0%": { opacity: "0", transform: "translateY(6px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         fadeIn: {
-          "0%":   { opacity: "0" },
+          "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
         skeleton: {
           "0%, 100%": { opacity: "1" },
-          "50%":      { opacity: "0.4" },
+          "50%": { opacity: "0.4" },
         },
       },
       animation: {
-        "fade-up":  "fadeUp 0.2s ease-out",
-        "fade-in":  "fadeIn 0.15s ease-out",
-        "skeleton": "skeleton 1.5s ease-in-out infinite",
+        "fade-up": "fadeUp 0.2s ease-out",
+        "fade-in": "fadeIn 0.15s ease-out",
+        skeleton: "skeleton 1.5s ease-in-out infinite",
       },
     },
   },
