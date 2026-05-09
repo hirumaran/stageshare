@@ -99,42 +99,6 @@ function CountBadge({ count, isCollapsed }: { count: number; isCollapsed: boolea
   )
 }
 
-function NewProductionPill() {
-  return (
-    <Link
-      to="/my-resources"
-      aria-label="Create new production"
-      className="group block"
-    >
-      <motion.div
-        className="relative flex h-11 cursor-pointer items-center overflow-hidden rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/15"
-        initial={{ width: 44 }}
-        whileHover={{ width: 220 }}
-        transition={{ type: "spring", stiffness: 400, damping: 25 }}
-      >
-        <motion.div
-          className="absolute inset-0 flex items-center justify-center"
-          initial={{ opacity: 1, scale: 1 }}
-          whileHover={{ opacity: 0, scale: 0.6 }}
-          transition={{ duration: 0.2 }}
-        >
-          <Plus className="h-4 w-4" />
-        </motion.div>
-
-        <motion.div
-          className="flex w-full items-center gap-3 px-4"
-          initial={{ opacity: 0, x: -12 }}
-          whileHover={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.25, delay: 0.08 }}
-        >
-          <Plus className="h-4 w-4 shrink-0" />
-          <span className="whitespace-nowrap text-sm font-medium">New Production</span>
-        </motion.div>
-      </motion.div>
-    </Link>
-  )
-}
-
 export function SessionNavBar() {
   const [isCollapsed, setIsCollapsed] = useState(true)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -247,7 +211,26 @@ export function SessionNavBar() {
             </div>
 
             <div className={cn("mb-6 flex justify-center", isCollapsed ? "px-2" : "px-4")}>
-              <NewProductionPill />
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "h-11 cursor-pointer rounded-lg border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
+                  isCollapsed
+                    ? "w-full justify-center px-0"
+                    : "w-[12rem] justify-start gap-3 px-3",
+                )}
+              >
+                <Link to="/my-resources" aria-label="Create new production">
+                  <Plus className="h-4 w-4" />
+                  {!isCollapsed && (
+                    <motion.span variants={labelVariants}>
+                      <span className="text-sm font-medium">New Production</span>
+                    </motion.span>
+                  )}
+                </Link>
+              </Button>
             </div>
 
             <ScrollArea className={cn("min-h-0 flex-1", isCollapsed ? "px-2" : "px-4")}>
