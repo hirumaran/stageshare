@@ -91,9 +91,22 @@ class Particle {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
+    const gradient = ctx.createRadialGradient(
+      this.x, this.y, 0,
+      this.x, this.y, this.size * 2.5,
+    )
+    gradient.addColorStop(0, this.color)
+    gradient.addColorStop(0.4, this.color)
+    gradient.addColorStop(1, "rgba(0,0,0,0)")
+
+    ctx.fillStyle = gradient
+    ctx.beginPath()
+    ctx.arc(this.x, this.y, this.size * 2.5, 0, Math.PI * 2)
+    ctx.fill()
+
     ctx.fillStyle = this.color
     ctx.beginPath()
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
+    ctx.arc(this.x, this.y, this.size * 1.2, 0, Math.PI * 2)
     ctx.fill()
   }
 }

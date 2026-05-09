@@ -195,11 +195,11 @@ export function SessionNavBar() {
                   >
                     <CursorDrivenParticleTypography
                       text="SKENE"
-                      fontSize={54}
-                      fontFamily="Roboto Mono, ui-monospace, monospace"
+                      fontSize={48}
+                      fontFamily="'DM Sans', 'Inter', system-ui, sans-serif"
                       color="#e2e8f0"
-                      particleDensity={5}
-                      particleSize={1.2}
+                      particleDensity={4}
+                      particleSize={2.5}
                       dispersionStrength={0}
                       returnSpeed={0.12}
                       interactive={false}
