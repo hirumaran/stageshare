@@ -86,9 +86,9 @@ export const AnimatedThemeToggler = ({ className }: AnimatedThemeTogglerProps) =
     <button
       ref={buttonRef}
       onClick={onToggle}
-      aria-label="Switch theme"
+      aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
       className={cn(
-        "flex cursor-pointer items-center justify-center rounded-full p-2 outline-none focus:outline-none focus:ring-0 active:outline-none",
+        "flex cursor-pointer items-center justify-center rounded-full p-2 outline-none transition-colors duration-200 focus:outline-none focus:ring-0 active:outline-none hover:bg-black/5 dark:hover:bg-white/10",
         className,
       )}
       type="button"
@@ -101,9 +101,9 @@ export const AnimatedThemeToggler = ({ className }: AnimatedThemeTogglerProps) =
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.33 }}
-            className="text-white"
+            className="text-white/90"
           >
-            <Sun className="h-4 w-4" />
+            <Sun className="h-[18px] w-[18px]" strokeWidth={1.75} />
           </motion.span>
         ) : (
           <motion.span
@@ -112,9 +112,9 @@ export const AnimatedThemeToggler = ({ className }: AnimatedThemeTogglerProps) =
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.33 }}
-            className="text-black dark:text-white"
+            className="text-black/90 dark:text-white/90"
           >
-            <Moon className="h-4 w-4" />
+            <Moon className="h-[18px] w-[18px]" strokeWidth={1.75} />
           </motion.span>
         )}
       </AnimatePresence>

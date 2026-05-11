@@ -64,10 +64,10 @@ function DashboardPage() {
     mockBorrowRequests[0]
 
   return (
-    <div className="min-h-full bg-[var(--bg-base)]">
-      <div className="mx-auto max-w-[1120px] px-5 pb-10 pt-6 sm:px-8 md:px-10 md:pb-12 md:pt-8 xl:px-0">
+    <div className="min-h-full">
+      <div className="relative z-10 mx-auto max-w-[1120px] px-5 pb-10 pt-6 sm:px-8 md:px-10 md:pb-12 md:pt-8 xl:px-0">
         <div className="mb-6 flex flex-col gap-4 overflow-visible sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="font-display text-[2.5rem] font-normal leading-none text-[var(--text-primary)] md:text-5xl">
+          <h1 className="font-display text-[2.5rem] font-normal leading-none text-[#172033] dark:text-[#EDE7DD] md:text-5xl">
             Dashboard
           </h1>
           <CataloguePortal
