@@ -23,6 +23,8 @@ export default function AppShell() {
 
   const isMessages = pathname.startsWith("/messages")
   const isDashboard = pathname.startsWith("/dashboard")
+  const usesDitherBackground =
+    isDashboard || pathname.startsWith("/settings")
 
   useEffect(() => {
     const syncTheme = () => setResolvedTheme(getResolvedTheme())
@@ -58,18 +60,18 @@ export default function AppShell() {
   )
   const shellStyle = {
     "--sidebar-width": "3.05rem",
-    backgroundColor: isDashboard ? dailyDither.background : undefined,
+    backgroundColor: usesDitherBackground ? dailyDither.background : undefined,
   } as CSSProperties
 
   return (
     <div
       className={cn(
         "relative h-screen overflow-hidden text-[var(--text-primary)] md:pl-[3.05rem]",
-        !isDashboard && "bg-[var(--bg-base)]",
+        !usesDitherBackground && "bg-[var(--bg-base)]",
       )}
       style={shellStyle}
     >
-      {isDashboard && (
+      {usesDitherBackground && (
         <>
           <AnimatedDitherBackground
             className="fixed inset-0 z-0 pointer-events-none"
