@@ -7,14 +7,13 @@ import {
   Film,
   MessageSquare,
   Package,
+  School,
   Sparkles,
   Theater,
 } from "lucide-react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { BentoGridShowcase } from "@/components/ui/bento-grid"
-import CataloguePortal from "@/components/ui/CataloguePortal"
 import {
   Card,
   CardContent,
@@ -31,11 +30,13 @@ import {
   mockResources,
   mockUsers,
 } from "@/data/mock-data"
-import { getInitials } from "@/lib/utils"
+import { cn, getInitials } from "@/lib/utils"
 import { useAuthStore } from "@/stores/auth-store"
 
+const dashboardCardClass =
+  "border-black/10 bg-white/68 shadow-[0_16px_50px_rgba(40,30,20,0.14)] backdrop-blur-xl dark:border-white/[0.08] dark:bg-[#24201d]/82 dark:shadow-[0_16px_50px_rgba(0,0,0,0.26)]"
+
 function DashboardPage() {
-  const navigate = useNavigate()
   const { user } = useAuthStore()
   const profile = user ?? currentUser
   const unreadAlerts = mockNotifications.filter(
@@ -65,41 +66,46 @@ function DashboardPage() {
 
   return (
     <div className="min-h-full">
-      <div className="relative z-10 mx-auto max-w-[1120px] px-5 pb-10 pt-6 sm:px-8 md:px-10 md:pb-12 md:pt-8 xl:px-0">
-        <div className="mb-6 flex flex-col gap-4 overflow-visible sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="font-display text-[2.5rem] font-normal leading-none text-[#172033] dark:text-[#EDE7DD] md:text-5xl">
+      <div className="relative z-10 mx-auto max-w-[1500px] px-6 pb-12 pt-4 sm:px-8 md:px-10 md:pb-14 xl:px-12">
+        <div className="mb-14 md:mb-16">
+          <h1 className="font-display text-[2.75rem] font-normal leading-none text-[#172033] [text-shadow:_0_2px_20px_rgb(255_255_255_/_22%)] dark:text-[#F0E9DF] dark:[text-shadow:_0_2px_24px_rgb(0_0_0_/_45%)] md:text-6xl">
             Dashboard
           </h1>
-          <CataloguePortal
-            itemCount={profile.resourcesShared}
-            onNavigate={() => navigate("/catalogue")}
-          />
+          <p className="mt-3 max-w-xl text-sm leading-6 text-[#5f6573] dark:text-[#B8B0A6]">
+            Resource flow, pending requests, and production-ready materials across
+            your theatre network.
+          </p>
         </div>
-        <BentoGridShowcase
-          integrations={
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
+          <section className="space-y-6 lg:col-span-4 xl:col-span-3">
             <ResourceNetworkCard
               availableOwnedResources={availableOwnedResources}
               resourcesShared={profile.resourcesShared}
             />
-          }
-          mainFeature={<FeaturedResourceCard resource={featuredResource} />}
-          featureTags={
+            <RequestCard request={nextRequest} />
+            <ActivityJourneyCard activeBorrow={activeBorrow.resource.title} />
+          </section>
+
+          <section className="lg:col-span-4 xl:col-span-4">
+            <FeaturedResourceCard resource={featuredResource} />
+          </section>
+
+          <section className="space-y-6 lg:col-span-4 xl:col-span-5">
             <SignalCard
               pendingRequests={pendingRequests}
               unreadAlerts={unreadAlerts}
               unreadMessages={unreadMessages}
+              request={nextRequest}
+              dueSoon={activeBorrow.resource.title}
             />
-          }
-          secondaryFeature={<RequestCard request={nextRequest} />}
-          statistic={
             <NetworkStatsCard
               borrowedItems={profile.resourcesBorrowed}
               resourcesShared={profile.resourcesShared}
               schoolCount={mockUsers.length}
             />
-          }
-          journey={<ActivityJourneyCard activeBorrow={activeBorrow.resource.title} />}
-        />
+          </section>
+        </div>
       </div>
     </div>
   )
@@ -115,8 +121,8 @@ function ResourceNetworkCard({
   availableOwnedResources,
 }: ResourceNetworkCardProps) {
   return (
-    <Card className="h-full overflow-hidden bg-[var(--bg-raised)]">
-      <CardHeader>
+    <Card className={cn("overflow-hidden", dashboardCardClass)}>
+      <CardHeader className="pb-4">
         <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <Package className="h-4 w-4" strokeWidth={1.6} aria-hidden="true" />
         </div>
@@ -125,7 +131,8 @@ function ResourceNetworkCard({
           {availableOwnedResources} available from {resourcesShared} shared items.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-3 gap-3">
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-3 gap-3">
         {[
           { icon: Theater, label: "Props", to: "/catalogue" },
           { icon: Film, label: "Shows", to: "/my-resources" },
@@ -144,6 +151,21 @@ function ResourceNetworkCard({
             />
           </Link>
         ))}
+        </div>
+        <Link
+          to="/catalogue"
+          className="flex items-center justify-between rounded-2xl border border-black/5 bg-white/30 px-3 py-3 text-sm transition-colors hover:bg-white/45 focus-visible:ring-2 focus-visible:ring-primary dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+        >
+          <span>
+            <span className="block font-medium text-[#172033] dark:text-[#F0E9DF]">
+              Browse catalogue
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {resourcesShared} shared items
+            </span>
+          </span>
+          <ArrowRight className="h-4 w-4 text-primary" aria-hidden="true" />
+        </Link>
       </CardContent>
     </Card>
   )
@@ -153,28 +175,78 @@ interface SignalCardProps {
   pendingRequests: number
   unreadAlerts: number
   unreadMessages: number
+  request: (typeof mockBorrowRequests)[number]
+  dueSoon: string
 }
 
 function SignalCard({
   pendingRequests,
   unreadAlerts,
   unreadMessages,
+  request,
+  dueSoon,
 }: SignalCardProps) {
   return (
-    <Card className="h-full bg-[var(--bg-raised)]">
-      <CardContent className="flex h-full flex-col justify-center gap-3 p-5">
-        <Badge variant="warning" className="w-fit gap-1.5 px-3 py-1.5">
-          <ClipboardList className="h-3.5 w-3.5" aria-hidden="true" />
-          {pendingRequests} pending
-        </Badge>
-        <Badge variant="accent" className="w-fit gap-1.5 px-3 py-1.5">
-          <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
-          {unreadAlerts} alerts
-        </Badge>
-        <Badge variant="outline" className="w-fit gap-1.5 px-3 py-1.5">
-          <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />
-          {unreadMessages} unread
-        </Badge>
+    <Card className={cn("overflow-hidden", dashboardCardClass)}>
+      <CardContent className="space-y-5 p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle className="text-lg">Action Queue</CardTitle>
+            <CardDescription className="mt-1">
+              Requests, alerts, and teacher messages that need a quick look.
+            </CardDescription>
+          </div>
+          <Badge variant="accent" className="gap-1.5 px-3 py-1.5">
+            <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+            Live
+          </Badge>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-3">
+          <Badge variant="warning" className="justify-center gap-1.5 px-3 py-1.5">
+            <ClipboardList className="h-3.5 w-3.5" aria-hidden="true" />
+            {pendingRequests} pending
+          </Badge>
+          <Badge variant="accent" className="justify-center gap-1.5 px-3 py-1.5">
+            <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+            {unreadAlerts} alerts
+          </Badge>
+          <Badge variant="outline" className="justify-center gap-1.5 px-3 py-1.5">
+            <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />
+            {unreadMessages} unread
+          </Badge>
+        </div>
+
+        <div className="space-y-2">
+          <Link
+            to="/borrowing"
+            className="flex items-center justify-between gap-3 rounded-2xl border border-black/5 bg-white/30 px-3 py-3 transition-colors hover:bg-white/45 focus-visible:ring-2 focus-visible:ring-primary dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+          >
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-medium text-[#172033] dark:text-[#F0E9DF]">
+                {request.resource.title}
+              </span>
+              <span className="line-clamp-1 text-xs text-muted-foreground">
+                {request.borrower.name} requested this for production.
+              </span>
+            </span>
+            <ArrowRight className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+          </Link>
+          <Link
+            to="/messages"
+            className="flex items-center justify-between gap-3 rounded-2xl border border-black/5 bg-white/30 px-3 py-3 transition-colors hover:bg-white/45 focus-visible:ring-2 focus-visible:ring-primary dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+          >
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-medium text-[#172033] dark:text-[#F0E9DF]">
+                Due soon
+              </span>
+              <span className="line-clamp-1 text-xs text-muted-foreground">
+                {dueSoon} is the next active pickup.
+              </span>
+            </span>
+            <CalendarDays className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+          </Link>
+        </div>
       </CardContent>
     </Card>
   )
@@ -186,7 +258,7 @@ interface FeaturedResourceCardProps {
 
 function FeaturedResourceCard({ resource }: FeaturedResourceCardProps) {
   return (
-    <Card className="relative h-full min-h-[30rem] overflow-hidden border-border bg-[var(--bg-raised)] md:min-h-0">
+    <Card className="relative h-full min-h-[36rem] overflow-hidden border-black/10 bg-[var(--bg-raised)] shadow-[0_20px_60px_rgba(0,0,0,0.22)] dark:border-white/10 lg:min-h-[44rem]">
       <img
         src={resource.images[0]}
         alt={resource.title}
@@ -231,12 +303,12 @@ interface RequestCardProps {
 
 function RequestCard({ request }: RequestCardProps) {
   return (
-    <Card className="h-full overflow-hidden bg-[var(--bg-raised)]">
+    <Card className={cn("overflow-hidden", dashboardCardClass)}>
       <div className="flex h-full">
         <img
           src={request.resource.images[0]}
           alt={request.resource.title}
-          className="hidden w-28 object-cover sm:block"
+          className="hidden w-32 object-cover sm:block lg:w-28 xl:w-32"
         />
         <div className="flex min-w-0 flex-1 flex-col justify-between p-5">
           <div>
@@ -277,22 +349,36 @@ function NetworkStatsCard({
   schoolCount,
 }: NetworkStatsCardProps) {
   return (
-    <Card className="flex h-full flex-col justify-between overflow-hidden bg-[#d7ead2] p-5 text-[#18341e] dark:bg-[#23301f] dark:text-[#e5f6dd]">
-      <div className="flex items-center justify-between">
-        <CheckCircle2 className="h-8 w-8" strokeWidth={1.5} aria-hidden="true" />
+    <Card className="overflow-hidden border-[#18341e]/15 bg-[#d7ead2]/82 p-5 text-[#18341e] shadow-[0_16px_50px_rgba(24,52,30,0.14)] backdrop-blur-xl dark:border-[#e5f6dd]/12 dark:bg-[#17311f]/82 dark:text-[#e5f6dd] dark:shadow-[0_16px_50px_rgba(0,0,0,0.24)]">
+      <div className="mb-6 flex items-center justify-between">
+        <CheckCircle2 className="h-7 w-7" strokeWidth={1.5} aria-hidden="true" />
         <Badge className="border-[#18341e]/15 bg-[#18341e]/10 text-[#18341e] dark:border-[#e5f6dd]/15 dark:bg-[#e5f6dd]/10 dark:text-[#e5f6dd]">
           Live
         </Badge>
       </div>
-      <div>
-        <p className="font-mono text-7xl font-light leading-none">
-          {resourcesShared}
-        </p>
-        <p className="mt-3 max-w-[14rem] text-sm leading-6">
-          Shared theatre resources, {borrowedItems} borrowed items, and{" "}
-          {schoolCount} partner schools moving through the same pool.
-        </p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {[
+          { label: "Shared", value: resourcesShared },
+          { label: "Borrowed", value: borrowedItems },
+          { label: "Schools", value: schoolCount },
+        ].map((stat) => (
+          <div
+            key={stat.label}
+            className="rounded-2xl border border-[#18341e]/10 bg-[#18341e]/5 p-3 dark:border-[#e5f6dd]/10 dark:bg-[#e5f6dd]/5"
+          >
+            <p className="font-mono text-3xl font-light leading-none">
+              {stat.value}
+            </p>
+            <p className="mt-2 text-xs uppercase tracking-[0.16em] opacity-75">
+              {stat.label}
+            </p>
+          </div>
+        ))}
       </div>
+      <p className="mt-5 max-w-xl text-sm leading-6 opacity-80">
+        Network health is active across shared resources, borrowing history, and
+        partner schools moving through the same resource pool.
+      </p>
     </Card>
   )
 }
@@ -303,7 +389,7 @@ interface ActivityJourneyCardProps {
 
 function ActivityJourneyCard({ activeBorrow }: ActivityJourneyCardProps) {
   return (
-    <Card className="relative h-full overflow-hidden bg-[var(--bg-raised)] p-5">
+    <Card className={cn("relative overflow-hidden p-5", dashboardCardClass)}>
       <div className="flex items-start justify-between gap-4">
         <div>
           <CardTitle className="text-lg">Weekly Run</CardTitle>
