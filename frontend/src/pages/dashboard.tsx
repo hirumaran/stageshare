@@ -10,10 +10,11 @@ import {
   Sparkles,
   Theater,
 } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { BentoGridShowcase } from "@/components/ui/bento-grid"
+import CataloguePortal from "@/components/ui/CataloguePortal"
 import {
   Card,
   CardContent,
@@ -34,6 +35,7 @@ import { getInitials } from "@/lib/utils"
 import { useAuthStore } from "@/stores/auth-store"
 
 function DashboardPage() {
+  const navigate = useNavigate()
   const { user } = useAuthStore()
   const profile = user ?? currentUser
   const unreadAlerts = mockNotifications.filter(
@@ -64,17 +66,14 @@ function DashboardPage() {
   return (
     <div className="min-h-full bg-[var(--bg-base)]">
       <div className="mx-auto max-w-[1120px] px-5 pb-10 pt-6 sm:px-8 md:px-10 md:pb-12 md:pt-8 xl:px-0">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-6 flex flex-col gap-4 overflow-visible sm:flex-row sm:items-center sm:justify-between">
           <h1 className="font-display text-[2.5rem] font-normal leading-none text-[var(--text-primary)] md:text-5xl">
             Dashboard
           </h1>
-          <Link
-            to="/catalogue"
-            className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-3 border border-[var(--border-accent)] bg-[var(--gold-glow)] px-5 font-label text-[0.7rem] font-medium uppercase tracking-[0.12em] text-[var(--gold)] transition-[background,transform] duration-200 hover:-translate-y-0.5 hover:bg-[var(--gold-dim)] focus-visible:ring-2 focus-visible:ring-[var(--gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-base)]"
-          >
-            Browse Catalogue
-            <ArrowRight className="h-4 w-4" strokeWidth={1} aria-hidden="true" />
-          </Link>
+          <CataloguePortal
+            itemCount={profile.resourcesShared}
+            onNavigate={() => navigate("/catalogue")}
+          />
         </div>
         <BentoGridShowcase
           integrations={
