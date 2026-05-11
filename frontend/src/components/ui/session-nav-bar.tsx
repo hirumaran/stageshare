@@ -20,8 +20,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CursorDrivenParticleTypography } from "@/components/ui/cursor-driven-particles-typography"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { SkeneWordmark } from "@/components/ui/skene-wordmark"
 import { currentUser } from "@/data/mock-data"
 import { useMessageStore } from "@/features/messages/stores/message-store"
 import { cn, getInitials } from "@/lib/utils"
@@ -188,23 +188,12 @@ export function SessionNavBar() {
                 ) : (
                   <motion.div
                     key="particle-logo"
-                    className="h-14 w-[11.75rem] overflow-hidden"
+                    className="h-14 w-[11.75rem] overflow-visible text-sidebar-foreground"
                     initial={{ opacity: 0, y: 2 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.18 }}
                   >
-                    <CursorDrivenParticleTypography
-                      text="SKENE"
-                      fontSize={48}
-                      fontFamily="'DM Sans', 'Inter', system-ui, sans-serif"
-                      color="#e2e8f0"
-                      particleDensity={4}
-                      particleSize={2.5}
-                      dispersionStrength={0}
-                      returnSpeed={0.12}
-                      interactive={false}
-                      ambientMotion={false}
-                    />
+                    <SkeneWordmark />
                   </motion.div>
                 )}
               </div>
