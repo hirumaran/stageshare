@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 import { motion, type Variants } from "framer-motion"
 import {
   ArrowLeftRight,
-  Bell,
   ChevronsUpDown,
   DollarSign,
   Film,
@@ -13,7 +12,6 @@ import {
   MessageSquare,
   Package,
   Plus,
-  Settings,
   Theater,
   UserCircle,
 } from "lucide-react"
@@ -28,9 +26,8 @@ import { cn, getInitials } from "@/lib/utils"
 import { useAuthStore } from "@/stores/auth-store"
 import { useCartStore } from "@/stores/cart-store"
 import { useMatrixStore } from "@/stores/matrix-store"
-import { useUIStore } from "@/stores/ui-store"
 
-type BadgeType = "cart" | "messages" | "notifications"
+type BadgeType = "cart" | "messages"
 
 interface NavItem {
   to: string
@@ -46,8 +43,6 @@ const primaryNav: NavItem[] = [
   { to: "/borrowing", label: "Borrowing", icon: ArrowLeftRight },
   { to: "/cart", label: "Finance", icon: DollarSign, badge: "cart" },
   { to: "/messages", label: "Messages", icon: MessageSquare, badge: "messages" },
-  { to: "/notifications", label: "Alerts", icon: Bell, badge: "notifications" },
-  { to: "/settings", label: "Settings", icon: Settings },
 ]
 
 const sidebarVariants: Variants = {
@@ -106,7 +101,6 @@ export function SessionNavBar() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
-  const { unreadNotificationCount } = useUIStore()
   const mockTotalUnread = useMessageStore((state) => state.totalUnread())
   const matrixUnread = useMatrixStore((state) => state.getUnreadCount())
   const matrixReady = useMatrixStore((state) => state.isReady)
@@ -117,7 +111,6 @@ export function SessionNavBar() {
   function getBadge(type?: BadgeType) {
     if (type === "cart") return cartCount
     if (type === "messages") return matrixReady ? matrixUnread : mockTotalUnread
-    if (type === "notifications") return unreadNotificationCount
     return 0
   }
 
@@ -291,15 +284,6 @@ export function SessionNavBar() {
                   >
                     <UserCircle className="h-4 w-4" />
                     Profile
-                  </Link>
-                  <Link
-                    to="/settings"
-                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-                    role="menuitem"
-                    onClick={() => setIsProfileOpen(false)}
-                  >
-                    <Settings className="h-4 w-4" />
-                    Settings
                   </Link>
                   <div className="my-1 h-px bg-muted" />
                   <button

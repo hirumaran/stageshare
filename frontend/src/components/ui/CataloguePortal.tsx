@@ -58,15 +58,14 @@ const styles = `
   .cp-label-bar { background: #ffffff; }
   .cp-card-label { color: #3a3934; }
 
-  @media (prefers-color-scheme: dark) {
-    .cp-card-upper-0 { background: linear-gradient(135deg, #7a6040, #9a7850); }
-    .cp-card-upper-1 { background: linear-gradient(135deg, #3a6b42, #4e8858); }
-    .cp-card-upper-2 { background: linear-gradient(135deg, #4040a0, #5555be); }
-    .cp-card-upper-3 { background: linear-gradient(160deg, #2e6090, #3a7ab0); }
-    .cp-card-upper-4 { background: linear-gradient(160deg, #8a6030, #aa7a40); }
-    .cp-card-label { color: #c8c4b8; }
-    .cp-label-bar { background: #1c1c1a; }
-  }
+  .cp-card-text-0 { color: #7a5a2a; }
+  .cp-card-text-1 { color: #2a5a3a; }
+  .cp-card-text-2 { color: #3a3480; }
+  .cp-card-text-3 { color: #3a5c8a; }
+  .cp-card-text-4 { color: #8a6840; }
+  .cp-hint-text   { color: #8a897e; }
+  .cp-cta-text    { color: #4746a3; }
+  .cp-cta-line    { background: #4746a3; }
 
   html.dark .cp-card-upper-0 { background: linear-gradient(135deg, #7a6040, #9a7850); }
   html.dark .cp-card-upper-1 { background: linear-gradient(135deg, #3a6b42, #4e8858); }
@@ -75,6 +74,15 @@ const styles = `
   html.dark .cp-card-upper-4 { background: linear-gradient(160deg, #8a6030, #aa7a40); }
   html.dark .cp-card-label { color: #c8c4b8; }
   html.dark .cp-label-bar { background: #1c1c1a; }
+
+  html.dark .cp-card-text-0 { color: #e8d5b0; }
+  html.dark .cp-card-text-1 { color: #c8e0c0; }
+  html.dark .cp-card-text-2 { color: #d0c8f0; }
+  html.dark .cp-card-text-3 { color: #d8eaf8; }
+  html.dark .cp-card-text-4 { color: #f8dfc0; }
+  html.dark .cp-hint-text   { color: #c4c3ba; }
+  html.dark .cp-cta-text    { color: #a8a4f0; }
+  html.dark .cp-cta-line    { background: #a8a4f0; }
 
   /* Pause cycling animation while hovering */
   .cp-wrap:hover .cp-cycle { animation-play-state: paused; }
@@ -261,11 +269,10 @@ export default function CataloguePortal({ href = '/catalogue', itemCount = 24, o
         >
           {/* Hint label */}
           <span
-            className="cp-hint"
+            className="cp-hint cp-hint-text"
             style={{
               fontSize: 11,
               letterSpacing: '0.08em',
-              color: '#8a897e',
               textTransform: 'uppercase',
             }}
           >
@@ -309,10 +316,9 @@ export default function CataloguePortal({ href = '/catalogue', itemCount = 24, o
                     style={{ position: 'absolute', inset: 0, borderRadius: 14, overflow: 'hidden', ...cycleProps[i].style }}
                   >
                     <div className={`cp-card-upper-${i}`} style={{ height: '68%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{
+                      <span className={`cp-card-text-${i}`} style={{
                         fontFamily: 'serif',
                         fontSize: 12,
-                        color: i === 0 ? '#7a5a2a' : i === 1 ? '#2a5a3a' : '#3a3480',
                         opacity: 0.55,
                       }}>
                         {i === 0 ? 'Makeup & FX' : i === 1 ? 'Props & Sets' : 'Lighting'}
@@ -342,7 +348,7 @@ export default function CataloguePortal({ href = '/catalogue', itemCount = 24, o
                 }}
               >
                 <div className="cp-card-upper-3" style={{ height: '68%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontFamily: 'serif', fontSize: 12, color: '#3a5c8a', opacity: 0.55, letterSpacing: '0.02em' }}>Sound &amp; AV</span>
+                  <span className="cp-card-text-3" style={{ fontFamily: 'serif', fontSize: 12, opacity: 0.55, letterSpacing: '0.02em' }}>Sound &amp; AV</span>
                 </div>
                 <div className="cp-label-bar" style={{
                   position: 'absolute', bottom: 0, left: 0, right: 0,
@@ -367,8 +373,8 @@ export default function CataloguePortal({ href = '/catalogue', itemCount = 24, o
                   height: '68%',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <span style={{
-                    fontFamily: 'serif', fontSize: 13, color: '#8a6840',
+                  <span className="cp-card-text-4" style={{
+                    fontFamily: 'serif', fontSize: 13,
                     opacity: 0.7, textAlign: 'center', padding: 8, lineHeight: 1.3,
                   }}>
                     A Midsummer<br />Night's Dream
@@ -386,24 +392,24 @@ export default function CataloguePortal({ href = '/catalogue', itemCount = 24, o
 
               {/* "Browse all" CTA — appears on hover below the stack */}
               <div
-                className="cp-cta"
+                className="cp-cta cp-cta-text"
                 style={{
                   position: 'absolute', bottom: -34, left: '50%',
                   transform: 'translateX(-50%) translateY(4px)',
                   opacity: 0,
                   transition: 'opacity 0.3s ease 0.1s, transform 0.3s ease 0.1s',
                   whiteSpace: 'nowrap', fontSize: 11, letterSpacing: '0.1em',
-                  textTransform: 'uppercase', color: '#4746a3', fontWeight: 500,
+                  textTransform: 'uppercase', fontWeight: 500,
                   display: 'flex', alignItems: 'center', gap: 5,
                 }}
               >
                 <span
                   className="cp-cta-line"
-                  style={{ display: 'block', width: 18, height: 1, background: '#4746a3', transition: 'width 0.3s ease' }}
+                  style={{ display: 'block', width: 18, height: 1, transition: 'width 0.3s ease' }}
                 />
                 Browse all
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-                  <path d="M2 8L8 2M8 2H3.5M8 2V6.5" stroke="#4746a3" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M2 8L8 2M8 2H3.5M8 2V6.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
             </div>
