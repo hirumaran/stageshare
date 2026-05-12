@@ -1,16 +1,17 @@
-import { Link } from "react-router-dom"
-import { mockUsers, mockResources } from "@/data/mock-data"
+import { Link, useNavigate } from "react-router-dom"
+import { mockResources } from "@/data/mock-data"
 import { useAuthStore } from "@/stores/auth-store"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ProfileCard } from "@/components/ui/profile-card"
 import { ResourceCard } from "@/components/resource-card"
-import { Mail, GraduationCap, Star, MessageSquare, Calendar, Edit } from "lucide-react"
-import { formatDate, getInitials } from "@/lib/utils"
+import { Mail, GraduationCap, MessageSquare, Calendar, Edit } from "lucide-react"
+import { formatDate } from "@/lib/utils"
 
 export default function ProfilePage() {
   const { user: currentUser } = useAuthStore()
+  const navigate = useNavigate()
 
   const profileUser = currentUser
   const isOwnProfile = true
@@ -28,65 +29,83 @@ export default function ProfilePage() {
   }
 
   const userResources = mockResources.filter((r) => r.ownerId === profileUser.id)
+  const surfaceClass =
+    "border-black/10 bg-white/[0.78] shadow-[0_16px_50px_rgba(40,30,20,0.14)] backdrop-blur-xl dark:border-white/[0.08] dark:bg-[#24201d]/[0.82] dark:shadow-[0_16px_50px_rgba(0,0,0,0.26)]"
+  const profileHandle = `@${profileUser.name.toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/(^\.|\.$)/g, "")}`
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6 px-6 pb-12 md:px-10">
       {/* Profile Header */}
-      <Card>
-        <CardContent className="p-6 md:p-8">
-          <div className="flex flex-col md:flex-row gap-6">
-            <Avatar className="h-24 w-24 md:h-32 md:w-32 mx-auto md:mx-0">
-              <AvatarImage src={profileUser.avatar} alt={profileUser.name} />
-              <AvatarFallback className="text-2xl">
-                {getInitials(profileUser.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 text-center md:text-left">
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
-                <div>
-                  <h1 className="text-2xl md:text-3xl font-medium tracking-tight mb-1">
-                    {profileUser.name}
-                  </h1>
-                </div>
-                <div className="flex items-center gap-2 justify-center md:justify-end">
-                  {isOwnProfile ? (
-                    <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit Profile
-                    </Button>
-                  ) : (
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to={`/messages?user=${profileUser.id}`}>
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                        Message
-                      </Link>
-                    </Button>
+      <div className="grid items-stretch gap-6 lg:grid-cols-[minmax(18rem,26rem)_1fr]">
+        <ProfileCard
+          className="mx-auto lg:mx-0"
+          name={profileUser.name}
+          handle={profileHandle}
+          timestamp={`Joined ${formatDate(profileUser.joinedAt)}`}
+          imageSrc={profileUser.avatar}
+          avatarSrc={profileUser.avatar}
+          actionLabel={isOwnProfile ? "Edit profile" : "Message"}
+          onAction={() => {
+            if (isOwnProfile) {
+              navigate("/settings")
+            } else {
+              navigate(`/messages?user=${profileUser.id}`)
+            }
+          }}
+        />
+        <Card className={surfaceClass}>
+          <CardContent className="flex h-full flex-col justify-center p-6 md:p-8">
+            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+              <div>
+                <p className="mb-2 text-xs uppercase tracking-[0.18em] text-primary">
+                  Drama educator
+                </p>
+                <h1 className="mb-4 font-serif text-3xl font-medium tracking-tight text-slate-900 dark:text-[#F0E9DF] md:text-5xl">
+                  {profileUser.name}
+                </h1>
+                <div className="mb-5 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                  {profileUser.school && (
+                    <div className="flex items-center gap-1.5">
+                      <GraduationCap className="h-4 w-4" />
+                      <span>{profileUser.school}</span>
+                    </div>
                   )}
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-4 justify-center md:justify-start text-sm text-muted-foreground mb-4">
-                {profileUser.school && (
                   <div className="flex items-center gap-1.5">
-                    <GraduationCap className="h-4 w-4" />
-                    <span>{profileUser.school}</span>
+                    <Calendar className="h-4 w-4" />
+                    <span>Joined {formatDate(profileUser.joinedAt)}</span>
                   </div>
-                )}
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4" />
-                  <span>Joined {formatDate(profileUser.joinedAt)}</span>
                 </div>
+                {profileUser.bio && (
+                  <p className="max-w-3xl text-sm leading-relaxed text-slate-700 dark:text-white/75 md:text-base">
+                    {profileUser.bio}
+                  </p>
+                )}
               </div>
-              {profileUser.bio && (
-                <p className="text-sm leading-relaxed mb-4">{profileUser.bio}</p>
-              )}
+              <div className="flex items-center gap-2">
+                {isOwnProfile ? (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/settings">
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Profile
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to={`/messages?user=${profileUser.id}`}>
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      Message
+                    </Link>
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-3 gap-4">
-        <Card>
+        <Card className={surfaceClass}>
           <CardContent className="p-4 md:p-6 text-center">
             <p className="text-2xl md:text-3xl font-semibold text-primary">
               {profileUser.resourcesShared}
@@ -96,7 +115,7 @@ export default function ProfilePage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className={surfaceClass}>
           <CardContent className="p-4 md:p-6 text-center">
             <p className="text-2xl md:text-3xl font-semibold text-primary">
               {profileUser.resourcesBorrowed}
@@ -106,7 +125,7 @@ export default function ProfilePage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className={surfaceClass}>
           <CardContent className="p-4 md:p-6 text-center">
             <p className="text-2xl md:text-3xl font-semibold text-primary">
               {userResources.reduce((sum, r) => sum + r.borrowCount, 0)}
@@ -129,7 +148,7 @@ export default function ProfilePage() {
 
         <TabsContent value="resources" className="mt-6">
           {userResources.length === 0 ? (
-            <Card>
+            <Card className={surfaceClass}>
               <CardContent className="p-12 text-center">
                 <p className="text-muted-foreground">No resources shared yet</p>
               </CardContent>
@@ -144,7 +163,7 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="about" className="mt-6">
-          <Card>
+          <Card className={surfaceClass}>
             <CardHeader>
               <CardTitle className="text-lg">Contact & Details</CardTitle>
             </CardHeader>
