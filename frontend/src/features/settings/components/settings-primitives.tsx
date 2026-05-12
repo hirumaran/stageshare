@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode } from "react"
-import { motion } from "framer-motion"
+import * as SwitchPrimitives from "@radix-ui/react-switch"
 import { Check, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -7,10 +7,10 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
 export const settingsPanelClass =
-  "rounded-2xl border border-white/[0.08] bg-[#1f1f1d]/76 text-[#f4f1ea] shadow-[0_18px_70px_rgba(0,0,0,0.28)] backdrop-blur-xl"
+  "rounded-2xl border shadow-[var(--settings-panel-shadow)] backdrop-blur-xl"
 
 export const settingsInputClass =
-  "h-11 rounded-xl border-white/[0.08] bg-[#30302e] text-[15px] text-[#f4f1ea] placeholder:text-[#8f8a82] shadow-inner shadow-black/10 focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-0"
+  "h-11 rounded-xl text-[15px] shadow-inner focus-visible:ring-2 focus-visible:ring-[var(--ring)]/70 focus-visible:ring-offset-0"
 
 export function SectionGroup({
   title,
@@ -26,14 +26,18 @@ export function SectionGroup({
   return (
     <section
       className={cn(
-        "border-t border-white/[0.08] py-7 first:border-t-0 first:pt-0",
-        danger && "rounded-2xl border border-red-400/20 bg-red-950/10 p-5",
+        "border-t py-7 first:border-t-0 first:pt-0",
+        danger
+          ? "rounded-2xl border-[var(--settings-danger-border)] bg-[var(--settings-danger-bg)] p-5"
+          : "border-[var(--settings-divider)]",
       )}
     >
       <div className="mb-5">
-        <h2 className="text-[15px] font-semibold text-[#f4f1ea]">{title}</h2>
+        <h2 className="text-[15px] font-semibold text-[var(--settings-text)]">
+          {title}
+        </h2>
         {description && (
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-[#a8a29a]">
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--settings-text-muted)]">
             {description}
           </p>
         )}
@@ -57,16 +61,19 @@ export function SettingRow({
   return (
     <div
       className={cn(
-        "grid gap-3 border-t border-white/[0.08] py-4 first:border-t-0 md:grid-cols-[minmax(13rem,1fr)_minmax(18rem,19rem)]",
+        "grid gap-3 border-t py-4 first:border-t-0 md:grid-cols-[minmax(13rem,1fr)_minmax(18rem,19rem)]",
         align === "center" ? "md:items-center" : "md:items-start",
+        "border-[var(--settings-divider)]",
       )}
     >
       <div>
-        <Label className="text-[15px] font-medium text-[#f4f1ea]">
+        <Label className="text-[15px] font-medium text-[var(--settings-text)]">
           {label}
         </Label>
         {description && (
-          <p className="mt-1 text-sm leading-6 text-[#8f8a82]">{description}</p>
+          <p className="mt-1 text-sm leading-6 text-[var(--settings-text-muted)]">
+            {description}
+          </p>
         )}
       </div>
       <div className="min-w-0">{children}</div>
@@ -86,28 +93,26 @@ export function ToggleSwitch({
   disabled?: boolean
 }) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      aria-pressed={checked}
+    <SwitchPrimitives.Root
+      checked={checked}
+      onCheckedChange={onChange}
       disabled={disabled}
-      onClick={() => onChange(!checked)}
+      aria-label={label}
       className={cn(
-        "relative h-7 w-12 cursor-pointer rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/80 disabled:cursor-not-allowed disabled:opacity-50",
-        checked
-          ? "border-purple-500/40 bg-purple-500"
-          : "border-white/10 bg-[#30302e]",
+        "peer inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-base)]",
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        "data-[state=checked]:bg-[var(--primary)] data-[state=unchecked]:bg-[var(--input)]",
       )}
     >
-      <motion.span
-        layout
-        transition={{ type: "spring", stiffness: 520, damping: 34 }}
+      <SwitchPrimitives.Thumb
         className={cn(
-          "absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-[#f4f1ea] shadow-sm",
-          checked ? "left-[1.55rem]" : "left-1",
+          "pointer-events-none block h-5 w-5 rounded-full shadow-md ring-0 transition-transform duration-200",
+          "bg-[var(--bg-base)]",
+          "data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0",
         )}
       />
-    </button>
+    </SwitchPrimitives.Root>
   )
 }
 
@@ -127,13 +132,8 @@ export function SaveBar({
   if (!dirty) return null
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 8 }}
-      className="mt-5 flex flex-col gap-3 rounded-2xl border border-purple-400/20 bg-purple-500/10 p-3 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <p className="text-sm text-purple-100">Unsaved changes</p>
+    <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-[var(--settings-accent-border)] bg-[var(--settings-accent-bg)] p-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm text-[var(--primary)]">Unsaved changes</p>
       <div className="flex gap-2">
         <Button
           type="button"
@@ -155,7 +155,7 @@ export function SaveBar({
           {saving ? "Saving..." : "Save"}
         </Button>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -177,7 +177,7 @@ export function PasswordInput({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={id} className="text-sm text-[#d8d2c8]">
+      <Label htmlFor={id} className="text-sm text-[var(--settings-text-secondary)]">
         {label}
       </Label>
       <div className="relative">
@@ -188,13 +188,16 @@ export function PasswordInput({
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
           autoComplete={autoComplete}
-          className={cn(settingsInputClass, "pr-11")}
+          className={cn(
+            settingsInputClass,
+            "border-[var(--settings-input-border)] bg-[var(--settings-input-bg)] text-[var(--settings-input-text)] placeholder:text-[var(--settings-input-placeholder)] pr-11",
+          )}
         />
         <button
           type="button"
           aria-label={visible ? `Hide ${label}` : `Show ${label}`}
           onClick={() => setVisible((current) => !current)}
-          className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 cursor-pointer place-items-center rounded-lg text-[#a8a29a] transition-colors hover:bg-white/[0.06] hover:text-[#f4f1ea] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+          className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 cursor-pointer place-items-center rounded-lg text-[var(--settings-text-muted)] transition-colors hover:bg-black/[0.06] hover:text-[var(--settings-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
         >
           {visible ? (
             <EyeOff className="h-4 w-4" aria-hidden="true" />
@@ -225,7 +228,7 @@ export function StrengthMeter({ password }: { password: string }) {
       ? "bg-red-400"
       : score <= 3
         ? "bg-amber-400"
-        : "bg-purple-400"
+        : "bg-[var(--primary)]"
 
   return (
     <div className="mt-3 space-y-2" aria-live="polite">
@@ -234,13 +237,15 @@ export function StrengthMeter({ password }: { password: string }) {
           <span
             key={index}
             className={cn(
-              "h-1.5 flex-1 rounded-full bg-white/[0.08]",
+              "h-1.5 flex-1 rounded-full bg-[var(--settings-divider)]",
               index < score && activeColor,
             )}
           />
         ))}
       </div>
-      <p className="text-xs text-[#8f8a82]">Strength: {labels[score]}</p>
+      <p className="text-xs text-[var(--settings-text-muted)]">
+        Strength: {labels[score]}
+      </p>
     </div>
   )
 }
@@ -261,11 +266,13 @@ export function DangerAction({
   const [confirming, setConfirming] = useState(false)
 
   return (
-    <div className="rounded-2xl border border-red-400/20 bg-red-950/10 p-4">
+    <div className="rounded-2xl border border-[var(--settings-danger-border)] bg-[var(--settings-danger-bg)] p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-sm font-medium text-[#f4f1ea]">{title}</h3>
-          <p className="mt-1 text-sm leading-6 text-[#a8a29a]">{description}</p>
+          <h3 className="text-sm font-medium text-[var(--settings-text)]">{title}</h3>
+          <p className="mt-1 text-sm leading-6 text-[var(--settings-text-muted)]">
+            {description}
+          </p>
         </div>
         <Button
           type="button"
@@ -278,12 +285,8 @@ export function DangerAction({
         </Button>
       </div>
       {confirming && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          className="mt-4 overflow-hidden rounded-xl border border-red-400/20 bg-black/20 p-3"
-        >
-          <p className="text-sm text-[#d8d2c8]">
+        <div className="mt-4 overflow-hidden rounded-xl border border-[var(--settings-danger-border)] bg-[var(--settings-card-bg)] p-3">
+          <p className="text-sm text-[var(--settings-text-secondary)]">
             Confirm this action for Sarah Johnson's Skēnē account.
           </p>
           <div className="mt-3 flex justify-end gap-2">
@@ -309,7 +312,7 @@ export function DangerAction({
               Confirm
             </Button>
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   )
@@ -317,7 +320,7 @@ export function DangerAction({
 
 export function SelectedMark() {
   return (
-    <span className="grid h-5 w-5 place-items-center rounded-full bg-purple-500 text-white">
+    <span className="grid h-5 w-5 place-items-center rounded-full bg-[var(--primary)] text-white">
       <Check className="h-3.5 w-3.5" aria-hidden="true" />
     </span>
   )

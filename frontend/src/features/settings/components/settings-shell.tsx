@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { AlertTriangle, Bell, Palette, Shield, UserCircle } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
@@ -56,81 +56,76 @@ export function SettingsShell() {
   const themeTools = useTheme()
   const [activeSection, setActiveSection] = useState<SettingsSection>("general")
   const prefersReducedMotion = useReducedMotion()
-  const activeMeta = useMemo(
-    () => sections.find((section) => section.id === activeSection) ?? sections[0],
-    [activeSection],
-  )
 
   if (!user) return null
 
   const transition = prefersReducedMotion
     ? { duration: 0 }
     : { duration: 0.18, ease: "easeOut" as const }
-  const ActiveIcon = activeMeta.icon
 
   return (
-    <div className="mx-auto w-full max-w-[1220px] px-6 pb-20 pt-2 md:px-10 lg:px-14">
-      <motion.div
-        initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={transition}
-        className="mb-10"
-      >
-        <h1 className="font-display text-4xl font-medium tracking-tight text-[#f4f1ea] md:text-5xl">
-          Settings
-        </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#a8a29a]">
-          Manage your Skēnē account, theatre profile, and workspace preferences.
-        </p>
-      </motion.div>
-
+    <div className="mx-auto w-full max-w-[1220px] px-6 pb-20 pt-0 md:px-10 lg:pl-4 lg:pr-14">
       <div className="grid gap-8 lg:grid-cols-[13.5rem_minmax(0,1fr)]">
-        <nav
-          aria-label="Settings sections"
-          className="lg:sticky lg:top-28 lg:self-start"
-        >
-          <div className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1 lg:overflow-visible lg:pb-0">
-            {sections.map((section) => {
-              const selected = section.id === activeSection
-              const Icon = section.icon
-              return (
-                <button
-                  key={section.id}
-                  type="button"
-                  onClick={() => setActiveSection(section.id)}
-                  className={cn(
-                    "group relative flex min-w-fit cursor-pointer items-center gap-3 rounded-xl px-4 py-3 text-left text-[15px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 lg:w-full",
-                    selected
-                      ? "bg-[#111110] text-[#f4f1ea]"
-                      : "text-[#d8d2c8] hover:bg-white/[0.045] hover:text-[#f4f1ea]",
-                  )}
-                  aria-current={selected ? "page" : undefined}
-                >
-                  <Icon
+        <div className="lg:sticky lg:top-10 lg:self-start lg:pt-8">
+          <motion.div
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={transition}
+            className="mb-2"
+          >
+            <h1 className="font-display text-4xl font-medium tracking-tight text-[var(--settings-heading)] md:text-5xl">
+              Settings
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--settings-text-muted)]">
+              Manage your Skēnē account, theatre profile, and workspace preferences.
+            </p>
+          </motion.div>
+
+          <nav aria-label="Settings sections">
+            <div className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1 lg:overflow-visible lg:pb-0">
+              {sections.map((section) => {
+                const selected = section.id === activeSection
+                const Icon = section.icon
+                return (
+                  <button
+                    key={section.id}
+                    type="button"
+                    onClick={() => setActiveSection(section.id)}
                     className={cn(
-                      "h-4 w-4 shrink-0 transition-colors lg:hidden",
-                      selected ? "text-purple-300" : "text-[#8f8a82]",
+                      "group relative flex min-w-fit cursor-pointer items-center gap-3 rounded-xl px-4 py-3 text-left text-[15px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] lg:w-full",
+                      selected
+                        ? "bg-[var(--settings-nav-active-bg)] text-[var(--settings-nav-active-text)] shadow-[var(--settings-accent-glow)]"
+                        : "text-[var(--settings-nav-text)] hover:bg-[var(--settings-nav-hover-bg)] hover:text-[var(--settings-text)]",
                     )}
-                    aria-hidden="true"
-                  />
-                  <span>
-                    <span className="block">{section.label}</span>
-                    <span className="mt-0.5 hidden text-xs leading-4 text-[#8f8a82] lg:block">
-                      {section.description}
+                    aria-current={selected ? "page" : undefined}
+                  >
+                    <Icon
+                      className={cn(
+                        "h-4 w-4 shrink-0 transition-colors lg:hidden",
+                        selected ? "text-[var(--primary)]" : "text-[var(--settings-nav-text-muted)]",
+                      )}
+                      aria-hidden="true"
+                    />
+                    <span>
+                      <span className="block font-medium">{section.label}</span>
+                      <span className="mt-0.5 hidden text-xs leading-4 text-[var(--settings-nav-text-muted)] lg:block">
+                        {section.description}
+                      </span>
                     </span>
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        </nav>
+                  </button>
+                )
+              })}
+            </div>
+          </nav>
+        </div>
 
         <div className="min-w-0">
-          <div className="mb-4 flex items-center gap-2 text-sm text-[#8f8a82] lg:hidden">
-            <ActiveIcon className="h-4 w-4" aria-hidden="true" />
-            <span>{activeMeta.description}</span>
-          </div>
-          <div className={cn(settingsPanelClass, "max-w-[720px] p-6 md:p-8")}>
+          <div
+            className={cn(
+              settingsPanelClass,
+              "max-w-[720px] border-[var(--settings-panel-border)] bg-[var(--settings-panel-bg)] p-6 md:p-8",
+            )}
+          >
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeSection}

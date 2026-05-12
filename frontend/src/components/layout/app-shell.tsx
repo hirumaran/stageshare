@@ -44,13 +44,20 @@ export default function AppShell() {
     [resolvedTheme, search],
   )
   const ditherOverlay = useMemo(
-    () => ({
-      background: `
-        radial-gradient(circle at 50% 20%, rgba(255,255,255,0.035), transparent 28%),
-        linear-gradient(to bottom, ${hexToRgba(dailyDither.background, dailyDither.overlayOpacity * 0.55)}, ${hexToRgba(dailyDither.darkLayer, Math.min(0.9, dailyDither.overlayOpacity + 0.16))}),
-        ${hexToRgba(dailyDither.darkLayer, resolvedTheme === "dark" ? 0.32 : 0.08)}
-      `,
-    }),
+    () => {
+      const isDark = resolvedTheme === "dark"
+      const baseOverlayOpacity = isDark
+        ? dailyDither.overlayOpacity
+        : Math.min(0.75, dailyDither.overlayOpacity + 0.12)
+      return {
+        background: `
+          radial-gradient(circle at 30% 20%, rgba(255,255,255,${isDark ? 0.035 : 0.08}), transparent 35%),
+          radial-gradient(circle at 70% 80%, rgba(0,0,0,${isDark ? 0.08 : 0.04}), transparent 40%),
+          linear-gradient(to bottom, ${hexToRgba(dailyDither.background, baseOverlayOpacity * 0.45)}, ${hexToRgba(dailyDither.darkLayer, Math.min(0.85, baseOverlayOpacity + 0.1))}),
+          ${hexToRgba(dailyDither.darkLayer, isDark ? 0.32 : 0.12)}
+        `,
+      }
+    },
     [
       dailyDither.background,
       dailyDither.darkLayer,
@@ -83,7 +90,7 @@ export default function AppShell() {
             pixelSize={10}
             scale={1.4}
             rotation={-8}
-            opacity={dailyDither.ditherOpacity * 0.65}
+            opacity={dailyDither.ditherOpacity}
           />
           <div
             className="pointer-events-none fixed inset-0 z-[1] transition-opacity duration-700"

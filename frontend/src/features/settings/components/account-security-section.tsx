@@ -59,7 +59,7 @@ export function AccountSecuritySection({ user }: { user: User }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18, ease: "easeOut" }}
     >
-      <h2 className="mb-8 text-lg font-semibold text-[#f4f1ea]">
+      <h2 className="mb-8 text-lg font-semibold text-[var(--settings-heading)]">
         Account & Security
       </h2>
 
@@ -72,7 +72,7 @@ export function AccountSecuritySection({ user }: { user: User }) {
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className={settingsInputClass}
+            className={`${settingsInputClass} border-[var(--settings-input-border)] bg-[var(--settings-input-bg)] text-[var(--settings-input-text)] placeholder:text-[var(--settings-input-placeholder)]`}
           />
         </SettingRow>
         <SaveBar
@@ -122,12 +122,12 @@ export function AccountSecuritySection({ user }: { user: User }) {
                 }
               />
               {mismatch && (
-                <p className="mt-2 text-xs text-red-300">
+                <p className="mt-2 text-xs text-red-400">
                   Passwords do not match.
                 </p>
               )}
               {weak && !mismatch && (
-                <p className="mt-2 text-xs text-amber-300">
+                <p className="mt-2 text-xs text-amber-400">
                   Use a stronger password before saving.
                 </p>
               )}

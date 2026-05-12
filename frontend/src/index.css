@@ -112,6 +112,32 @@
   --school-bigpicture: #4A6B5A;
   --school-newport: #4A5080;
   --school-sammamish: #4A7C59;
+
+  /* Settings page theme tokens */
+  --settings-heading: #1e293b;
+  --settings-text: #1e293b;
+  --settings-text-secondary: #4b5563;
+  --settings-text-muted: #6b7280;
+  --settings-panel-bg: rgba(250, 249, 246, 0.95);
+  --settings-panel-border: rgba(0, 0, 0, 0.08);
+  --settings-panel-shadow: 0 18px 70px rgba(0, 0, 0, 0.08);
+  --settings-input-bg: #ffffff;
+  --settings-input-border: rgba(0, 0, 0, 0.10);
+  --settings-input-text: #1e293b;
+  --settings-input-placeholder: #9ca3af;
+  --settings-nav-active-bg: rgba(99, 102, 241, 0.12);
+  --settings-nav-active-text: #1e293b;
+  --settings-nav-hover-bg: rgba(0, 0, 0, 0.05);
+  --settings-nav-text: #374151;
+  --settings-nav-text-muted: #6b7280;
+  --settings-divider: rgba(0, 0, 0, 0.08);
+  --settings-card-bg: rgba(0, 0, 0, 0.03);
+  --settings-card-border: rgba(0, 0, 0, 0.06);
+  --settings-accent-bg: rgba(99, 102, 241, 0.10);
+  --settings-accent-border: rgba(99, 102, 241, 0.35);
+  --settings-accent-glow: 0 10px 40px rgba(99, 102, 241, 0.10);
+  --settings-danger-bg: rgba(239, 68, 68, 0.06);
+  --settings-danger-border: rgba(239, 68, 68, 0.20);
 }
 
 .dark {
@@ -149,6 +175,32 @@
   --destructive-foreground: #1e1b18;
   --sidebar-accent-foreground: #d1d5db;
   --sidebar-primary-foreground: #1e1b18;
+
+  /* Settings page dark theme tokens */
+  --settings-heading: #f4f1ea;
+  --settings-text: #f4f1ea;
+  --settings-text-secondary: #d8d2c8;
+  --settings-text-muted: #a8a29a;
+  --settings-panel-bg: rgba(31, 31, 29, 0.76);
+  --settings-panel-border: rgba(255, 255, 255, 0.08);
+  --settings-panel-shadow: 0 18px 70px rgba(0, 0, 0, 0.28);
+  --settings-input-bg: #30302e;
+  --settings-input-border: rgba(255, 255, 255, 0.08);
+  --settings-input-text: #f4f1ea;
+  --settings-input-placeholder: #8f8a82;
+  --settings-nav-active-bg: rgba(99, 102, 241, 0.18);
+  --settings-nav-active-text: #f4f1ea;
+  --settings-nav-hover-bg: rgba(255, 255, 255, 0.06);
+  --settings-nav-text: #e2d8cc;
+  --settings-nav-text-muted: #a8a29a;
+  --settings-divider: rgba(255, 255, 255, 0.08);
+  --settings-card-bg: rgba(255, 255, 255, 0.03);
+  --settings-card-border: rgba(255, 255, 255, 0.06);
+  --settings-accent-bg: rgba(94, 108, 255, 0.15);
+  --settings-accent-border: rgba(129, 140, 248, 0.35);
+  --settings-accent-glow: 0 10px 40px rgba(94, 108, 255, 0.14);
+  --settings-danger-bg: rgba(239, 68, 68, 0.10);
+  --settings-danger-border: rgba(239, 68, 68, 0.20);
 }
 
 @layer base {

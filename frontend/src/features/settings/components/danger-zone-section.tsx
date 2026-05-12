@@ -9,7 +9,7 @@ export function DangerZoneSection() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18, ease: "easeOut" }}
     >
-      <h2 className="mb-8 text-lg font-semibold text-[#f4f1ea]">
+      <h2 className="mb-8 text-lg font-semibold text-[var(--settings-heading)]">
         Danger Zone
       </h2>
 

@@ -67,25 +67,27 @@ export function ProfileSection({
       transition={{ duration: 0.18, ease: "easeOut" }}
       className="space-y-2"
     >
-      <h2 className="mb-8 text-lg font-semibold text-[#f4f1ea]">Profile</h2>
+      <h2 className="mb-8 text-lg font-semibold text-[var(--settings-heading)]">
+        Profile
+      </h2>
 
       <SectionGroup title="Avatar">
         <div className="flex items-center justify-between gap-5">
           <div>
-            <p className="text-sm leading-6 text-[#a8a29a]">
+            <p className="text-sm leading-6 text-[var(--settings-text-muted)]">
               Shown on borrow requests, teacher messages, and shared resources.
             </p>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="mt-3 cursor-pointer border-white/10 bg-transparent"
+              className="mt-3 cursor-pointer border-[var(--settings-card-border)] bg-transparent"
             >
               <Upload className="h-4 w-4" aria-hidden="true" />
               Change avatar
             </Button>
           </div>
-          <Avatar className="h-16 w-16 border border-white/10 shadow-lg">
+          <Avatar className="h-16 w-16 border border-[var(--settings-card-border)] shadow-lg">
             <AvatarImage src={user.avatar} alt={user.name} />
             <AvatarFallback className="text-lg">
               {getInitials(user.name)}
@@ -101,7 +103,7 @@ export function ProfileSection({
             onChange={(event) =>
               setForm((current) => ({ ...current, name: event.target.value }))
             }
-            className={settingsInputClass}
+            className={`${settingsInputClass} border-[var(--settings-input-border)] bg-[var(--settings-input-bg)] text-[var(--settings-input-text)] placeholder:text-[var(--settings-input-placeholder)]`}
           />
         </SettingRow>
         <SettingRow label="What should Skēnē call you?">
@@ -113,7 +115,7 @@ export function ProfileSection({
                 callName: event.target.value,
               }))
             }
-            className={settingsInputClass}
+            className={`${settingsInputClass} border-[var(--settings-input-border)] bg-[var(--settings-input-bg)] text-[var(--settings-input-text)] placeholder:text-[var(--settings-input-placeholder)]`}
           />
         </SettingRow>
         <SettingRow label="What best describes your work?">
@@ -122,7 +124,7 @@ export function ProfileSection({
             onChange={(event) =>
               setForm((current) => ({ ...current, work: event.target.value }))
             }
-            className={settingsInputClass}
+            className={`${settingsInputClass} border-[var(--settings-input-border)] bg-[var(--settings-input-bg)] text-[var(--settings-input-text)] placeholder:text-[var(--settings-input-placeholder)]`}
           />
         </SettingRow>
         <SettingRow label="School">
@@ -131,7 +133,7 @@ export function ProfileSection({
             onChange={(event) =>
               setForm((current) => ({ ...current, school: event.target.value }))
             }
-            className={settingsInputClass}
+            className={`${settingsInputClass} border-[var(--settings-input-border)] bg-[var(--settings-input-bg)] text-[var(--settings-input-text)] placeholder:text-[var(--settings-input-placeholder)]`}
           />
         </SettingRow>
       </SectionGroup>
@@ -149,7 +151,7 @@ export function ProfileSection({
               instructions: event.target.value,
             }))
           }
-          className="min-h-44 rounded-xl border-white/[0.08] bg-[#30302e] text-[15px] leading-6 text-[#f4f1ea] placeholder:text-[#8f8a82] focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-0"
+          className="min-h-44 rounded-xl border-[var(--settings-input-border)] bg-[var(--settings-input-bg)] text-[15px] leading-6 text-[var(--settings-input-text)] placeholder:text-[var(--settings-input-placeholder)] focus-visible:ring-2 focus-visible:ring-[var(--ring)]/70 focus-visible:ring-offset-0"
         />
       </SectionGroup>
 
@@ -161,7 +163,7 @@ export function ProfileSection({
           onChange={(event) =>
             setForm((current) => ({ ...current, bio: event.target.value }))
           }
-          className="rounded-xl border-white/[0.08] bg-[#30302e] text-[15px] leading-6 text-[#f4f1ea] placeholder:text-[#8f8a82] focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-0"
+          className="rounded-xl border-[var(--settings-input-border)] bg-[var(--settings-input-bg)] text-[15px] leading-6 text-[var(--settings-input-text)] placeholder:text-[var(--settings-input-placeholder)] focus-visible:ring-2 focus-visible:ring-[var(--ring)]/70 focus-visible:ring-offset-0"
         />
         <SaveBar
           dirty={dirty}
