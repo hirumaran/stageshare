@@ -60,7 +60,7 @@ export function NotificationsSection() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18, ease: "easeOut" }}
     >
-      <h2 className="mb-8 text-lg font-semibold text-[#f4f1ea]">
+      <h2 className="mb-8 text-lg font-semibold text-[var(--settings-heading)]">
         Notifications
       </h2>
 
@@ -68,7 +68,7 @@ export function NotificationsSection() {
         title="Delivery"
         description="Toggles auto-save so notification changes take effect immediately."
       >
-        <div className="mb-2 hidden grid-cols-[1fr_4rem_4rem] gap-4 px-1 text-right text-xs font-medium uppercase tracking-[0.14em] text-[#8f8a82] md:grid">
+        <div className="mb-2 hidden grid-cols-[1fr_4rem_4rem] gap-4 px-1 text-right text-xs font-medium uppercase tracking-[0.14em] text-[var(--settings-text-muted)] md:grid">
           <span />
           <span>Email</span>
           <span>In-app</span>
@@ -81,7 +81,9 @@ export function NotificationsSection() {
           >
             <div className="flex items-center justify-end gap-6">
               <div className="flex items-center gap-2 md:block">
-                <span className="text-xs text-[#8f8a82] md:hidden">Email</span>
+                <span className="text-xs text-[var(--settings-text-muted)] md:hidden">
+                  Email
+                </span>
                 <ToggleSwitch
                   checked={email[row.id]}
                   label={`${row.label} email notifications`}
@@ -89,7 +91,9 @@ export function NotificationsSection() {
                 />
               </div>
               <div className="flex items-center gap-2 md:block">
-                <span className="text-xs text-[#8f8a82] md:hidden">In-app</span>
+                <span className="text-xs text-[var(--settings-text-muted)] md:hidden">
+                  In-app
+                </span>
                 <ToggleSwitch
                   checked={inApp[row.id]}
                   label={`${row.label} in-app notifications`}

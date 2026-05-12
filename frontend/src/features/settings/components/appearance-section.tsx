@@ -60,7 +60,9 @@ export function AppearanceSection({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18, ease: "easeOut" }}
     >
-      <h2 className="mb-8 text-lg font-semibold text-[#f4f1ea]">Appearance</h2>
+      <h2 className="mb-8 text-lg font-semibold text-[var(--settings-heading)]">
+        Appearance
+      </h2>
 
       <SectionGroup
         title="Theme"
@@ -76,20 +78,23 @@ export function AppearanceSection({
                 type="button"
                 onClick={() => setTheme(option.value)}
                 className={cn(
-                  "group relative cursor-pointer rounded-2xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500",
+                  "group relative cursor-pointer rounded-2xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
                   selected
-                    ? "border-purple-400/50 bg-purple-500/15 shadow-[0_10px_40px_rgba(94,108,255,0.14)]"
-                    : "border-white/[0.08] bg-[#242422]/70 hover:border-white/15 hover:bg-[#2b2b29]",
+                    ? "border-[var(--settings-accent-border)] bg-[var(--settings-accent-bg)] shadow-[var(--settings-accent-glow)]"
+                    : "border-[var(--settings-card-border)] bg-[var(--settings-card-bg)] hover:border-[var(--settings-panel-border)] hover:bg-[var(--settings-card-bg)]",
                 )}
               >
                 <div className="mb-5 flex items-center justify-between">
-                  <Icon className="h-4 w-4 text-[#d8d2c8]" aria-hidden="true" />
+                  <Icon
+                    className="h-4 w-4 text-[var(--settings-text-secondary)]"
+                    aria-hidden="true"
+                  />
                   {selected && <SelectedMark />}
                 </div>
-                <p className="text-sm font-medium text-[#f4f1ea]">
+                <p className="text-sm font-medium text-[var(--settings-text)]">
                   {option.label}
                 </p>
-                <p className="mt-1 text-xs leading-5 text-[#8f8a82]">
+                <p className="mt-1 text-xs leading-5 text-[var(--settings-text-muted)]">
                   {option.description}
                 </p>
               </button>
@@ -114,10 +119,10 @@ export function AppearanceSection({
                   toast.success(`${option.label} accent selected`)
                 }}
                 className={cn(
-                  "grid h-9 w-9 cursor-pointer place-items-center rounded-full border transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500",
+                  "grid h-9 w-9 cursor-pointer place-items-center rounded-full border transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
                   accent === option.value
-                    ? "border-white/70"
-                    : "border-white/10",
+                    ? "border-[var(--settings-text)]"
+                    : "border-[var(--settings-card-border)]",
                 )}
               >
                 <span
@@ -161,10 +166,13 @@ export function AppearanceSection({
       </SectionGroup>
 
       <SectionGroup title="Preview">
-        <div className="rounded-2xl border border-white/[0.08] bg-[#242422]/70 p-4">
+        <div className="rounded-2xl border border-[var(--settings-card-border)] bg-[var(--settings-card-bg)] p-4">
           <div className="mb-4 flex items-center gap-2">
-            <Palette className="h-4 w-4 text-purple-300" aria-hidden="true" />
-            <p className="text-sm font-medium text-[#f4f1ea]">
+            <Palette
+              className="h-4 w-4 text-[var(--primary)]"
+              aria-hidden="true"
+            />
+            <p className="text-sm font-medium text-[var(--settings-text)]">
               Theatre workspace
             </p>
           </div>
@@ -172,14 +180,14 @@ export function AppearanceSection({
             {["Resource", "Request", "Message"].map((item) => (
               <div
                 key={item}
-                className="rounded-xl border border-white/[0.08] bg-[#30302e] p-3"
+                className="rounded-xl border border-[var(--settings-card-border)] bg-[var(--settings-input-bg)] p-3"
               >
                 <div
                   className="mb-3 h-1.5 w-10 rounded-full"
                   style={{ backgroundColor: accent }}
                 />
-                <p className="text-sm text-[#f4f1ea]">{item}</p>
-                <p className="mt-1 text-xs text-[#8f8a82]">
+                <p className="text-sm text-[var(--settings-text)]">{item}</p>
+                <p className="mt-1 text-xs text-[var(--settings-text-muted)]">
                   Preview surface
                 </p>
               </div>
