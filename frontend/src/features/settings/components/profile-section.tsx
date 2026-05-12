@@ -19,7 +19,6 @@ type ProfileForm = {
   name: string
   callName: string
   work: string
-  instructions: string
   school: string
   bio: string
 }
@@ -36,8 +35,6 @@ export function ProfileSection({
       name: user.name,
       callName: user.name.split(" ")[0] ?? user.name,
       work: "High school drama teacher",
-      instructions:
-        "Keep recommendations practical for public school theatre budgets. Prioritize reusable props, adaptable lesson plans, and clear borrowing timelines.",
       school: user.school ?? "",
       bio: user.bio ?? "",
     }),
@@ -136,23 +133,6 @@ export function ProfileSection({
             className={`${settingsInputClass} border-[var(--settings-input-border)] bg-[var(--settings-input-bg)] text-[var(--settings-input-text)] placeholder:text-[var(--settings-input-placeholder)]`}
           />
         </SettingRow>
-      </SectionGroup>
-
-      <SectionGroup
-        title="Instructions for Skēnē"
-        description="Skēnē uses this context to keep catalog suggestions and collaboration prompts relevant to your theatre program."
-      >
-        <Textarea
-          value={form.instructions}
-          rows={7}
-          onChange={(event) =>
-            setForm((current) => ({
-              ...current,
-              instructions: event.target.value,
-            }))
-          }
-          className="min-h-44 rounded-xl border-[var(--settings-input-border)] bg-[var(--settings-input-bg)] text-[15px] leading-6 text-[var(--settings-input-text)] placeholder:text-[var(--settings-input-placeholder)] focus-visible:ring-2 focus-visible:ring-[var(--ring)]/70 focus-visible:ring-offset-0"
-        />
       </SectionGroup>
 
       <SectionGroup title="Public bio">
