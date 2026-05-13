@@ -1,4 +1,4 @@
-import React from "react"
+import { Edit3 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export interface ProfileCardProps {
@@ -21,93 +21,56 @@ export const ProfileCard = ({
   timestamp = "12m ago",
   imageSrc = defaultImage,
   avatarSrc = imageSrc,
-  actionLabel = "+ Add member",
+  actionLabel = "Edit profile",
   onAction,
   className,
 }: ProfileCardProps) => {
   return (
-    <>
-      <style>
-        {`
-          .profile-card-hover-scale {
-            transition: transform 700ms ease-out;
-          }
+    <div className={cn("w-full max-w-sm", className)}>
+      <div className="group overflow-hidden rounded-2xl border border-black/10 bg-white/85 shadow-[0_18px_50px_rgba(25,20,15,0.14)] backdrop-blur-xl transition-colors duration-200 hover:border-black/15 dark:border-white/[0.10] dark:bg-[#25211d]/90 dark:shadow-[0_18px_50px_rgba(0,0,0,0.24)] dark:hover:border-white/[0.16]">
+        <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+          <img
+            src={imageSrc}
+            alt={name}
+            className="h-full w-full object-cover brightness-[0.94] saturate-[0.92] transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+          <p className="absolute bottom-4 left-4 font-serif text-2xl text-white drop-shadow">
+            {name}
+          </p>
+        </div>
 
-          .profile-card-hover-scale:hover {
-            transform: scale(1.02);
-          }
-
-          .profile-card-image-scale {
-            transition: transform 700ms ease-out;
-          }
-
-          .profile-card-image-container:hover .profile-card-image-scale {
-            transform: scale(1.03);
-          }
-
-          .profile-card-hover-translate {
-            transition: transform 500ms ease-out;
-          }
-
-          .profile-card-hover-translate:hover {
-            transform: translateX(4px);
-          }
-
-          .profile-card-hover-scale-sm {
-            transition: transform 500ms ease-out;
-          }
-
-          .profile-card-hover-scale-sm:hover {
-            transform: scale(1.1);
-          }
-        `}
-      </style>
-
-      <div className={cn("w-full max-w-md", className)}>
-        <div className="profile-card-hover-scale overflow-hidden rounded-3xl border border-black/10 bg-white/80 shadow-lg backdrop-blur-xl dark:border-white/[0.08] dark:bg-[#24201d]/[0.82] dark:shadow-2xl dark:shadow-black/50">
-          <div className="profile-card-image-container relative overflow-hidden">
-            <img
-              src={imageSrc}
-              alt={name}
-              className="profile-card-image-scale aspect-square w-full object-cover"
-            />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/35 to-transparent dark:from-black/65" />
-            <div className="absolute left-6 top-6">
-              <h2 className="text-2xl font-medium text-white drop-shadow-lg">
-                {name}
-              </h2>
+        <div className="flex items-center justify-between gap-3 p-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-white/45 dark:ring-white/15">
+              <img
+                src={avatarSrc}
+                alt={`${name} avatar`}
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-foreground">
+                {handle}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {timestamp}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-4 p-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="profile-card-hover-scale-sm h-8 w-8 shrink-0 overflow-hidden rounded-full ring-2 ring-gray-200 dark:ring-zinc-700">
-                <img
-                  src={avatarSrc}
-                  alt={`${name} avatar`}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="profile-card-hover-translate min-w-0">
-                <div className="truncate text-sm text-gray-700 dark:text-zinc-200">
-                  {handle}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-zinc-500">
-                  {timestamp}
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={onAction}
-              className="shrink-0 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-all duration-500 ease-out hover:scale-105 hover:bg-gray-800 hover:shadow-md active:scale-95 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:hover:shadow-lg dark:hover:shadow-black/50"
-              type="button"
-            >
-              {actionLabel}
-            </button>
-          </div>
+          <button
+            onClick={onAction}
+            className="inline-flex min-h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-border bg-secondary px-3.5 text-xs font-medium text-foreground transition-colors duration-200 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            type="button"
+            aria-label={actionLabel}
+          >
+            <Edit3 className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>{actionLabel}</span>
+          </button>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
