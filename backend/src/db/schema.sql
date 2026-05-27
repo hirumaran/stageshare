@@ -97,15 +97,18 @@ CREATE TABLE messages (
 
 -- Notifications
 CREATE TABLE notifications (
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  type VARCHAR(100) NOT NULL,
-  title VARCHAR(255),
-  message TEXT,
-  read BOOLEAN DEFAULT FALSE,
-  related_id INTEGER,
-  related_type VARCHAR(100),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type        VARCHAR(50) NOT NULL
+              CHECK (type IN (
+                'borrow_request', 'approved', 'rejected', 'cancelled',
+                'picked_up', 'returned', 'overdue', 'system'
+              )),
+  title       VARCHAR(200) NOT NULL,
+  body        TEXT,
+  link        TEXT,
+  is_read     BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- Seed schools
@@ -114,14 +117,15 @@ INSERT INTO schools (name, domain, location) VALUES
 ('Sample State College', 'sample.edu', 'Sample Town, SM'),
 ('Tech Institute', 'tech.edu', 'Tech City, TC');
 
--- Seed categories
+-- Seed categories (theatre-specific — must match frontend ResourceCategory union)
 INSERT INTO categories (name, icon) VALUES
-('Electronics', 'electronics'),
-('Furniture', 'furniture'),
-('Clothing', 'clothing'),
-('Books', 'books'),
-('Sports Equipment', 'sports'),
-('Tools', 'tools'),
-('Musical Instruments', 'music'),
-('Kitchen', 'kitchen'),
+('Scripts', 'scripts'),
+('Lesson Plans', 'lesson-plans'),
+('Costumes', 'costumes'),
+('Props', 'props'),
+('Lighting', 'lighting'),
+('Sound', 'sound'),
+('Set Design', 'set-design'),
+('Makeup', 'makeup'),
+('Music', 'music'),
 ('Other', 'other');

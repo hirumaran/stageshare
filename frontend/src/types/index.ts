@@ -74,7 +74,7 @@ export interface Resource {
 }
 
 // Borrowing types
-export type BorrowRequestStatus = "pending" | "approved" | "rejected" | "returned" | "overdue"
+export type BorrowRequestStatus = "pending" | "approved" | "active" | "rejected" | "cancelled" | "returned" | "overdue"
 
 export interface BorrowRequest {
   id: string

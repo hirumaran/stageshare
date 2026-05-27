@@ -83,6 +83,10 @@ async function getUsersBySchool(req, res) {
       return res.status(400).json({ error: 'Invalid school ID' })
     }
 
+    if (req.user.schoolId !== schoolId && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'You can only view users from your own school' })
+    }
+
     const schoolCheck = await pool.query(
       'SELECT id FROM schools WHERE id = $1',
       [schoolId]
@@ -128,6 +132,10 @@ async function getSchoolStats(req, res) {
     const schoolId = parseInt(req.params.id, 10)
     if (Number.isNaN(schoolId)) {
       return res.status(400).json({ error: 'Invalid school ID' })
+    }
+
+    if (req.user.schoolId !== schoolId && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'You can only view stats from your own school' })
     }
 
     const result = await pool.query(

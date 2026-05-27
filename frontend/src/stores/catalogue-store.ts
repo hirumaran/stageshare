@@ -1,6 +1,6 @@
 import { create } from "zustand"
 import type { Resource, CatalogueFilters, ResourceCategory, ResourceCondition, ResourceStatus } from "@/types"
-import { mockResources } from "@/data/mock-data"
+import { apiFetch } from "@/lib/api"
 
 interface CatalogueState {
   resources: Resource[]
@@ -8,7 +8,8 @@ interface CatalogueState {
   selectedResource: Resource | null
   filters: CatalogueFilters
   isLoading: boolean
-  
+  error: string | null
+
   // Actions
   setFilters: (filters: Partial<CatalogueFilters>) => void
   resetFilters: () => void
@@ -18,7 +19,100 @@ interface CatalogueState {
   toggleCategory: (category: ResourceCategory) => void
   toggleCondition: (condition: ResourceCondition) => void
   toggleStatus: (status: ResourceStatus) => void
+  createItem: (data: CreateItemInput) => Promise<Resource | null>
+  updateItem: (id: string, data: UpdateItemInput) => Promise<Resource | null>
+  deleteItem: (id: string) => Promise<boolean>
 }
+
+export interface CreateItemInput {
+  name: string
+  description?: string
+  condition?: string
+  category_id?: number
+  quantity_total?: number
+  quantity_available?: number
+}
+
+export interface UpdateItemInput {
+  name?: string
+  description?: string
+  condition?: string
+  category_id?: number
+  quantity_total?: number
+  is_active?: boolean
+}
+
+// ---------------------------------------------------------------------------
+// Transform helpers — map backend snake_case / raw DB rows → frontend Resource
+// ---------------------------------------------------------------------------
+
+function mapCategory(_categoryId: unknown, categoryName?: string): ResourceCategory {
+  if (categoryName) {
+    const lower = categoryName.toLowerCase()
+    if (lower.includes("costume") || lower.includes("cloth")) return "costumes"
+    if (lower.includes("script") || lower.includes("book")) return "scripts"
+    if (lower.includes("prop")) return "props"
+    if (lower.includes("light")) return "lighting"
+    if (lower.includes("sound") || lower.includes("audio")) return "sound"
+    if (lower.includes("set") || lower.includes("design")) return "set-design"
+    if (lower.includes("makeup")) return "makeup"
+    if (lower.includes("music")) return "music"
+    if (lower.includes("lesson") || lower.includes("plan")) return "lesson-plans"
+  }
+  return "other"
+}
+
+function mapCondition(condition: unknown): ResourceCondition {
+  if (condition === "excellent" || condition === "good" || condition === "fair") return condition
+  if (condition === "poor") return "worn" // backend "poor" → frontend "worn"
+  return "good"
+}
+
+function mapStatus(item: Record<string, unknown>): ResourceStatus {
+  if (!item.is_active) return "unavailable"
+  const avail = Number(item.quantity_available ?? item.quantityAvailable ?? 0)
+  if (avail <= 0) return "borrowed"
+  return "available"
+}
+
+function mapItem(item: Record<string, unknown>): Resource {
+  const images: string[] = []
+  if (item.primary_image_url) images.push(item.primary_image_url as string)
+  if (Array.isArray(item.images)) {
+    for (const img of item.images as Array<{ image_url?: string }>) {
+      if (img.image_url) images.push(img.image_url)
+    }
+  }
+
+  return {
+    id: String(item.id),
+    title: (item.name as string) ?? "",
+    description: (item.description as string) ?? "",
+    category: mapCategory(item.category_id ?? item.categoryId, item.category_name as string | undefined),
+    condition: mapCondition(item.condition),
+    status: mapStatus(item),
+    images,
+    tags: [],
+    ownerId: String(item.school_id ?? item.schoolId ?? ""),
+    owner: {
+      id: "",
+      email: "",
+      name: "",
+      joinedAt: "",
+      resourcesShared: 0,
+      resourcesBorrowed: 0,
+    },
+    createdAt: (item.created_at as string) ?? (item.createdAt as string) ?? "",
+    updatedAt: (item.updated_at as string) ?? (item.updatedAt as string) ?? "",
+    borrowCount: 0,
+    rating: 0,
+    reviewCount: 0,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Client-side filtering (unchanged logic)
+// ---------------------------------------------------------------------------
 
 const defaultFilters: CatalogueFilters = {
   search: "",
@@ -30,8 +124,7 @@ const defaultFilters: CatalogueFilters = {
 
 function applyFilters(resources: Resource[], filters: CatalogueFilters): Resource[] {
   let result = [...resources]
-  
-  // Search filter
+
   if (filters.search) {
     const searchLower = filters.search.toLowerCase()
     result = result.filter(
@@ -41,23 +134,19 @@ function applyFilters(resources: Resource[], filters: CatalogueFilters): Resourc
         r.tags.some((t) => t.toLowerCase().includes(searchLower))
     )
   }
-  
-  // Category filter
+
   if (filters.categories.length > 0) {
     result = result.filter((r) => filters.categories.includes(r.category))
   }
-  
-  // Condition filter
+
   if (filters.conditions.length > 0) {
     result = result.filter((r) => filters.conditions.includes(r.condition))
   }
-  
-  // Status filter
+
   if (filters.status.length > 0) {
     result = result.filter((r) => filters.status.includes(r.status))
   }
-  
-  // Sorting
+
   switch (filters.sortBy) {
     case "newest":
       result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -72,9 +161,13 @@ function applyFilters(resources: Resource[], filters: CatalogueFilters): Resourc
       result.sort((a, b) => a.title.localeCompare(b.title))
       break
   }
-  
+
   return result
 }
+
+// ---------------------------------------------------------------------------
+// Store
+// ---------------------------------------------------------------------------
 
 export const useCatalogueStore = create<CatalogueState>((set, get) => ({
   resources: [],
@@ -82,6 +175,7 @@ export const useCatalogueStore = create<CatalogueState>((set, get) => ({
   selectedResource: null,
   filters: defaultFilters,
   isLoading: false,
+  error: null,
 
   setFilters: (newFilters) => {
     const filters = { ...get().filters, ...newFilters }
@@ -99,15 +193,15 @@ export const useCatalogueStore = create<CatalogueState>((set, get) => ({
   },
 
   fetchResources: async () => {
-    set({ isLoading: true })
-    
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    
-    const resources = mockResources
-    const filteredResources = applyFilters(resources, get().filters)
-    
-    set({ resources, filteredResources, isLoading: false })
+    set({ isLoading: true, error: null })
+    try {
+      const json = await apiFetch("/items")
+      const resources: Resource[] = (json.data as Record<string, unknown>[]).map(mapItem)
+      const filteredResources = applyFilters(resources, get().filters)
+      set({ resources, filteredResources, isLoading: false })
+    } catch (err) {
+      set({ isLoading: false, error: (err as Error).message })
+    }
   },
 
   searchResources: (query) => {
@@ -138,5 +232,55 @@ export const useCatalogueStore = create<CatalogueState>((set, get) => ({
       ? currentStatus.filter((s) => s !== status)
       : [...currentStatus, status]
     get().setFilters({ status: newStatus })
+  },
+
+  createItem: async (data) => {
+    set({ isLoading: true, error: null })
+    try {
+      const json = await apiFetch("/items", {
+        method: "POST",
+        body: JSON.stringify(data),
+      })
+      const resource = mapItem(json as Record<string, unknown>)
+      const resources = [...get().resources, resource]
+      const filteredResources = applyFilters(resources, get().filters)
+      set({ resources, filteredResources, isLoading: false })
+      return resource
+    } catch (err) {
+      set({ isLoading: false, error: (err as Error).message })
+      return null
+    }
+  },
+
+  updateItem: async (id, data) => {
+    set({ isLoading: true, error: null })
+    try {
+      const json = await apiFetch(`/items/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      })
+      const updated = mapItem(json as Record<string, unknown>)
+      const resources = get().resources.map((r) => (r.id === id ? updated : r))
+      const filteredResources = applyFilters(resources, get().filters)
+      set({ resources, filteredResources, isLoading: false, selectedResource: updated })
+      return updated
+    } catch (err) {
+      set({ isLoading: false, error: (err as Error).message })
+      return null
+    }
+  },
+
+  deleteItem: async (id) => {
+    set({ isLoading: true, error: null })
+    try {
+      await apiFetch(`/items/${id}`, { method: "DELETE" })
+      const resources = get().resources.filter((r) => r.id !== id)
+      const filteredResources = applyFilters(resources, get().filters)
+      set({ resources, filteredResources, isLoading: false })
+      return true
+    } catch (err) {
+      set({ isLoading: false, error: (err as Error).message })
+      return false
+    }
   },
 }))

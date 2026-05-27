@@ -8,6 +8,8 @@ import {
   Calendar,
   AlertCircle,
   MessageSquare,
+  PackageOpen,
+  Ban,
 } from "lucide-react"
 import { useUIStore } from "@/stores/ui-store"
 import { useAuthStore } from "@/stores/auth-store"
@@ -36,10 +38,20 @@ const statusConfig: Record<
     color: "bg-success text-success-foreground",
     icon: Check,
   },
+  active: {
+    label: "Active — Out on Loan",
+    color: "bg-primary text-primary-foreground",
+    icon: PackageOpen,
+  },
   rejected: {
     label: "Rejected",
     color: "bg-destructive text-destructive-foreground",
     icon: X,
+  },
+  cancelled: {
+    label: "Cancelled",
+    color: "bg-muted text-muted-foreground",
+    icon: Ban,
   },
   returned: {
     label: "Returned",
@@ -91,7 +103,7 @@ export default function BorrowingPage() {
 
   const pendingIncoming = incomingRequests.filter((r) => r.status === "pending")
   const activeIncoming = incomingRequests.filter(
-    (r) => r.status === "approved" || r.status === "overdue"
+    (r) => r.status === "approved" || r.status === "active" || r.status === "overdue"
   )
 
   const handleApprove = (requestId: string) => {
@@ -102,6 +114,11 @@ export default function BorrowingPage() {
   const handleReject = (requestId: string) => {
     updateBorrowRequest(requestId, "rejected", "Sorry, this item is not available at this time.")
     toast.success("Request rejected")
+  }
+
+  const handlePickup = (requestId: string) => {
+    updateBorrowRequest(requestId, "active")
+    toast.success("Marked as picked up")
   }
 
   const handleMarkReturned = (requestId: string) => {
@@ -216,6 +233,14 @@ export default function BorrowingPage() {
                   <div className="flex gap-2 mt-3">
                     <Button
                       size="sm"
+                      variant="default"
+                      onClick={() => handlePickup(request.id)}
+                    >
+                      <PackageOpen className="h-4 w-4 mr-1" />
+                      Mark as Picked Up
+                    </Button>
+                    <Button
+                      size="sm"
                       variant="outline"
                       onClick={() => handleMarkReturned(request.id)}
                     >
@@ -224,7 +249,22 @@ export default function BorrowingPage() {
                   </div>
                 )}
 
-              {request.status === "approved" && !isIncoming && (
+              {showActions &&
+                request.status === "active" &&
+                isIncoming && (
+                  <div className="flex gap-2 mt-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleMarkReturned(request.id)}
+                    >
+                      Mark as Returned
+                    </Button>
+                  </div>
+                )}
+
+              {(request.status === "approved" || request.status === "active") &&
+                !isIncoming && (
                 <div className="flex gap-2 mt-3">
                   <Button
                     size="sm"
@@ -274,7 +314,7 @@ export default function BorrowingPage() {
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">
-              {myRequests.filter((r) => r.status === "approved").length}
+              {myRequests.filter((r) => r.status === "approved" || r.status === "active").length}
             </div>
             <p className="text-sm text-muted-foreground">Items I&apos;m Borrowing</p>
           </CardContent>
@@ -343,14 +383,14 @@ export default function BorrowingPage() {
               )}
 
               {incomingRequests.filter(
-                (r) => r.status === "returned" || r.status === "rejected"
+                (r) => r.status === "returned" || r.status === "rejected" || r.status === "cancelled"
               ).length > 0 && (
                 <div>
                   <h3 className="font-semibold mb-3">History</h3>
                   <div className="space-y-3">
                     {incomingRequests
                       .filter(
-                        (r) => r.status === "returned" || r.status === "rejected"
+                        (r) => r.status === "returned" || r.status === "rejected" || r.status === "cancelled"
                       )
                       .map((request) => (
                         <RequestCard key={request.id} request={request} isIncoming />

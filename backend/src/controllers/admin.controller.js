@@ -7,6 +7,20 @@ async function getAllUsers(req, res) {
       return res.status(400).json({ error: 'Invalid school ID' })
     }
 
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const offset = (page - 1) * limit;
+
+    // Count distinct users matching the school filter
+    const countResult = await pool.query(
+      `SELECT COUNT(DISTINCT u.id)::int AS total
+       FROM users u
+       JOIN schools s ON u.school_id = s.id
+       WHERE ($1::int IS NULL OR u.school_id = $1)`,
+      [schoolId]
+    );
+    const total = countResult.rows[0].total;
+
     const { rows } = await pool.query(
       `SELECT
         u.id,
@@ -31,16 +45,25 @@ async function getAllUsers(req, res) {
       LEFT JOIN borrow_requests br ON br.requester_id = u.id
       WHERE ($1::int IS NULL OR u.school_id = $1)
       GROUP BY u.id, s.id, s.name, s.slug
-      ORDER BY s.name ASC, u.last_name ASC, u.first_name ASC`,
-      [schoolId]
+      ORDER BY s.name ASC, u.last_name ASC, u.first_name ASC
+      LIMIT $2 OFFSET $3`,
+      [schoolId, limit, offset]
     )
 
-    res.status(200).json(rows.map(row => ({
-      ...row,
-      items_listed: parseInt(row.items_listed),
-      active_borrows: parseInt(row.active_borrows),
-      pending_requests: parseInt(row.pending_requests)
-    })))
+    res.status(200).json({
+      data: rows.map(row => ({
+        ...row,
+        items_listed: parseInt(row.items_listed),
+        active_borrows: parseInt(row.active_borrows),
+        pending_requests: parseInt(row.pending_requests)
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (err) {
     console.error('[admin.controller.getAllUsers]', err)
     res.status(500).json({ error: 'Internal server error' })
@@ -75,7 +98,7 @@ async function toggleUserStatus(req, res) {
 
     const { rows } = await pool.query(
       `UPDATE users
-       SET is_active = $1, updated_at = NOW()
+       SET is_active = $1
        WHERE id = $2
        RETURNING id, first_name, last_name, email, role, is_active, school_id`,
       [is_active, targetUserId]

@@ -1,4 +1,5 @@
 const { pool } = require('../config/db')
+const { createNotification } = require('./notification.controller')
 
 /**
  * POST /api/v1/requests
@@ -97,6 +98,22 @@ async function createRequest(req, res) {
     )
 
     res.status(201).json(insert.rows[0])
+
+    // Fire-and-forget notification to item owner
+    const actor = await pool.query(
+      'SELECT first_name, last_name FROM users WHERE id = $1',
+      [req.user.userId]
+    )
+    const actorName = actor.rows.length
+      ? `${actor.rows[0].first_name} ${actor.rows[0].last_name}`
+      : 'A teacher'
+    createNotification(pool, {
+      userId: item.added_by,
+      type: 'borrow_request',
+      title: 'New Borrow Request',
+      body: `${actorName} wants to borrow "${item.name}"`,
+      link: `/requests/${insert.rows[0].id}`,
+    })
   } catch (err) {
     console.error('[createRequest] Error:', err)
     res.status(500).json({ error: 'Internal server error' })
@@ -109,19 +126,29 @@ async function createRequest(req, res) {
  */
 async function getIncomingRequests(req, res) {
   try {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const offset = (page - 1) * limit;
+
+    const countResult = await pool.query(
+      'SELECT COUNT(*)::int AS total FROM borrow_requests WHERE owner_school_id = $1',
+      [req.user.schoolId]
+    );
+    const total = countResult.rows[0].total;
+
     const result = await pool.query(
       `SELECT
         br.*,
         i.name          AS item_name,
         i.category_id,
-        ii.url          AS item_image_url,
+        ii.image_url    AS item_image_url,
         u.first_name    AS requester_first_name,
         u.last_name     AS requester_last_name,
         u.email         AS requester_email,
         s.name          AS requester_school_name
       FROM borrow_requests br
       JOIN items         i  ON br.item_id       = i.id
-      LEFT JOIN item_images ii ON ii.item_id   = i.id AND ii.is_primary = TRUE
+      LEFT JOIN item_images ii ON ii.item_id   = i.id AND ii.sort_order = 0
       JOIN users         u  ON br.requester_id  = u.id
       JOIN schools       s  ON br.requester_school_id = s.id
       WHERE br.owner_school_id = $1
@@ -132,10 +159,20 @@ async function getIncomingRequests(req, res) {
           WHEN 'active'   THEN 3
           ELSE 4
         END,
-        br.created_at DESC`,
-      [req.user.schoolId]
-    )
-    res.status(200).json(result.rows)
+        br.created_at DESC
+      LIMIT $2 OFFSET $3`,
+      [req.user.schoolId, limit, offset]
+    );
+
+    res.status(200).json({
+      data: result.rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (err) {
     console.error('[getIncomingRequests] Error:', err)
     res.status(500).json({ error: 'Internal server error' })
@@ -148,26 +185,46 @@ async function getIncomingRequests(req, res) {
  */
 async function getOutgoingRequests(req, res) {
   try {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const offset = (page - 1) * limit;
+
+    const countResult = await pool.query(
+      'SELECT COUNT(*)::int AS total FROM borrow_requests WHERE requester_id = $1',
+      [req.user.userId]
+    );
+    const total = countResult.rows[0].total;
+
     const result = await pool.query(
       `SELECT
         br.*,
         i.name          AS item_name,
         i.category_id,
-        ii.url          AS item_image_url,
+        ii.image_url    AS item_image_url,
         os.name         AS owner_school_name,
         u.first_name    AS owner_first_name,
         u.last_name     AS owner_last_name,
         u.matrix_user_id AS owner_matrix_user_id
       FROM borrow_requests br
       JOIN items       i  ON br.item_id         = i.id
-      LEFT JOIN item_images ii ON ii.item_id   = i.id AND ii.is_primary = TRUE
+      LEFT JOIN item_images ii ON ii.item_id   = i.id AND ii.sort_order = 0
       JOIN schools     os ON br.owner_school_id = os.id
       JOIN users       u  ON i.added_by         = u.id
       WHERE br.requester_id = $1
-      ORDER BY br.created_at DESC`,
-      [req.user.userId]
-    )
-    res.status(200).json(result.rows)
+      ORDER BY br.created_at DESC
+      LIMIT $2 OFFSET $3`,
+      [req.user.userId, limit, offset]
+    );
+
+    res.status(200).json({
+      data: result.rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (err) {
     console.error('[getOutgoingRequests] Error:', err)
     res.status(500).json({ error: 'Internal server error' })
@@ -220,6 +277,21 @@ async function approveRequest(req, res) {
     )
 
     res.status(200).json(updated.rows[0])
+
+    const actor = await pool.query(
+      'SELECT first_name, last_name FROM users WHERE id = $1',
+      [req.user.userId]
+    )
+    const actorName = actor.rows.length
+      ? `${actor.rows[0].first_name} ${actor.rows[0].last_name}`
+      : 'The item owner'
+    createNotification(pool, {
+      userId: request.requester_id,
+      type: 'approved',
+      title: 'Request Approved',
+      body: `${actorName} approved your request for "${request.item_name}"`,
+      link: `/requests/${requestId}`,
+    })
   } catch (err) {
     console.error('[approveRequest] Error:', err)
     res.status(500).json({ error: 'Internal server error' })
@@ -276,6 +348,21 @@ async function rejectRequest(req, res) {
     )
 
     res.status(200).json(updated.rows[0])
+
+    const actor = await pool.query(
+      'SELECT first_name, last_name FROM users WHERE id = $1',
+      [req.user.userId]
+    )
+    const actorName = actor.rows.length
+      ? `${actor.rows[0].first_name} ${actor.rows[0].last_name}`
+      : 'The item owner'
+    createNotification(pool, {
+      userId: request.requester_id,
+      type: 'rejected',
+      title: 'Request Rejected',
+      body: `${actorName} rejected your request for "${request.item_name}"`,
+      link: `/requests/${requestId}`,
+    })
   } catch (err) {
     console.error('[rejectRequest] Error:', err)
     res.status(500).json({ error: 'Internal server error' })
@@ -321,6 +408,28 @@ async function cancelRequest(req, res) {
     )
 
     res.status(200).json(updated.rows[0])
+
+    // Notify item owner
+    const itemResult = await pool.query(
+      'SELECT added_by, name FROM items WHERE id = $1',
+      [request.item_id]
+    )
+    const actor = await pool.query(
+      'SELECT first_name, last_name FROM users WHERE id = $1',
+      [req.user.userId]
+    )
+    const actorName = actor.rows.length
+      ? `${actor.rows[0].first_name} ${actor.rows[0].last_name}`
+      : 'A teacher'
+    if (itemResult.rows.length) {
+      createNotification(pool, {
+        userId: itemResult.rows[0].added_by,
+        type: 'cancelled',
+        title: 'Request Cancelled',
+        body: `${actorName} cancelled their request for "${itemResult.rows[0].name}"`,
+        link: `/requests/${requestId}`,
+      })
+    }
   } catch (err) {
     console.error('[cancelRequest] Error:', err)
     res.status(500).json({ error: 'Internal server error' })
@@ -382,6 +491,23 @@ async function pickupItem(req, res) {
     )
 
     await client.query('COMMIT')
+
+    const pickupActor = await pool.query(
+      'SELECT first_name, last_name FROM users WHERE id = $1',
+      [req.user.userId]
+    )
+    const pickupActorName = pickupActor.rows.length
+      ? `${pickupActor.rows[0].first_name} ${pickupActor.rows[0].last_name}`
+      : 'The item owner'
+    const pickupItemInfo = await pool.query('SELECT name FROM items WHERE id = $1', [request.item_id])
+    createNotification(pool, {
+      userId: request.requester_id,
+      type: 'picked_up',
+      title: 'Item Picked Up',
+      body: `${pickupActorName} marked "${pickupItemInfo.rows[0]?.name || 'item'}" as picked up`,
+      link: `/requests/${requestId}`,
+    })
+
     res.status(200).json(updated[0])
   } catch (err) {
     await client.query('ROLLBACK')
@@ -446,6 +572,23 @@ async function returnItem(req, res) {
     )
 
     await client.query('COMMIT')
+
+    const returnActor = await pool.query(
+      'SELECT first_name, last_name FROM users WHERE id = $1',
+      [req.user.userId]
+    )
+    const returnActorName = returnActor.rows.length
+      ? `${returnActor.rows[0].first_name} ${returnActor.rows[0].last_name}`
+      : 'The item owner'
+    const returnItemInfo = await pool.query('SELECT name FROM items WHERE id = $1', [request.item_id])
+    createNotification(pool, {
+      userId: request.requester_id,
+      type: 'returned',
+      title: 'Item Returned',
+      body: `${returnActorName} marked "${returnItemInfo.rows[0]?.name || 'item'}" as returned`,
+      link: `/requests/${requestId}`,
+    })
+
     res.status(200).json(updated[0])
   } catch (err) {
     await client.query('ROLLBACK')
@@ -475,7 +618,7 @@ async function getRequestById(req, res) {
         br.*,
         i.name        AS item_name,
         i.description AS item_description,
-        ii.url        AS item_image_url,
+        ii.image_url  AS item_image_url,
         req_u.first_name  AS requester_first_name,
         req_u.last_name   AS requester_last_name,
         req_u.email       AS requester_email,
@@ -486,7 +629,7 @@ async function getRequestById(req, res) {
         own_u.matrix_user_id AS owner_matrix_user_id
       FROM borrow_requests br
       JOIN items       i     ON br.item_id             = i.id
-      LEFT JOIN item_images ii ON ii.item_id           = i.id AND ii.is_primary = TRUE
+      LEFT JOIN item_images ii ON ii.item_id           = i.id AND ii.sort_order = 0
       JOIN users       req_u ON br.requester_id         = req_u.id
       JOIN schools     req_s ON br.requester_school_id  = req_s.id
       JOIN schools     own_s ON br.owner_school_id      = own_s.id
