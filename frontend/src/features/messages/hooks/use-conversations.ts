@@ -1,8 +1,9 @@
-import { useMemo } from "react"
+import { useMemo, useCallback, useState } from "react"
 import { useMatrixStore } from "@/stores/matrix-store"
 import { useAuthStore } from "@/stores/auth-store"
 import { useUIStore } from "@/stores/ui-store"
 import { useMessageStore } from "../stores/message-store"
+import { apiFetch } from "@/lib/api"
 import type { Conversation } from "../types"
 
 const CHAT_STATUSES = new Set(["approved", "active", "returned", "overdue"])
@@ -11,15 +12,20 @@ export function useConversations() {
   const matrixReady = useMatrixStore((s) => s.isReady)
   const matrixActiveRoomId = useMatrixStore((s) => s.activeRoomId)
   const setMatrixActiveRoom = useMatrixStore((s) => s.setActiveRoom)
+  const createOrGetDMRoom = useMatrixStore((s) => s.createOrGetDMRoom)
   const currentUser = useAuthStore((s) => s.user)
 
   const borrowRequests = useUIStore((s) => s.borrowRequests)
+  const setRequestMatrixRoomId = useUIStore((s) => s.setRequestMatrixRoomId)
 
   // Search + active conversation managed in message-store (UI-only state)
   const searchQuery = useMessageStore((s) => s.searchQuery)
   const mockActiveConversationId = useMessageStore((s) => s.activeConversationId)
   const mockSetActiveConversation = useMessageStore((s) => s.setActiveConversation)
   const setSearchQuery = useMessageStore((s) => s.setSearchQuery)
+
+  // Per-conversation retry error state: requestId → error message
+  const [retryErrors, setRetryErrors] = useState<Record<string, string>>({})
 
   const conversations: Conversation[] = useMemo(() => {
     if (!matrixReady) return []
@@ -40,14 +46,9 @@ export function useConversations() {
       const otherName = iAmBorrower ? req.owner.name : req.borrower.name
       const otherMatrixId = iAmBorrower
         ? req.ownerMatrixUserId
-        : undefined // incoming requests carry requester_matrix_user_id in a future field
+        : req.borrower.matrixUserId
 
-      const initials = otherName
-        .split(" ")
-        .map((n) => n[0] ?? "")
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
+      const isReady = !!req.matrixRoomId
 
       result.push({
         id: convId,
@@ -63,12 +64,15 @@ export function useConversations() {
         counterpartId: otherMatrixId ?? otherName,
         title: otherName,
         resourceId: req.resourceId,
-        lastMessagePreview: req.matrixRoomId
+        lastMessagePreview: isReady
           ? "Open chat"
-          : "Room being set up…",
+          : "Chat setup incomplete",
         lastMessageAt: req.requestedAt,
         unreadCount: 0,
         pinned: false,
+        isReady,
+        requestId: req.id,
+        borrowerMatrixUserId: req.borrower.matrixUserId,
       })
     }
 
@@ -110,6 +114,39 @@ export function useConversations() {
     mockSetActiveConversation(id)
   }
 
+  /**
+   * FIX 2 — Retry room setup for approved/active requests whose matrix_room_id is null.
+   * Calls createOrGetDMRoom → PATCH /requests/:id/room → updates ui-store in-place.
+   * On failure, stores an inline error keyed by requestId.
+   */
+  const retryRoomSetup = useCallback(
+    async (requestId: string, borrowerMatrixUserId: string) => {
+      // Clear any prior error for this request
+      setRetryErrors((prev) => {
+        const next = { ...prev }
+        delete next[requestId]
+        return next
+      })
+
+      try {
+        const roomId = await createOrGetDMRoom(borrowerMatrixUserId)
+        await apiFetch(`/requests/${requestId}/room`, {
+          method: "PATCH",
+          body: JSON.stringify({ matrixRoomId: roomId }),
+        })
+        // Update ui-store so conversation flips to isReady: true
+        setRequestMatrixRoomId(requestId, roomId)
+      } catch (err) {
+        console.error("[Matrix] Retry room setup failed:", err)
+        setRetryErrors((prev) => ({
+          ...prev,
+          [requestId]: "Chat setup failed. Please try again.",
+        }))
+      }
+    },
+    [createOrGetDMRoom, setRequestMatrixRoomId]
+  )
+
   return {
     conversations: filtered,
     activeConversation,
@@ -118,5 +155,7 @@ export function useConversations() {
     searchQuery,
     setSearchQuery,
     isLoading: !matrixReady,
+    retryRoomSetup,
+    retryErrors,
   }
 }

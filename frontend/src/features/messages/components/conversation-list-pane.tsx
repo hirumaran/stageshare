@@ -11,6 +11,8 @@ interface ConversationListPaneProps {
   searchQuery: string
   onSearchChange: (q: string) => void
   totalUnread: number
+  onRetryRoomSetup: (requestId: string, borrowerMatrixUserId: string) => void
+  retryErrors: Record<string, string>
 }
 
 export function ConversationListPane({
@@ -20,6 +22,8 @@ export function ConversationListPane({
   searchQuery,
   onSearchChange,
   totalUnread,
+  onRetryRoomSetup,
+  retryErrors,
 }: ConversationListPaneProps) {
   return (
     <aside className="flex h-full w-full flex-col bg-[#fbfaf7]">
@@ -88,7 +92,18 @@ export function ConversationListPane({
                 <ConversationListItem
                   conversation={c}
                   active={c.id === activeConversationId}
-                  onClick={() => onSelect(c.id)}
+                  onClick={() => {
+                    // FIX 3 — only open thread when room is ready
+                    if (c.isReady) {
+                      onSelect(c.id)
+                    }
+                  }}
+                  onRetryRoomSetup={
+                    !c.isReady && c.borrowerMatrixUserId
+                      ? () => onRetryRoomSetup(c.requestId, c.borrowerMatrixUserId!)
+                      : undefined
+                  }
+                  retryError={retryErrors[c.requestId]}
                 />
               </li>
             ))}

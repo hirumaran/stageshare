@@ -1,4 +1,4 @@
-import { Box, Pin } from "lucide-react"
+import { Box, Pin, RefreshCw } from "lucide-react"
 import { cn, relativeTimeShort } from "@/lib/utils"
 import type { Conversation } from "../types"
 import { getAvatarPalette, getInitials } from "../lib/avatar"
@@ -8,9 +8,19 @@ interface ConversationListItemProps {
   conversation: Conversation
   active?: boolean
   onClick: () => void
+  /** Called when user clicks "Retry setup". Undefined when room is already ready. */
+  onRetryRoomSetup?: () => void
+  /** Inline error message from the last failed retry attempt */
+  retryError?: string
 }
 
-export function ConversationListItem({ conversation, active, onClick }: ConversationListItemProps) {
+export function ConversationListItem({
+  conversation,
+  active,
+  onClick,
+  onRetryRoomSetup,
+  retryError,
+}: ConversationListItemProps) {
   const counterpart =
     conversation.participants.find((p) => p.id === conversation.counterpartId) ??
     conversation.participants[0]
@@ -28,16 +38,27 @@ export function ConversationListItem({ conversation, active, onClick }: Conversa
         : "bg-[#9a9a9a]"
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-current={active ? "true" : undefined}
+    <div
       className={cn(
         "group relative flex w-full items-stretch gap-3 border-b-[3px] border-black px-4 py-4 text-left transition-colors",
         active
           ? "bg-black text-white"
-          : "bg-[#fbfaf7] text-black hover:bg-[#fff3c4]",
+          : "bg-[#fbfaf7] text-black",
+        // Only apply hover highlight when ready to open
+        conversation.isReady && !active && "hover:bg-[#fff3c4] cursor-pointer",
+        !conversation.isReady && "cursor-default",
       )}
+      role={conversation.isReady ? "button" : undefined}
+      tabIndex={conversation.isReady ? 0 : undefined}
+      aria-current={active ? "true" : undefined}
+      onClick={conversation.isReady ? onClick : undefined}
+      onKeyDown={
+        conversation.isReady
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") onClick()
+            }
+          : undefined
+      }
     >
       <div className="relative shrink-0">
         <Avatar className="h-14 w-14 rounded-none border-[3px] border-current bg-white">
@@ -131,7 +152,30 @@ export function ConversationListItem({ conversation, active, onClick }: Conversa
             )}
           </div>
         </div>
+
+        {/* FIX 3 — Chat not ready: show retry affordance instead of letting thread open */}
+        {!conversation.isReady && onRetryRoomSetup && (
+          <div className="mt-2">
+            <button
+              type="button"
+              id={`retry-chat-${conversation.requestId}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                onRetryRoomSetup()
+              }}
+              className="inline-flex items-center gap-1.5 border-2 border-black bg-white px-2 py-1 text-[0.66rem] font-black uppercase tracking-[0.1em] transition-colors hover:bg-black hover:text-white"
+            >
+              <RefreshCw className="h-3 w-3" />
+              Retry setup
+            </button>
+            {retryError && (
+              <p className="mt-1 text-[0.66rem] font-black uppercase text-red-600">
+                {retryError}
+              </p>
+            )}
+          </div>
+        )}
       </div>
-    </button>
+    </div>
   )
 }

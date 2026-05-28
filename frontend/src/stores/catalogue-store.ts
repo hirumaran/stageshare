@@ -9,12 +9,15 @@ interface CatalogueState {
   filters: CatalogueFilters
   isLoading: boolean
   error: string | null
+  currentPage: number
+  totalPages: number
+  totalItems: number
 
   // Actions
   setFilters: (filters: Partial<CatalogueFilters>) => void
   resetFilters: () => void
   setSelectedResource: (resource: Resource | null) => void
-  fetchResources: () => Promise<void>
+  fetchResources: (page?: number) => Promise<void>
   searchResources: (query: string) => void
   toggleCategory: (category: ResourceCategory) => void
   toggleCondition: (condition: ResourceCondition) => void
@@ -176,6 +179,9 @@ export const useCatalogueStore = create<CatalogueState>((set, get) => ({
   filters: defaultFilters,
   isLoading: false,
   error: null,
+  currentPage: 1,
+  totalPages: 1,
+  totalItems: 0,
 
   setFilters: (newFilters) => {
     const filters = { ...get().filters, ...newFilters }
@@ -192,13 +198,21 @@ export const useCatalogueStore = create<CatalogueState>((set, get) => ({
     set({ selectedResource: resource })
   },
 
-  fetchResources: async () => {
+  fetchResources: async (page = 1) => {
     set({ isLoading: true, error: null })
     try {
-      const json = await apiFetch("/items")
+      const json = await apiFetch(`/items?page=${page}&limit=20`)
       const resources: Resource[] = (json.data as Record<string, unknown>[]).map(mapItem)
       const filteredResources = applyFilters(resources, get().filters)
-      set({ resources, filteredResources, isLoading: false })
+      const pagination = json.pagination as { page: number; total: number; totalPages: number }
+      set({
+        resources,
+        filteredResources,
+        currentPage: pagination.page,
+        totalPages: pagination.totalPages,
+        totalItems: pagination.total,
+        isLoading: false,
+      })
     } catch (err) {
       set({ isLoading: false, error: (err as Error).message })
     }

@@ -138,6 +138,7 @@ interface UIState {
     requesterNote?: string
   }) => Promise<BorrowRequest | null>
   updateBorrowRequest: (id: string, status: BorrowRequestStatus, response?: string) => Promise<void>
+  setRequestMatrixRoomId: (id: string, matrixRoomId: string) => void
 }
 
 export const useUIStore = create<UIState>((set, get) => ({
@@ -306,6 +307,15 @@ export const useUIStore = create<UIState>((set, get) => ({
       }))
     } catch (err) {
       set({ isLoadingRequests: false, requestsError: (err as Error).message })
+      throw err
     }
+  },
+
+  setRequestMatrixRoomId: (id, matrixRoomId) => {
+    set((state) => ({
+      borrowRequests: state.borrowRequests.map((r) =>
+        r.id === id ? { ...r, matrixRoomId } : r
+      ),
+    }))
   },
 }))

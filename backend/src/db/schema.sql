@@ -30,9 +30,10 @@ CREATE TABLE users (
   bio TEXT,
   role VARCHAR(50) DEFAULT 'user',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  matrix_user_id      TEXT UNIQUE,
-  matrix_access_token TEXT,
-  matrix_device_id    TEXT
+  matrix_user_id       TEXT UNIQUE,
+  matrix_access_token  TEXT,
+  matrix_device_id     TEXT,
+  matrix_password_hash TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_matrix_id ON users(matrix_user_id);
@@ -116,6 +117,20 @@ CREATE TABLE notifications (
   is_read     BOOLEAN NOT NULL DEFAULT FALSE,
   created_at  TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+-- Performance indexes for base-schema columns
+-- (Indexes on migration-added columns live in migration 017)
+CREATE INDEX IF NOT EXISTS idx_items_category_id
+  ON items(category_id);
+
+CREATE INDEX IF NOT EXISTS idx_requests_item_id
+  ON borrow_requests(item_id);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id_unread
+  ON notifications(user_id, is_read);
+
+CREATE INDEX IF NOT EXISTS idx_users_school_id
+  ON users(school_id);
 
 -- Seed schools
 INSERT INTO schools (name, domain, location) VALUES

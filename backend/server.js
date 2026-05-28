@@ -1,15 +1,26 @@
+const dotenv = require('dotenv');
+dotenv.config();
+
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const routes = require('./src/routes');
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(helmet());
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: ["'self'", "https://res.cloudinary.com", "data:"],
+      connectSrc: ["'self'", process.env.MATRIX_HOMESERVER_URL ?? ''],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+    },
+  })
+);
 app.use(cors());
 app.use(express.json());
 
@@ -18,6 +29,12 @@ app.get('/api/v1/health', (req, res) => {
 });
 
 app.use('/api/v1', routes);
+
+// Start background workers
+// TODO Phase 5: move workers to separate process with PM2
+require('./src/workers/matrix.worker');
+require('./src/workers/notification.worker');
+console.log('[Workers] Matrix and notification workers started');
 
 const server = app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);

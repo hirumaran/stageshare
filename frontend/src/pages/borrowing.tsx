@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import {
   ArrowLeftRight,
@@ -72,6 +72,10 @@ export default function BorrowingPage() {
   const { createOrGetDMRoom, setActiveRoom, sendMessage } = useMatrixStore()
   const navigate = useNavigate()
 
+  // Per-request error state for the approve flow
+  const [approveErrors, setApproveErrors] = useState<Record<string, string | null>>({})
+  const [roomSetupFailed, setRoomSetupFailed] = useState<Record<string, boolean>>({})
+
   useEffect(() => {
     fetchBorrowRequests()
   }, [fetchBorrowRequests])
@@ -108,10 +112,24 @@ export default function BorrowingPage() {
   )
 
   const handleApprove = async (request: BorrowRequest) => {
-    await updateBorrowRequest(request.id, "approved", "Approved! Let me know when you can pick it up.")
+    // Clear any prior errors for this request
+    setApproveErrors((prev) => ({ ...prev, [request.id]: null }))
+    setRoomSetupFailed((prev) => ({ ...prev, [request.id]: false }))
+
+    // Step 1 — approve the request; stop entirely on failure
+    try {
+      await updateBorrowRequest(request.id, "approved", "Approved! Let me know when you can pick it up.")
+    } catch {
+      setApproveErrors((prev) => ({
+        ...prev,
+        [request.id]: "Failed to approve request. Please try again.",
+      }))
+      return
+    }
+
     toast.success("Request approved")
 
-    // Create Matrix room between lender (me) and borrower, then persist the room ID
+    // Step 2 — create Matrix room; approval already committed, failure is non-blocking
     const borrowerMatrixId = request.borrower.matrixUserId
     if (borrowerMatrixId) {
       try {
@@ -120,24 +138,31 @@ export default function BorrowingPage() {
           method: "PATCH",
           body: JSON.stringify({ matrixRoomId: roomId }),
         })
-      } catch (err) {
-        console.error("[Matrix] Room creation after approve failed:", err)
+      } catch (roomErr) {
+        console.error("[Matrix] Room creation after approve failed:", roomErr)
+        setRoomSetupFailed((prev) => ({ ...prev, [request.id]: true }))
       }
     }
   }
 
   const handleReject = (requestId: string) => {
-    updateBorrowRequest(requestId, "rejected", "Sorry, this item is not available at this time.")
+    updateBorrowRequest(requestId, "rejected", "Sorry, this item is not available at this time.").catch(() => {
+      toast.error("Failed to decline request. Please try again.")
+    })
     toast.success("Request rejected")
   }
 
   const handlePickup = (requestId: string) => {
-    updateBorrowRequest(requestId, "active")
+    updateBorrowRequest(requestId, "active").catch(() => {
+      toast.error("Failed to mark as picked up. Please try again.")
+    })
     toast.success("Marked as picked up")
   }
 
   const handleMarkReturned = (requestId: string) => {
-    updateBorrowRequest(requestId, "returned")
+    updateBorrowRequest(requestId, "returned").catch(() => {
+      toast.error("Failed to mark as returned. Please try again.")
+    })
     toast.success("Marked as returned")
   }
 
@@ -222,23 +247,36 @@ export default function BorrowingPage() {
 
               {/* Actions */}
               {showActions && request.status === "pending" && isIncoming && (
-                <div className="flex gap-2 mt-3">
-                  <Button
-                    size="sm"
-                    variant="default"
-                    onClick={() => handleApprove(request)}
-                  >
-                    <Check className="h-4 w-4 mr-1" />
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleReject(request.id)}
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Decline
-                  </Button>
+                <div className="mt-3 space-y-2">
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() => handleApprove(request)}
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleReject(request.id)}
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Decline
+                    </Button>
+                  </div>
+                  {approveErrors[request.id] && (
+                    <p className="text-xs text-destructive font-medium flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {approveErrors[request.id]}
+                    </p>
+                  )}
+                  {roomSetupFailed[request.id] && (
+                    <p className="text-xs text-yellow-600 bg-yellow-500/15 border border-yellow-500 rounded px-2 py-1">
+                      Request approved. Chat setup failed — you can retry from the conversation.
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -253,13 +291,6 @@ export default function BorrowingPage() {
                     >
                       <PackageOpen className="h-4 w-4 mr-1" />
                       Mark as Picked Up
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleMarkReturned(request.id)}
-                    >
-                      Mark as Returned
                     </Button>
                   </div>
                 )}

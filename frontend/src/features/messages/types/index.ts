@@ -36,6 +36,12 @@ export interface Conversation {
   lastMessageAt: string
   unreadCount: number
   pinned?: boolean
+  /** True when a Matrix room exists and the chat thread can be opened */
+  isReady: boolean
+  /** The backing borrow request ID (for retry room setup) */
+  requestId: string
+  /** Matrix user ID of the borrower (for retry room setup) */
+  borrowerMatrixUserId?: string
 }
 
 export interface TypingIndicator {

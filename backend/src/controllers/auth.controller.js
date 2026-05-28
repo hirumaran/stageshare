@@ -1,7 +1,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { query } = require('../config/db');
-const { provisionMatrixUser } = require('../utils/matrix');
+const { regenerateMatrixToken } = require('../utils/matrix');
+const { matrixQueue } = require('../queues');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
@@ -39,27 +40,16 @@ async function register(req, res) {
     );
     const user = userResult.rows[0];
 
-    // Provision Matrix account (fire-and-forget — don't let Synapse failure block registration)
-    let matrixCreds = null;
+    // Enqueue Matrix provisioning — runs async, does not block registration
     try {
-      const displayName = `${firstName} ${lastName}`;
-      matrixCreds = await provisionMatrixUser(firstName, lastName, displayName);
-
-      await query(
-        `UPDATE users
-         SET matrix_user_id      = $1,
-             matrix_access_token = $2,
-             matrix_device_id    = $3
-         WHERE id = $4`,
-        [
-          matrixCreds.matrixUserId,
-          matrixCreds.matrixAccessToken,
-          matrixCreds.matrixDeviceId,
-          user.id,
-        ]
-      );
-    } catch (matrixErr) {
-      console.error('[Matrix] Account provisioning failed:', matrixErr.message);
+      await matrixQueue.add('provision', {
+        userId: user.id,
+        firstName,
+        lastName,
+        email,
+      });
+    } catch (queueErr) {
+      console.error('[Matrix] Failed to enqueue provisioning job:', queueErr.message);
     }
 
     const token = signToken({ userId: user.id, email: user.email, role: user.role, schoolId: user.school_id });
@@ -76,9 +66,9 @@ async function register(req, res) {
         role: user.role,
         avatarUrl: user.avatar_url,
         bio: user.bio,
-        matrixUserId: matrixCreds?.matrixUserId ?? null,
-        matrixAccessToken: matrixCreds?.matrixAccessToken ?? null,
-        matrixDeviceId: matrixCreds?.matrixDeviceId ?? null,
+        matrixUserId: null,
+        matrixAccessToken: null,
+        matrixDeviceId: null,
       },
     });
   } catch (err) {
@@ -185,4 +175,33 @@ async function me(req, res) {
   }
 }
 
-module.exports = { register, login, me };
+/**
+ * GET /api/v1/auth/matrix/refresh
+ * Regenerate a Matrix access token via the Synapse admin API.
+ * Does not require the Matrix password — uses MATRIX_ADMIN_TOKEN.
+ */
+async function refreshMatrix(req, res) {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const creds = await regenerateMatrixToken(userId);
+
+    res.status(200).json({
+      matrixAccessToken: creds.matrixAccessToken,
+      matrixDeviceId: creds.matrixDeviceId,
+    });
+  } catch (err) {
+    console.error('[Auth] refreshMatrix error:', err);
+
+    if (err.message === 'User has no Matrix account') {
+      return res.status(404).json({ error: 'No Matrix account found for this user' });
+    }
+
+    res.status(500).json({ error: 'Failed to refresh Matrix token' });
+  }
+}
+
+module.exports = { register, login, me, refreshMatrix };

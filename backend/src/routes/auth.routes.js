@@ -1,6 +1,6 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
-const { register, login, me } = require('../controllers/auth.controller');
+const { register, login, me, refreshMatrix } = require('../controllers/auth.controller');
 const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
@@ -20,5 +20,6 @@ const registerLimiter = rateLimit({
 router.post('/register', registerLimiter, register);
 router.post('/login', loginLimiter, login);
 router.get('/me', authenticateToken, me);
+router.get('/matrix/refresh', authenticateToken, refreshMatrix);
 
 module.exports = router;

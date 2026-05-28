@@ -48,6 +48,8 @@ export function mapMatrixConversation(
     lastMessageAt: mc.lastMessageAt?.toISOString() ?? new Date().toISOString(),
     unreadCount: mc.unreadCount,
     pinned: false,
+    isReady: true,
+    requestId: mc.roomId,
   }
 }
 

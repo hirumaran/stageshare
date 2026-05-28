@@ -9,7 +9,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: 'Messages',
   description: 'A terminal-inspired messaging interface.',
-  generator: 'v0.app',
+  generator: 'Thirumaran Deepak',
   icons: {
     icon: [
       {

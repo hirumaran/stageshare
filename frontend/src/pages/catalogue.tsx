@@ -62,6 +62,8 @@ export default function CataloguePage() {
     filteredResources,
     filters,
     isLoading,
+    currentPage,
+    totalPages,
     fetchResources,
     setFilters,
     resetFilters,
@@ -357,6 +359,31 @@ export default function CataloguePage() {
                   <ResourceCard key={resource.id} resource={resource} />
                 ))}
               </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-4 mt-8">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage === 1}
+                    onClick={() => fetchResources(currentPage - 1)}
+                  >
+                    ← Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage === totalPages}
+                    onClick={() => fetchResources(currentPage + 1)}
+                  >
+                    Next →
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </div>

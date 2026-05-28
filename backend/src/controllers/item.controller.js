@@ -118,8 +118,10 @@ async function getItemById(req, res) {
 async function createItem(req, res) {
   try {
     const {
-      name, description, condition, quantity_total, quantity_available,
-      category_id,
+      name, description, condition,
+      quantity_total   = req.body.quantityTotal,
+      quantity_available = req.body.quantityAvailable ?? req.body.quantityTotal,
+      category_id      = req.body.categoryId,
     } = req.body;
 
     if (!name) {
@@ -136,14 +138,16 @@ async function createItem(req, res) {
 
     const itemResult = await query(
       `INSERT INTO items
-         (school_id, added_by, category_id, name, description, condition,
+         (school_id, user_id, added_by, category_id, title, name, description, condition,
           quantity_total, quantity_available)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        RETURNING *`,
       [
         req.user.schoolId,
         req.user.userId,
+        req.user.userId,
         category_id          || null,
+        name,
         name,
         description          || null,
         condition            || null,
@@ -385,8 +389,8 @@ async function addItemImages(req, res) {
 
 /**
  * DELETE /api/v1/items/:id/images/:imageId
- * Remove an image from an item. Acting user must belong to the item's school.
- * TODO: also delete the image asset from Cloudinary using its public_id.
+ * Remove an image from an item and delete the asset from Cloudinary.
+ * Acting user must belong to the item's school.
  */
 async function deleteItemImage(req, res) {
   try {

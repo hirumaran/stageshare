@@ -63,6 +63,8 @@ export const conversations: Conversation[] = mockConversations.map((conv, i) => 
     lastMessageAt: ts,
     unreadCount: conv.unreadCount,
     pinned: i === 0,
+    isReady: true,
+    requestId: conv.id,
   }
 })
 

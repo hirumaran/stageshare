@@ -18,3 +18,7 @@ coverage/
 __pycache__/
 *.pyc
 .claude/worktrees/
+
+/antigravitycli/
+synapse/data/
+

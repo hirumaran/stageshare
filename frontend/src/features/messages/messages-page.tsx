@@ -25,6 +25,8 @@ export default function MessagesPage() {
     setActiveConversation,
     searchQuery,
     setSearchQuery,
+    retryRoomSetup,
+    retryErrors,
   } = useConversations()
   const { grouped } = useMessages(activeConversationId)
   const sendMessage = useSendMessage()
@@ -93,6 +95,8 @@ export default function MessagesPage() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           totalUnread={totalUnread}
+          onRetryRoomSetup={retryRoomSetup}
+          retryErrors={retryErrors}
         />
       </div>
 

@@ -1,4 +1,5 @@
 const { pool } = require('../config/db')
+const { notificationQueue } = require('../queues')
 
 async function getNotifications(req, res) {
   try {
@@ -108,15 +109,18 @@ async function deleteNotification(req, res) {
  *     link: `/requests/${requestId}`
  *   })
  */
-async function createNotification(pool, { userId, type, title, body, link }) {
+async function createNotification(_pool, { userId, type, title, body, link }) {
   try {
-    await pool.query(
-      `INSERT INTO notifications (user_id, type, title, body, link)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [userId, type, title, body, link ?? null]
-    )
+    await notificationQueue.add('create', {
+      userId,
+      type,
+      title,
+      body,
+      link,
+    });
   } catch (err) {
-    console.error('[createNotification] Failed to insert notification:', err.message)
+    console.error('[Notification] Failed to enqueue:', err.message);
+    // Swallow — notification failure should never affect the caller
   }
 }
 
