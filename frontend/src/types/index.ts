@@ -92,6 +92,7 @@ export interface BorrowRequest {
   message?: string
   ownerResponse?: string
   ownerMatrixUserId?: string
+  matrixRoomId?: string
 }
 
 // Cart types

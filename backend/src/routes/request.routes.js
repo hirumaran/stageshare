@@ -14,5 +14,6 @@ router.patch  ('/:id/reject',    controller.rejectRequest)
 router.patch  ('/:id/cancel',    controller.cancelRequest)
 router.patch  ('/:id/pickup',    controller.pickupItem)
 router.patch  ('/:id/return',    controller.returnItem)
+router.patch  ('/:id/room',      controller.setRequestRoom)
 
 module.exports = router

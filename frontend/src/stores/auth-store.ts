@@ -102,6 +102,7 @@ export const useAuthStore = create<AuthState>()(
           const data = await apiFetch("/auth/me")
           const user = mapBackendUser(data)
           set({ user, isAuthenticated: true, isLoading: false })
+          bootMatrix(user)
         } catch {
           // Token is invalid/expired — clear auth state
           set({ user: null, token: null, isAuthenticated: false, isLoading: false })

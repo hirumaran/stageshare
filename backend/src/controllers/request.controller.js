@@ -145,6 +145,7 @@ async function getIncomingRequests(req, res) {
         u.first_name    AS requester_first_name,
         u.last_name     AS requester_last_name,
         u.email         AS requester_email,
+        u.matrix_user_id AS requester_matrix_user_id,
         s.name          AS requester_school_name
       FROM borrow_requests br
       JOIN items         i  ON br.item_id       = i.id
@@ -204,7 +205,8 @@ async function getOutgoingRequests(req, res) {
         os.name         AS owner_school_name,
         u.first_name    AS owner_first_name,
         u.last_name     AS owner_last_name,
-        u.matrix_user_id AS owner_matrix_user_id
+        u.matrix_user_id AS owner_matrix_user_id,
+        br.matrix_room_id
       FROM borrow_requests br
       JOIN items       i  ON br.item_id         = i.id
       LEFT JOIN item_images ii ON ii.item_id   = i.id AND ii.sort_order = 0
@@ -657,6 +659,50 @@ async function getRequestById(req, res) {
   }
 }
 
+/**
+ * PATCH /api/v1/requests/:id/room
+ * Store the Matrix room ID on a borrow request.
+ * Only the item owner may call this — called immediately after approving.
+ */
+async function setRequestRoom(req, res) {
+  try {
+    const requestId = parseInt(req.params.id, 10)
+    if (Number.isNaN(requestId)) {
+      return res.status(400).json({ error: 'Invalid request ID' })
+    }
+
+    const { matrixRoomId } = req.body
+    if (!matrixRoomId || typeof matrixRoomId !== 'string') {
+      return res.status(400).json({ error: 'matrixRoomId is required' })
+    }
+
+    // Verify the caller is the item owner
+    const { rows } = await pool.query(
+      `SELECT br.id, i.added_by AS item_owner_id
+       FROM borrow_requests br
+       JOIN items i ON br.item_id = i.id
+       WHERE br.id = $1`,
+      [requestId]
+    )
+    if (!rows[0]) {
+      return res.status(404).json({ error: 'Request not found' })
+    }
+    if (rows[0].item_owner_id !== req.user.userId) {
+      return res.status(403).json({ error: 'Only the item owner can set the room ID' })
+    }
+
+    const updated = await pool.query(
+      `UPDATE borrow_requests SET matrix_room_id = $1 WHERE id = $2 RETURNING id, matrix_room_id`,
+      [matrixRoomId, requestId]
+    )
+
+    res.status(200).json(updated.rows[0])
+  } catch (err) {
+    console.error('[setRequestRoom] Error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+}
+
 module.exports = {
   createRequest,
   getIncomingRequests,
@@ -667,4 +713,5 @@ module.exports = {
   cancelRequest,
   pickupItem,
   returnItem,
+  setRequestRoom,
 }

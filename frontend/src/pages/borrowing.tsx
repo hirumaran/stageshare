@@ -14,6 +14,7 @@ import {
 import { useUIStore } from "@/stores/ui-store"
 import { useAuthStore } from "@/stores/auth-store"
 import { useMatrixStore } from "@/stores/matrix-store"
+import { apiFetch } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -106,9 +107,23 @@ export default function BorrowingPage() {
     (r) => r.status === "approved" || r.status === "active" || r.status === "overdue"
   )
 
-  const handleApprove = (requestId: string) => {
-    updateBorrowRequest(requestId, "approved", "Approved! Let me know when you can pick it up.")
+  const handleApprove = async (request: BorrowRequest) => {
+    await updateBorrowRequest(request.id, "approved", "Approved! Let me know when you can pick it up.")
     toast.success("Request approved")
+
+    // Create Matrix room between lender (me) and borrower, then persist the room ID
+    const borrowerMatrixId = request.borrower.matrixUserId
+    if (borrowerMatrixId) {
+      try {
+        const roomId = await createOrGetDMRoom(borrowerMatrixId)
+        await apiFetch(`/requests/${request.id}/room`, {
+          method: "PATCH",
+          body: JSON.stringify({ matrixRoomId: roomId }),
+        })
+      } catch (err) {
+        console.error("[Matrix] Room creation after approve failed:", err)
+      }
+    }
   }
 
   const handleReject = (requestId: string) => {
@@ -211,7 +226,7 @@ export default function BorrowingPage() {
                   <Button
                     size="sm"
                     variant="default"
-                    onClick={() => handleApprove(request.id)}
+                    onClick={() => handleApprove(request)}
                   >
                     <Check className="h-4 w-4 mr-1" />
                     Approve

@@ -1,5 +1,4 @@
 import { useMemo } from "react"
-import { useMessageStore } from "../stores/message-store"
 import { useMatrixStore } from "@/stores/matrix-store"
 import { mapMatrixMessage } from "../lib/matrix-adapter"
 import type { Message } from "../types"
@@ -32,17 +31,13 @@ function dayLabel(iso: string) {
 }
 
 export function useMessages(conversationId: string | null) {
-  const matrixReady = useMatrixStore((s) => s.isReady)
   const matrixMessages = useMatrixStore((s) => s.messages)
-  const mockMessages = useMessageStore((s) => s.messages)
 
-  const messages = useMemo(() => {
-    if (matrixReady && conversationId) {
-      const msgs = matrixMessages[conversationId] ?? []
-      return msgs.map((m) => mapMatrixMessage(m))
-    }
-    return conversationId ? mockMessages[conversationId] ?? [] : []
-  }, [matrixReady, matrixMessages, mockMessages, conversationId])
+  const messages = useMemo((): Message[] => {
+    if (!conversationId) return []
+    const msgs = matrixMessages[conversationId] ?? []
+    return msgs.map((m) => mapMatrixMessage(m))
+  }, [matrixMessages, conversationId])
 
   const grouped = useMemo(() => {
     if (!messages.length) return []

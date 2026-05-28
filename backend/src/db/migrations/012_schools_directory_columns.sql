@@ -36,5 +36,12 @@ UPDATE schools
 SET slug = LOWER(REGEXP_REPLACE(REGEXP_REPLACE(name, '[^a-zA-Z0-9]+', '-', 'g'), '^-|-$', '', 'g'))
 WHERE slug IS NULL;
 
--- Ensure unique slugs after backfill
-ALTER TABLE schools ADD CONSTRAINT IF NOT EXISTS schools_slug_unique UNIQUE (slug);
+-- Ensure unique slugs after backfill (idempotent via DO block for PG < 17)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'schools_slug_unique'
+  ) THEN
+    ALTER TABLE schools ADD CONSTRAINT schools_slug_unique UNIQUE (slug);
+  END IF;
+END $$;

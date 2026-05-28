@@ -52,6 +52,7 @@ function mapBorrowRequest(backend: Record<string, unknown>): BorrowRequest {
     resourcesShared: 0,
     resourcesBorrowed: 0,
     school: (backend.requester_school_name as string) ?? undefined,
+    matrixUserId: (backend.requester_matrix_user_id as string) ?? undefined,
   }
 
   const stubOwner: User = {
@@ -81,6 +82,7 @@ function mapBorrowRequest(backend: Record<string, unknown>): BorrowRequest {
     message: (backend.requester_note as string) ?? undefined,
     ownerResponse: (backend.owner_note as string) ?? undefined,
     ownerMatrixUserId: (backend.owner_matrix_user_id as string) ?? undefined,
+    matrixRoomId: (backend.matrix_room_id as string) ?? undefined,
   }
 }
 

@@ -29,8 +29,13 @@ CREATE TABLE users (
   avatar_url TEXT,
   bio TEXT,
   role VARCHAR(50) DEFAULT 'user',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  matrix_user_id      TEXT UNIQUE,
+  matrix_access_token TEXT,
+  matrix_device_id    TEXT
 );
+
+CREATE INDEX IF NOT EXISTS idx_users_matrix_id ON users(matrix_user_id);
 
 -- Categories
 CREATE TABLE categories (
@@ -71,6 +76,7 @@ CREATE TABLE borrow_requests (
   start_date DATE,
   end_date DATE,
   message TEXT,
+  matrix_room_id VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
