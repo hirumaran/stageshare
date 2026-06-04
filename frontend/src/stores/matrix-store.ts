@@ -6,6 +6,36 @@
  *
  * matrix-js-sdk reference:
  *   https://matrix-org.github.io/matrix-js-sdk/
+ *
+ * -------------------------------------------------------------------------
+ * REACT NATIVE COMPATIBILITY NOTES
+ *
+ * Before using this store in React Native, the following must be resolved:
+ *
+ * 1. CRYPTO STORE: matrix-js-sdk uses IndexedDB for crypto persistence in browsers.
+ *    In React Native, replace with:
+ *    import { AsyncStorageCryptoStore } from '@matrix-org/matrix-sdk-crypto-wasm';
+ *    or use react-native-mmkv backed store.
+ *    Configure in initClient() where initRustCrypto() is called.
+ *
+ * 2. WASM: initRustCrypto() requires WebAssembly.
+ *    In React Native, install: @matrix-org/matrix-sdk-crypto-wasm
+ *    This requires a JSI-enabled build (Expo SDK 50+ or bare workflow).
+ *
+ * 3. CRYPTO POLYFILL: Install react-native-get-random-values and import
+ *    it at the top of index.js (before any other imports):
+ *    import 'react-native-get-random-values';
+ *
+ * 4. PERSISTENT SESSION: matrix_access_token is passed in from auth-store.
+ *    On React Native, auth-store uses AsyncStorage (via setAuthStorage).
+ *    The Matrix client must be re-initialized on every cold start from
+ *    the stored credentials — bootMatrix() in auth-store handles this
+ *    via loadUser() which is called on app init.
+ *
+ * 5. STORAGE ADAPTER: Pass AsyncStorage to matrix-js-sdk's createClient:
+ *    storage: new IndexedDBStore({ indexedDB: asyncStorageAdapter })
+ *    or use MemoryStore for MVP (messages don't persist across restarts).
+ * -------------------------------------------------------------------------
  */
 
 import { create } from "zustand"
@@ -19,6 +49,7 @@ import {
   Preset,
 } from "matrix-js-sdk"
 import type { MatrixConversation, MatrixMessage } from "@/types"
+import { getConfig } from "@/lib/config"
 
 interface MatrixStore {
   client: MatrixClient | null
@@ -80,6 +111,21 @@ function roomToConversation(
   }
 }
 
+/**
+ * Cross-platform UUID generator.
+ * Works in browser, Node, and React Native (with react-native-get-random-values polyfill).
+ */
+function generateId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  // Fallback for environments without randomUUID
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
+  })
+}
+
 function eventToMessage(
   event: MatrixEvent,
   myUserId: string
@@ -89,7 +135,7 @@ function eventToMessage(
   if (!content?.body) return null
 
   return {
-    id: event.getId() ?? crypto.randomUUID(),
+    id: event.getId() ?? generateId(),
     roomId: event.getRoomId() ?? "",
     senderId: event.getSender() ?? "",
     senderName:
@@ -117,7 +163,7 @@ export const useMatrixStore = create<MatrixStore>((set, get) => ({
 
     try {
       const client = sdk.createClient({
-        baseUrl: (import.meta as any).env.VITE_MATRIX_HOMESERVER_URL,
+        baseUrl: getConfig().matrixHomeserverUrl,
         userId,
         accessToken,
         deviceId,

@@ -1,12 +1,47 @@
 import { create } from "zustand"
-import { persist } from "zustand/middleware"
+import { persist, createJSONStorage } from "zustand/middleware"
 import type { User } from "@/types"
 import { apiFetch } from "@/lib/api"
+import { getConfig } from "@/lib/config"
 import { useMatrixStore } from "./matrix-store"
 
+// ---------------------------------------------------------------------------
+// Storage adapter — configurable for React Native
+// Web uses window.localStorage by default.
+// React Native callers should call setAuthStorage(AsyncStorage) on app init.
+// ---------------------------------------------------------------------------
+type AuthStorageAdapter = {
+  getItem: (key: string) => Promise<string | null> | string | null
+  setItem: (key: string, value: string) => Promise<void> | void
+  removeItem: (key: string) => Promise<void> | void
+}
+
+let storageAdapter: AuthStorageAdapter | null = null
+
+const noopStorage: AuthStorageAdapter = {
+  getItem: () => null,
+  setItem: () => undefined,
+  removeItem: () => undefined,
+}
+
+function getAuthStorage() {
+  if (storageAdapter) return storageAdapter
+  if (typeof window !== "undefined") return window.localStorage
+  return noopStorage
+}
+
+export function setAuthStorage(adapter: AuthStorageAdapter) {
+  storageAdapter = adapter
+  useAuthStore.persist.rehydrate()
+}
+
+// ---------------------------------------------------------------------------
+// State shape
+// ---------------------------------------------------------------------------
 interface AuthState {
   user: User | null
   token: string | null
+  refreshToken: string | null
   isAuthenticated: boolean
   isLoading: boolean
   error: string | null
@@ -15,11 +50,15 @@ interface AuthState {
   login: (email: string, password: string) => Promise<boolean>
   signup: (email: string, password: string, name: string) => Promise<boolean>
   loadUser: () => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   updateProfile: (updates: Partial<User>) => void
   clearError: () => void
+  setTokens: (token: string, refreshToken: string) => void
 }
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 function mapBackendUser(bu: Record<string, unknown>): User {
   return {
     id: String(bu.id),
@@ -46,11 +85,15 @@ async function bootMatrix(user: User) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Store
+// ---------------------------------------------------------------------------
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
       error: null,
@@ -63,7 +106,13 @@ export const useAuthStore = create<AuthState>()(
             body: JSON.stringify({ email, password }),
           })
           const user = mapBackendUser(data.user)
-          set({ user, token: data.token, isAuthenticated: true, isLoading: false })
+          set({
+            user,
+            token: data.token,
+            refreshToken: data.refreshToken ?? null,
+            isAuthenticated: true,
+            isLoading: false,
+          })
           bootMatrix(user)
           return true
         } catch (err) {
@@ -84,7 +133,13 @@ export const useAuthStore = create<AuthState>()(
             body: JSON.stringify({ email, password, firstName, lastName }),
           })
           const user = mapBackendUser(data.user)
-          set({ user, token: data.token, isAuthenticated: true, isLoading: false })
+          set({
+            user,
+            token: data.token,
+            refreshToken: data.refreshToken ?? null,
+            isAuthenticated: true,
+            isLoading: false,
+          })
           bootMatrix(user)
           return true
         } catch (err) {
@@ -105,15 +160,32 @@ export const useAuthStore = create<AuthState>()(
           bootMatrix(user)
         } catch {
           // Token is invalid/expired — clear auth state
-          set({ user: null, token: null, isAuthenticated: false, isLoading: false })
+          set({ user: null, token: null, refreshToken: null, isAuthenticated: false, isLoading: false })
         }
       },
 
-      logout: () => {
+      logout: async () => {
+        const { refreshToken } = get()
+
+        // Best-effort server-side revocation — do not block logout on failure
+        if (refreshToken) {
+          try {
+            const BASE_URL = getConfig().apiBaseUrl
+            await fetch(BASE_URL + "/auth/logout", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ refreshToken }),
+            })
+          } catch {
+            // Ignore — local state is cleared regardless
+          }
+        }
+
         useMatrixStore.getState().stopClient()
         set({
           user: null,
           token: null,
+          refreshToken: null,
           isAuthenticated: false,
           error: null,
         })
@@ -128,12 +200,28 @@ export const useAuthStore = create<AuthState>()(
       clearError: () => {
         set({ error: null })
       },
+
+      setTokens: (token: string, refreshToken: string) => {
+        set({ token, refreshToken })
+      },
     }),
     {
       name: "skene-auth",
+      storage: createJSONStorage(() => ({
+        getItem: (key: string) => {
+          return getAuthStorage().getItem(key)
+        },
+        setItem: (key: string, value: string) => {
+          return getAuthStorage().setItem(key, value)
+        },
+        removeItem: (key: string) => {
+          return getAuthStorage().removeItem(key)
+        },
+      })),
       partialize: (state) => ({
         user: state.user,
         token: state.token,
+        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }

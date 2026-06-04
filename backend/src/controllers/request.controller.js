@@ -112,7 +112,7 @@ async function createRequest(req, res) {
       type: 'borrow_request',
       title: 'New Borrow Request',
       body: `${actorName} wants to borrow "${item.name}"`,
-      link: `/requests/${insert.rows[0].id}`,
+      link: `skene://requests/${insert.rows[0].id}`,
     })
   } catch (err) {
     console.error('[createRequest] Error:', err)
@@ -292,7 +292,7 @@ async function approveRequest(req, res) {
       type: 'approved',
       title: 'Request Approved',
       body: `${actorName} approved your request for "${request.item_name}"`,
-      link: `/requests/${requestId}`,
+      link: `skene://requests/${requestId}`,
     })
   } catch (err) {
     console.error('[approveRequest] Error:', err)
@@ -363,7 +363,7 @@ async function rejectRequest(req, res) {
       type: 'rejected',
       title: 'Request Rejected',
       body: `${actorName} rejected your request for "${request.item_name}"`,
-      link: `/requests/${requestId}`,
+      link: `skene://requests/${requestId}`,
     })
   } catch (err) {
     console.error('[rejectRequest] Error:', err)
@@ -429,7 +429,7 @@ async function cancelRequest(req, res) {
         type: 'cancelled',
         title: 'Request Cancelled',
         body: `${actorName} cancelled their request for "${itemResult.rows[0].name}"`,
-        link: `/requests/${requestId}`,
+        link: `skene://requests/${requestId}`,
       })
     }
   } catch (err) {
@@ -507,7 +507,7 @@ async function pickupItem(req, res) {
       type: 'picked_up',
       title: 'Item Picked Up',
       body: `${pickupActorName} marked "${pickupItemInfo.rows[0]?.name || 'item'}" as picked up`,
-      link: `/requests/${requestId}`,
+      link: `skene://requests/${requestId}`,
     })
 
     res.status(200).json(updated[0])
@@ -588,7 +588,7 @@ async function returnItem(req, res) {
       type: 'returned',
       title: 'Item Returned',
       body: `${returnActorName} marked "${returnItemInfo.rows[0]?.name || 'item'}" as returned`,
-      link: `/requests/${requestId}`,
+      link: `skene://requests/${requestId}`,
     })
 
     res.status(200).json(updated[0])
