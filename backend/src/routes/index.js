@@ -5,10 +5,12 @@ const requestRoutes = require('./request.routes');
 const schoolRoutes = require('./school.routes');
 const adminRoutes = require('./admin.routes');
 const notificationRoutes = require('./notification.routes');
+const deviceRoutes = require('./device.routes');
 
 const router = express.Router();
 
 router.use('/auth', authRoutes);
+router.use('/auth', deviceRoutes);
 router.use('/items', itemRoutes);
 router.use('/requests', requestRoutes);
 router.use('/schools', schoolRoutes);
