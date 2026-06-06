@@ -43,10 +43,12 @@ function getApiBaseUrl() {
 
 // --- Config ----------------------------------------------------------------
 // Must run before the auth store hydrates or any API call is made.
+console.log('[startup] stores/index.ts loaded');
 setConfig({
   matrixHomeserverUrl: '',
   apiBaseUrl: getApiBaseUrl(),
 });
+console.log('[startup] config set — apiBaseUrl:', getApiBaseUrl());
 
 // --- Storage ---------------------------------------------------------------
 if (Platform.OS === 'web') {
@@ -55,6 +57,7 @@ if (Platform.OS === 'web') {
   // branch.
   const webStorage = (globalThis as any).window?.localStorage;
   if (webStorage) {
+    console.log('[startup] installing web storage adapter');
     setAuthStorage({
       getItem: (k) => webStorage.getItem(k),
       setItem: (k, v) => webStorage.setItem(k, v),
@@ -62,6 +65,7 @@ if (Platform.OS === 'web') {
     });
   }
 } else {
+  console.log('[startup] installing SecureStore adapter');
   setAuthStorage(secureStoreAdapter);
 }
 

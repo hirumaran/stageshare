@@ -32,7 +32,12 @@ function getAuthStorage(): AuthStorageAdapter {
 
 export function setAuthStorage(adapter: AuthStorageAdapter) {
   storageAdapter = adapter
-  void useAuthStore.persist.rehydrate()
+  console.log('[startup] setAuthStorage called, triggering rehydrate');
+  try {
+    void useAuthStore.persist.rehydrate()
+  } catch (err) {
+    console.error('[startup] rehydrate threw:', err)
+  }
 }
 
 // ---------------------------------------------------------------------------
