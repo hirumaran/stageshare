@@ -2,18 +2,26 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
-import { Button } from '@/components/ui/Button';
-import { TextInput } from '@/components/ui/TextInput';
-import { Spacing } from '@/constants/theme';
 import { useAuthStore } from '@/stores';
+import {
+  AuthButton,
+  AuthErrorText,
+  AuthHeading,
+  AuthInput,
+  AuthSubtext,
+  LogoBlock,
+  authSharedStyles,
+  useAuthTheme,
+} from '@/components/auth/auth-ui';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -22,6 +30,7 @@ export default function LoginScreen() {
   const isLoading = useAuthStore((state) => state.isLoading);
   const storeError = useAuthStore((state) => state.error);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { scheme, theme } = useAuthTheme();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -53,23 +62,30 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.flex}
+      style={[authSharedStyles.flex, { backgroundColor: theme.canvas }]}
     >
-      <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
-        <View style={styles.root}>
-          <View style={styles.header}>
-            <View style={styles.brandMark}>
-              <View style={styles.brandDot} />
-              <Text style={styles.brandText}>Skēnē</Text>
-            </View>
-            <Text style={styles.subtitle}>Sign in</Text>
-          </View>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <SafeAreaView
+        edges={['top', 'bottom']}
+        style={[authSharedStyles.flex, { backgroundColor: theme.canvas }]}
+      >
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
+          <LogoBlock style={styles.logo} theme={theme} />
+
+          <AuthHeading theme={theme}>Log in</AuthHeading>
+          <AuthSubtext theme={theme}>
+            Enter your email and password to continue
+          </AuthSubtext>
 
           <View style={styles.form}>
-            <TextInput
+            <AuthInput
               autoCapitalize="none"
               autoCorrect={false}
               editable={!isLoading}
+              error={Boolean(errorText)}
               inputMode="email"
               keyboardType="email-address"
               onChangeText={(value) => {
@@ -77,16 +93,17 @@ export default function LoginScreen() {
                 setLocalError(null);
                 clearError();
               }}
-              placeholder="Email"
-              placeholderTextColor="#8F9198"
+              placeholder="Email address"
               returnKeyType="next"
               textContentType="emailAddress"
+              theme={theme}
               value={email}
             />
-            <TextInput
+            <AuthInput
               autoCapitalize="none"
               autoCorrect={false}
               editable={!isLoading}
+              error={Boolean(errorText)}
               onChangeText={(value) => {
                 setPassword(value);
                 setLocalError(null);
@@ -94,90 +111,75 @@ export default function LoginScreen() {
               }}
               onSubmitEditing={handleLogin}
               placeholder="Password"
-              placeholderTextColor="#8F9198"
               returnKeyType="go"
               secureTextEntry
               textContentType="password"
+              theme={theme}
               value={password}
             />
 
             {errorText ? (
-              <Text style={styles.errorText}>{errorText}</Text>
+              <AuthErrorText theme={theme}>{errorText}</AuthErrorText>
             ) : null}
 
-            <Button
+            <AuthButton
               loading={isLoading}
               onPress={handleLogin}
-              title="Sign in"
-              variant="primary"
+              style={styles.primaryAction}
+              theme={theme}
+              title="Continue"
             />
           </View>
 
-          <Pressable
-            onPress={() => router.back()}
-            style={styles.backLink}
-          >
-            <Text style={styles.backLinkText}>← Back to sign in options</Text>
-          </Pressable>
-        </View>
+          <Text style={[styles.switchText, { color: theme.textSec }]}>
+            {"Don't have an account? "}
+            <Text
+              onPress={() => router.replace('/register')}
+              style={{ color: theme.link }}
+            >
+              Sign up
+            </Text>
+          </Text>
+
+          <AuthButton
+            onPress={() => router.replace('/(auth)')}
+            style={styles.backButton}
+            theme={theme}
+            title="Back to sign in options"
+            variant="ghost"
+          />
+        </ScrollView>
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
+  content: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingBottom: 48,
+    paddingHorizontal: 24,
+    paddingTop: 58,
   },
-  root: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.five,
-    paddingBottom: Spacing.four,
-    gap: Spacing.five,
-  },
-  header: {
-    gap: Spacing.three,
-    alignItems: 'center',
-  },
-  brandMark: {
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  brandDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#6B1E2E',
-  },
-  brandText: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: '#050505',
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#8F9198',
-    fontWeight: '500',
+  logo: {
+    marginBottom: 54,
   },
   form: {
-    gap: Spacing.three,
+    gap: 14,
   },
-  errorText: {
-    color: '#b42318',
-    fontSize: 14,
-    fontWeight: '500',
+  primaryAction: {
+    marginTop: 18,
+  },
+  switchText: {
+    fontSize: 15,
+    fontWeight: '400',
+    letterSpacing: -0.1,
+    lineHeight: 22,
+    marginTop: 28,
     textAlign: 'center',
   },
-  backLink: {
-    alignItems: 'center',
-    paddingTop: Spacing.two,
-  },
-  backLinkText: {
-    fontSize: 14,
-    color: '#8F9198',
-    fontWeight: '500',
+  backButton: {
+    marginTop: 8,
   },
 });

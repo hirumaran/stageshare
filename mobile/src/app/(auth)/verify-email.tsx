@@ -1,34 +1,36 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
-import { Button } from '@/components/ui/Button';
-import { Spacing } from '@/constants/theme';
 import { useAuthStore } from '@/stores';
-
-function MailIcon() {
-  return (
-    <View style={styles.iconContainer}>
-      <View style={styles.envelope}>
-        <View style={styles.envelopeBody} />
-        <View style={styles.envelopeFlap} />
-      </View>
-      <View style={styles.alertDot} />
-    </View>
-  );
-}
+import {
+  AuthButton,
+  AuthHeading,
+  AuthInput,
+  AuthSubtext,
+  LogoBlock,
+  TermsLinks,
+  authSharedStyles,
+  useAuthTheme,
+} from '@/components/auth/auth-ui';
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const email = useAuthStore((state) => state.user?.email);
+  const { scheme, theme } = useAuthTheme();
+  const [code, setCode] = useState('');
 
-  // If not authenticated, there's nothing to verify — send back to auth landing
+  // If not authenticated, there's nothing to verify; send back to auth landing.
   useEffect(() => {
     if (!isAuthenticated) {
       router.replace('/(auth)');
@@ -47,113 +49,97 @@ export default function VerifyEmailScreen() {
   }, [router]);
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
-      <View style={styles.root}>
-        <View style={styles.content}>
-          <MailIcon />
-          <Text style={styles.title}>Verify your email</Text>
-          <Text style={styles.subtitle}>
-            Tap the link we sent to your email.
-          </Text>
-        </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={[authSharedStyles.flex, { backgroundColor: theme.canvas }]}
+    >
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <SafeAreaView
+        edges={['top', 'bottom']}
+        style={[authSharedStyles.flex, { backgroundColor: theme.canvas }]}
+      >
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
+          <LogoBlock style={styles.logo} theme={theme} />
 
-        <View style={styles.actions}>
-          <Button
-            onPress={handleVerified}
-            title="I've verified my email"
-            variant="primary"
-          />
-          <Button
-            onPress={handleSignOut}
-            title="Sign out"
-            variant="secondary"
-          />
-        </View>
-      </View>
-    </SafeAreaView>
+          <AuthHeading theme={theme}>Check your inbox</AuthHeading>
+          <AuthSubtext theme={theme}>
+            Enter the verification code we sent to {email ?? 'your email'}.
+          </AuthSubtext>
+
+          <View style={styles.form}>
+            <AuthInput
+              autoCapitalize="none"
+              autoCorrect={false}
+              inputMode="numeric"
+              keyboardType="number-pad"
+              maxLength={6}
+              onChangeText={setCode}
+              onSubmitEditing={handleVerified}
+              placeholder="Code"
+              returnKeyType="done"
+              textContentType="oneTimeCode"
+              theme={theme}
+              value={code}
+            />
+
+            <AuthButton
+              onPress={handleVerified}
+              style={styles.primaryAction}
+              theme={theme}
+              title="Continue"
+            />
+          </View>
+
+          <View style={styles.secondaryActions}>
+            <AuthButton
+              disabled
+              onPress={() => {}}
+              theme={theme}
+              title="Resend email"
+              variant="ghost"
+            />
+            <AuthButton
+              onPress={handleSignOut}
+              theme={theme}
+              title="Sign out"
+              variant="ghost"
+            />
+          </View>
+
+          <View style={styles.terms}>
+            <TermsLinks theme={theme} />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  root: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.five,
-    paddingBottom: Spacing.four,
-  },
   content: {
-    flex: 1,
-    alignItems: 'center',
+    flexGrow: 1,
     justifyContent: 'center',
-    gap: Spacing.three,
+    paddingBottom: 42,
+    paddingHorizontal: 24,
+    paddingTop: 58,
   },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.two,
+  logo: {
+    marginBottom: 54,
   },
-  envelope: {
-    width: 40,
-    height: 28,
-    borderWidth: 2,
-    borderColor: '#050505',
-    borderRadius: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
+  form: {
+    gap: 14,
   },
-  envelopeBody: {
-    position: 'absolute',
-    width: 26,
-    height: 2,
-    backgroundColor: '#050505',
-    top: 10,
+  primaryAction: {
+    marginTop: 18,
   },
-  envelopeFlap: {
-    position: 'absolute',
-    width: 0,
-    height: 0,
-    borderLeftWidth: 14,
-    borderRightWidth: 14,
-    borderTopWidth: 10,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: '#050505',
-    top: 2,
+  secondaryActions: {
+    gap: 0,
+    marginTop: 20,
   },
-  alertDot: {
-    position: 'absolute',
-    top: 6,
-    right: 4,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#eb5757',
-    borderWidth: 2,
-    borderColor: '#ffffff',
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#050505',
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#8F9198',
-    textAlign: 'center',
-    fontWeight: '500',
-    maxWidth: 280,
-    lineHeight: 20,
-  },
-  actions: {
-    gap: Spacing.three,
-    paddingTop: Spacing.four,
+  terms: {
+    marginTop: 24,
   },
 });

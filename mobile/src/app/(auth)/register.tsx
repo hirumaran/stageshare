@@ -2,18 +2,27 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
-import { Button } from '@/components/ui/Button';
-import { TextInput } from '@/components/ui/TextInput';
-import { Spacing } from '@/constants/theme';
 import { useAuthStore } from '@/stores';
+import {
+  AuthButton,
+  AuthErrorText,
+  AuthHeading,
+  AuthInput,
+  AuthSubtext,
+  LogoBlock,
+  TermsLinks,
+  authSharedStyles,
+  useAuthTheme,
+} from '@/components/auth/auth-ui';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -22,9 +31,9 @@ export default function RegisterScreen() {
   const isLoading = useAuthStore((state) => state.isLoading);
   const storeError = useAuthStore((state) => state.error);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { scheme, theme } = useAuthTheme();
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
@@ -36,8 +45,8 @@ export default function RegisterScreen() {
   }, [isAuthenticated, router]);
 
   const handleSignup = useCallback(async () => {
-    if (!firstName.trim() || !lastName.trim()) {
-      setLocalError('Enter your first and last name.');
+    if (!fullName.trim()) {
+      setLocalError('Enter your full name.');
       return;
     }
     if (!email.trim()) {
@@ -51,72 +60,54 @@ export default function RegisterScreen() {
 
     setLocalError(null);
     clearError();
-    const fullName = `${firstName.trim()} ${lastName.trim()}`;
-    const didSignup = await signup(email.trim(), password, fullName);
-    if (!didSignup) {
-      // Keep form values so user can correct errors
-    }
-  }, [firstName, lastName, email, password, signup, clearError]);
+    await signup(email.trim(), password, fullName.trim());
+  }, [fullName, email, password, signup, clearError]);
 
   const errorText = localError || storeError;
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.flex}
+      style={[authSharedStyles.flex, { backgroundColor: theme.canvas }]}
     >
-      <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
-        <View style={styles.root}>
-          <View style={styles.header}>
-            <View style={styles.brandMark}>
-              <View style={styles.brandDot} />
-              <Text style={styles.brandText}>Skēnē</Text>
-            </View>
-            <Text style={styles.subtitle}>Create account</Text>
-          </View>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <SafeAreaView
+        edges={['top', 'bottom']}
+        style={[authSharedStyles.flex, { backgroundColor: theme.canvas }]}
+      >
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
+          <LogoBlock style={styles.logo} theme={theme} />
+
+          <AuthHeading theme={theme}>Create an account</AuthHeading>
+          <AuthSubtext theme={theme}>
+            Set up your Skēnē account to continue
+          </AuthSubtext>
 
           <View style={styles.form}>
-            <View style={styles.nameRow}>
-              <View style={styles.nameField}>
-                <TextInput
-                  autoCapitalize="words"
-                  autoCorrect={false}
-                  editable={!isLoading}
-                  onChangeText={(value) => {
-                    setFirstName(value);
-                    setLocalError(null);
-                    clearError();
-                  }}
-                  placeholder="First name"
-                  placeholderTextColor="#8F9198"
-                  returnKeyType="next"
-                  textContentType="givenName"
-                  value={firstName}
-                />
-              </View>
-              <View style={styles.nameField}>
-                <TextInput
-                  autoCapitalize="words"
-                  autoCorrect={false}
-                  editable={!isLoading}
-                  onChangeText={(value) => {
-                    setLastName(value);
-                    setLocalError(null);
-                    clearError();
-                  }}
-                  placeholder="Last name"
-                  placeholderTextColor="#8F9198"
-                  returnKeyType="next"
-                  textContentType="familyName"
-                  value={lastName}
-                />
-              </View>
-            </View>
-
-            <TextInput
+            <AuthInput
+              autoCapitalize="words"
+              autoCorrect={false}
+              editable={!isLoading}
+              error={Boolean(errorText)}
+              onChangeText={(value) => {
+                setFullName(value);
+                setLocalError(null);
+                clearError();
+              }}
+              placeholder="Full name"
+              returnKeyType="next"
+              textContentType="name"
+              theme={theme}
+              value={fullName}
+            />
+            <AuthInput
               autoCapitalize="none"
               autoCorrect={false}
               editable={!isLoading}
+              error={Boolean(errorText)}
               inputMode="email"
               keyboardType="email-address"
               onChangeText={(value) => {
@@ -124,16 +115,17 @@ export default function RegisterScreen() {
                 setLocalError(null);
                 clearError();
               }}
-              placeholder="Email"
-              placeholderTextColor="#8F9198"
+              placeholder="Email address"
               returnKeyType="next"
               textContentType="emailAddress"
+              theme={theme}
               value={email}
             />
-            <TextInput
+            <AuthInput
               autoCapitalize="none"
               autoCorrect={false}
               editable={!isLoading}
+              error={Boolean(errorText)}
               onChangeText={(value) => {
                 setPassword(value);
                 setLocalError(null);
@@ -141,97 +133,92 @@ export default function RegisterScreen() {
               }}
               onSubmitEditing={handleSignup}
               placeholder="Password"
-              placeholderTextColor="#8F9198"
               returnKeyType="go"
               secureTextEntry
               textContentType="newPassword"
+              theme={theme}
               value={password}
             />
 
             {errorText ? (
-              <Text style={styles.errorText}>{errorText}</Text>
+              <AuthErrorText theme={theme}>{errorText}</AuthErrorText>
             ) : null}
 
-            <Button
+            <AuthButton
               loading={isLoading}
               onPress={handleSignup}
-              title="Create account"
-              variant="primary"
+              style={styles.primaryAction}
+              theme={theme}
+              title="Continue"
             />
           </View>
 
-          <Pressable
-            onPress={() => router.back()}
-            style={styles.backLink}
-          >
-            <Text style={styles.backLinkText}>← Back to sign in options</Text>
-          </Pressable>
-        </View>
+          <Text style={[styles.switchText, { color: theme.textSec }]}>
+            Already have an account?{' '}
+            <Text
+              onPress={() => router.replace('/login')}
+              style={{ color: theme.link }}
+            >
+              Log in
+            </Text>
+          </Text>
+
+          <View style={styles.termsWrap}>
+            <Text style={[styles.agreementText, { color: theme.textSec }]}>
+              By tapping Continue, you agree to our terms and privacy policy.
+            </Text>
+            <TermsLinks theme={theme} />
+          </View>
+
+          <AuthButton
+            onPress={() => router.replace('/(auth)')}
+            style={styles.backButton}
+            theme={theme}
+            title="Back to sign in options"
+            variant="ghost"
+          />
+        </ScrollView>
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
+  content: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingBottom: 40,
+    paddingHorizontal: 24,
+    paddingTop: 46,
   },
-  root: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.five,
-    paddingBottom: Spacing.four,
-    gap: Spacing.five,
-  },
-  header: {
-    gap: Spacing.three,
-    alignItems: 'center',
-  },
-  brandMark: {
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  brandDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#6B1E2E',
-  },
-  brandText: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: '#050505',
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#8F9198',
-    fontWeight: '500',
+  logo: {
+    marginBottom: 46,
   },
   form: {
-    gap: Spacing.three,
+    gap: 14,
   },
-  nameRow: {
-    flexDirection: 'row',
-    gap: Spacing.three,
+  primaryAction: {
+    marginTop: 18,
   },
-  nameField: {
-    flex: 1,
-  },
-  errorText: {
-    color: '#b42318',
-    fontSize: 14,
-    fontWeight: '500',
+  switchText: {
+    fontSize: 15,
+    fontWeight: '400',
+    letterSpacing: -0.1,
+    lineHeight: 22,
+    marginTop: 28,
     textAlign: 'center',
   },
-  backLink: {
-    alignItems: 'center',
-    paddingTop: Spacing.two,
+  termsWrap: {
+    gap: 12,
+    marginTop: 24,
   },
-  backLinkText: {
-    fontSize: 14,
-    color: '#8F9198',
-    fontWeight: '500',
+  agreementText: {
+    fontSize: 13,
+    fontWeight: '400',
+    lineHeight: 19,
+    textAlign: 'center',
+  },
+  backButton: {
+    marginTop: 10,
   },
 });
