@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Redirect } from 'expo-router';
 
+import { IntroBootAnimation } from '@/components/IntroBootAnimation';
+import { IntroLogoTypewriter } from '@/components/IntroLogoTypewriter';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { useAuthStore } from '@/stores';
+import AuthLandingScreen from './(auth)';
 
 function useAuthHydrated() {
   return useSyncExternalStore(
@@ -36,18 +40,34 @@ export default function Index() {
   const hasHydrated = useAuthHydrated();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [isReady, setIsReady] = useState(false);
+  const [isIntroBootDone, setIsIntroBootDone] = useState(false);
+  const [isLogoTypewriterDone, setIsLogoTypewriterDone] = useState(false);
+  const handleIntroBootFinish = useCallback(() => {
+    console.log('[startup] intro boot finished — showing logo typewriter');
+    setIsIntroBootDone(true);
+  }, []);
+  const handleLogoTypewriterFinish = useCallback(() => {
+    console.log('[startup] logo typewriter finished — landing is static');
+    setIsLogoTypewriterDone(true);
+  }, []);
+
+  useEffect(() => {
+    console.log('[startup] index mounted');
+  }, []);
 
   // Timeout fallback: app can never hang forever
   useEffect(() => {
-    console.log('[startup] index mounted — hasHydrated:', hasHydrated);
+    if (isReady) {
+      return;
+    }
+
     const timer = setTimeout(() => {
-      if (!isReady) {
-        console.log('[startup] ⏱ timeout fallback triggered — forcing ready');
-        setIsReady(true);
-      }
+      console.log('[startup] ⏱ timeout fallback triggered — forcing ready');
+      setIsReady(true);
     }, 4000);
+
     return () => clearTimeout(timer);
-  }, []);
+  }, [isReady]);
 
   // When hydration finishes, wait a tiny beat so we never flicker the spinner away instantly
   useEffect(() => {
@@ -71,10 +91,27 @@ export default function Index() {
   }
 
   if (!isAuthenticated) {
-    console.log('[startup] redirecting → /(auth)');
-    return <Redirect href="/(auth)" />;
+    console.log('[startup] rendering unauth intro host — bootDone:', isIntroBootDone, 'typewriterDone:', isLogoTypewriterDone);
+    return (
+      <View style={styles.authIntroHost}>
+        <AuthLandingScreen />
+        {!isIntroBootDone ? (
+          <IntroBootAnimation onFinish={handleIntroBootFinish} />
+        ) : null}
+        {isIntroBootDone && !isLogoTypewriterDone ? (
+          <IntroLogoTypewriter onFinish={handleLogoTypewriterFinish} />
+        ) : null}
+      </View>
+    );
   }
 
   console.log('[startup] redirecting → /(tabs)/catalogue');
   return <Redirect href="/(tabs)/catalogue" />;
 }
+
+const styles = StyleSheet.create({
+  authIntroHost: {
+    backgroundColor: '#ffffff',
+    flex: 1,
+  },
+});

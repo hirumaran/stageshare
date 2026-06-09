@@ -18,18 +18,24 @@ export default function ClioBootRoute() {
     let mounted = true;
 
     async function checkPermission() {
+      console.log('[clio-boot-route] checking first-signup boot permission');
+
       try {
         const allowed = await shouldShowFirstSignupBoot();
 
         if (!mounted) return;
 
+        console.log('[clio-boot-route] permission result:', allowed);
+
         if (allowed) {
           setIsAllowed(true);
           setIsChecking(false);
         } else {
+          console.log('[clio-boot-route] not allowed — redirecting to main app');
           router.replace(MAIN_APP_ROUTE);
         }
       } catch {
+        console.log('[clio-boot-route] permission check failed — redirecting to main app');
         router.replace(MAIN_APP_ROUTE);
       }
     }
@@ -42,17 +48,22 @@ export default function ClioBootRoute() {
   }, []);
 
   const handleFinish = useCallback(async () => {
+    console.log('[clio-boot-route] boot animation finished — marking seen');
+
     try {
       await markFirstSignupBootSeen();
     } finally {
+      console.log('[clio-boot-route] redirecting to main app');
       router.replace(MAIN_APP_ROUTE);
     }
   }, []);
 
   if (isChecking || !isAllowed) {
+    console.log('[clio-boot-route] rendering fallback — checking:', isChecking, 'allowed:', isAllowed);
     return <View style={styles.fallback} />;
   }
 
+  console.log('[clio-boot-route] rendering ClioBootAnimation');
   return <ClioBootAnimation onFinish={handleFinish} />;
 }
 
