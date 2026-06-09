@@ -95,6 +95,9 @@ export default function Index() {
     return (
       <View style={styles.authIntroHost}>
         <AuthLandingScreen />
+        {!isLogoTypewriterDone ? (
+          <View pointerEvents="none" style={styles.wordmarkMask} />
+        ) : null}
         {!isIntroBootDone ? (
           <IntroBootAnimation onFinish={handleIntroBootFinish} />
         ) : null}
@@ -113,5 +116,15 @@ const styles = StyleSheet.create({
   authIntroHost: {
     backgroundColor: '#ffffff',
     flex: 1,
+  },
+  wordmarkMask: {
+    backgroundColor: '#ffffff',
+    height: 112,
+    left: 0,
+    paddingHorizontal: 28,
+    position: 'absolute',
+    right: 0,
+    top: '34.5%',
+    zIndex: 20,
   },
 });
