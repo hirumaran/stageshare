@@ -4,7 +4,6 @@ import { Redirect } from 'expo-router';
 
 import { IntroBootAnimation } from '@/components/IntroBootAnimation';
 import { IntroLogoTypewriter } from '@/components/IntroLogoTypewriter';
-import { LoadingState } from '@/components/ui/LoadingState';
 import { useAuthStore } from '@/stores';
 import AuthLandingScreen from './(auth)';
 
@@ -87,7 +86,7 @@ export default function Index() {
   }, [hasHydrated, isAuthenticated, isReady]);
 
   if (!isReady) {
-    return <LoadingState />;
+    return <View style={styles.startupFallback} />;
   }
 
   if (!isAuthenticated) {
@@ -114,6 +113,10 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   authIntroHost: {
+    backgroundColor: '#ffffff',
+    flex: 1,
+  },
+  startupFallback: {
     backgroundColor: '#ffffff',
     flex: 1,
   },
