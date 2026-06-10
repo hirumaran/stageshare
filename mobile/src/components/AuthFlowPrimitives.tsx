@@ -36,6 +36,7 @@ export const AUTH_COLORS = {
   ink2: '#6B6860',
   border: '#D1CEC9',
   activeBorder: '#0D0D0D',
+  focus: '#2563FF',
   muted: '#9B9891',
   disabledBg: '#C8C5C0',
   disabledText: '#8C8880',
@@ -182,11 +183,17 @@ export function FloatingInput({
   const isFloating = isFocused || Boolean(value && value.length > 0);
 
   const labelStyle = useAnimatedStyle(() => ({
-    color: isFloating ? AUTH_COLORS.ink : AUTH_COLORS.muted,
-    fontSize: withTiming(isFloating ? 11 : 15, { duration: 150 }),
+    color: error
+      ? AUTH_COLORS.error
+      : isFloating
+        ? isFocused
+          ? AUTH_COLORS.focus
+          : AUTH_COLORS.ink2
+        : AUTH_COLORS.muted,
+    fontSize: withTiming(isFloating ? 14 : 15, { duration: 150 }),
     transform: [
       {
-        translateY: withTiming(isFloating ? 8 : 18, { duration: 150 }),
+        translateY: withTiming(isFloating ? -10 : 18, { duration: 150 }),
       },
     ],
   }));
@@ -217,7 +224,7 @@ export function FloatingInput({
             onFocus?.(event);
           }}
           placeholder=""
-          selectionColor={AUTH_COLORS.ink}
+          selectionColor={AUTH_COLORS.focus}
           style={[styles.textInput, !editable && styles.textInputDisabled]}
           value={value}
         />
@@ -642,7 +649,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   inputShellFocused: {
-    borderColor: AUTH_COLORS.activeBorder,
+    borderColor: AUTH_COLORS.focus,
   },
   inputShellError: {
     borderColor: AUTH_COLORS.error,
@@ -651,10 +658,13 @@ const styles = StyleSheet.create({
     opacity: 0.92,
   },
   floatingLabel: {
+    backgroundColor: AUTH_COLORS.surface,
     fontWeight: '400',
     left: 18,
+    paddingHorizontal: 6,
     position: 'absolute',
     top: 0,
+    zIndex: 1,
   },
   inputRow: {
     alignItems: 'center',
@@ -669,9 +679,10 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     height: '100%',
     includeFontPadding: false,
+    lineHeight: 24,
     paddingBottom: 0,
     paddingHorizontal: 0,
-    paddingTop: 24,
+    paddingTop: 14,
   },
   textInputDisabled: {
     color: AUTH_COLORS.ink,
