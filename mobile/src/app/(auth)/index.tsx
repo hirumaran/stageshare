@@ -7,16 +7,19 @@ import {
   Text,
   View,
   type StyleProp,
+  type TextStyle,
   type ViewStyle,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { useAuthStore } from '@/stores';
 import { authSharedStyles } from '@/components/auth/auth-ui';
-import { ClioDotWordmark } from '@/components/ClioDotWordmark';
+
+const CLIO_FONT_WEIGHT = '360' as unknown as TextStyle['fontWeight'];
 
 function BackgroundEffects() {
   return (
@@ -30,13 +33,21 @@ function BackgroundEffects() {
 }
 
 function ClioWordmark() {
+  const [fontsLoaded] = useFonts({
+    BitcountSingle: require('../../../assets/fonts/BitcountSingle-Variable.ttf'),
+  });
+  const fontStyle = fontsLoaded ? styles.bitcountSingle : null;
+
   return (
-    <View
-      accessibilityLabel="Clio"
-      accessible
-      style={styles.clioWordmarkWrap}
-    >
-      <ClioDotWordmark />
+    <View style={styles.clioWordmarkWrap}>
+      <Text
+        accessibilityLabel="Clio"
+        adjustsFontSizeToFit
+        numberOfLines={1}
+        style={[styles.clioText, styles.clioWordmark, fontStyle]}
+      >
+        Clio
+      </Text>
     </View>
   );
 }
@@ -264,6 +275,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
     width: '100%',
+  },
+  bitcountSingle: {
+    fontFamily: 'BitcountSingle',
+  },
+  clioText: {
+    fontSize: 96,
+    fontWeight: CLIO_FONT_WEIGHT,
+    letterSpacing: 5,
+    lineHeight: 112,
+    maxWidth: '92%',
+    minWidth: 0,
+    textAlign: 'center',
+  },
+  clioWordmark: {
+    color: LAUNCH_COLORS.black,
   },
   sheet: {
     backgroundColor: LAUNCH_COLORS.black,

@@ -1,241 +1,703 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import Svg, { Circle, Path } from 'react-native-svg';
+import Animated, {
+  Easing,
+  SlideInLeft,
+  SlideInRight,
+  SlideOutLeft,
+  SlideOutRight,
+} from 'react-native-reanimated';
 
-import { useAuthStore } from '@/stores';
 import {
-  AuthButton,
-  AuthErrorText,
-  AuthHeading,
-  AuthInput,
-  AuthSubtext,
-  LogoBlock,
-  TermsLinks,
-  authSharedStyles,
-  useAuthTheme,
-} from '@/components/auth/auth-ui';
-import { markFirstSignupBootPending } from '@/lib/firstSignupBoot';
+  AUTH_COLORS,
+  AuthScreen,
+  BackButton,
+  CheckIcon,
+  EyeButton,
+  FeatureIcon,
+  FloatingInput,
+  InlineError,
+  OrDivider,
+  OtpInput,
+  PrimaryButton,
+  PulseWordmark,
+  SsoButton,
+} from '@/components/AuthFlowPrimitives';
+import { useAuthStore } from '@/stores';
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 8;
+const MAIN_ROUTE = '/(tabs)/catalogue';
+
+type SignupStatus = 'idle' | 'loading' | 'success';
+
+function clampEmail(email: string) {
+  return email.length > 32 ? `${email.slice(0, 29)}...` : email;
+}
+
+function firstNameFrom(name: string) {
+  return name.trim().split(/\s+/)[0] || 'there';
+}
+
+function RequirementRow({ met }: { met: boolean }) {
+  return (
+    <View style={styles.requirementCard}>
+      <View style={styles.requirementRow}>
+        <CheckIcon met={met} />
+        <Text style={[styles.requirementText, met && styles.requirementTextMet]}>
+          At least {MIN_PASSWORD_LENGTH} characters
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function TermsText() {
+  return (
+    <Text style={styles.termsText}>
+      By tapping Continue, you agree to our{' '}
+      <Text style={styles.termsLink}>Terms</Text> and have read our{' '}
+      <Text style={styles.termsLink}>Privacy Policy</Text>.
+    </Text>
+  );
+}
+
+function FeatureRow({
+  body,
+  icon,
+  title,
+}: {
+  body: string;
+  icon: 'borrow' | 'box' | 'message';
+  title: string;
+}) {
+  return (
+    <View style={styles.featureRow}>
+      <View style={styles.featureIcon}>
+        <FeatureIcon name={icon} />
+      </View>
+      <View style={styles.featureText}>
+        <Text style={styles.featureTitle}>{title}</Text>
+        <Text style={styles.featureBody}>{body}</Text>
+      </View>
+    </View>
+  );
+}
+
+function ErrorBanner({ message }: { message: string }) {
+  return (
+    <View style={styles.errorBanner}>
+      <Text style={styles.errorBannerText}>{message}</Text>
+    </View>
+  );
+}
+
+function SmallErrorIcon() {
+  return (
+    <Svg height={14} viewBox="0 0 14 14" width={14}>
+      <Circle
+        cx={7}
+        cy={7}
+        fill="none"
+        r={6}
+        stroke={AUTH_COLORS.error}
+        strokeWidth={1.4}
+      />
+      <Path
+        d="M7 3.9v3.6M7 10.1h.01"
+        fill="none"
+        stroke={AUTH_COLORS.error}
+        strokeLinecap="round"
+        strokeWidth={1.5}
+      />
+    </Svg>
+  );
+}
 
 export default function RegisterScreen() {
   const router = useRouter();
   const signup = useAuthStore((state) => state.signup);
   const clearError = useAuthStore((state) => state.clearError);
-  const isLoading = useAuthStore((state) => state.isLoading);
-  const storeError = useAuthStore((state) => state.error);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const { scheme, theme } = useAuthTheme();
 
-  const [fullName, setFullName] = useState('');
+  const [step, setStep] = useState(0);
+  const [transitionDirection, setTransitionDirection] = useState(1);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+  const [fullName, setFullName] = useState('');
+  const [school, setSchool] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
-  const signupBootRedirectRef = useRef(false);
+  const [bannerError, setBannerError] = useState<string | null>(null);
+  const [resendRemaining, setResendRemaining] = useState(0);
+  const [signupStatus, setSignupStatus] = useState<SignupStatus>('idle');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const signupStartedRef = useRef(false);
 
-  useEffect(() => {
-    if (isAuthenticated && !signupBootRedirectRef.current) {
-      router.replace('/(tabs)/catalogue');
-    }
-  }, [isAuthenticated, router]);
+  const emailIsValid = EMAIL_PATTERN.test(email.trim());
+  const passwordIsValid = password.length >= MIN_PASSWORD_LENGTH;
+  const otpValue = otpDigits.join('');
+  const otpIsComplete = otpValue.length === 6;
+  const profileIsValid = fullName.trim().length >= 2 && school.trim().length >= 2;
+  const firstName = useMemo(() => firstNameFrom(fullName), [fullName]);
 
-  const handleSignup = useCallback(async () => {
-    if (!fullName.trim()) {
-      setLocalError('Enter your full name.');
-      return;
-    }
-    if (!email.trim()) {
-      setLocalError('Enter your email address.');
-      return;
-    }
-    if (password.length < 6) {
-      setLocalError('Password must be at least 6 characters.');
-      return;
-    }
+  const goToStep = useCallback(
+    (nextStep: number) => {
+      const direction = nextStep > step ? 1 : -1;
+      setTransitionDirection(direction);
+      setStep(nextStep);
+    },
+    [step]
+  );
 
+  const clearFieldErrors = useCallback(() => {
     setLocalError(null);
     clearError();
-    signupBootRedirectRef.current = true;
+  }, [clearError]);
 
-    try {
-      const created = await signup(email.trim(), password, fullName.trim());
+  const handleBack = useCallback(() => {
+    clearFieldErrors();
 
-      if (!created) {
-        signupBootRedirectRef.current = false;
+    if (step === 0) {
+      if (router.canGoBack()) {
+        router.back();
         return;
       }
 
-      await markFirstSignupBootPending();
-      router.replace('/clio-boot');
-    } catch (error) {
-      signupBootRedirectRef.current = false;
-      setLocalError((error as Error).message || 'Unable to complete signup.');
+      router.replace('/');
+      return;
     }
-  }, [fullName, email, password, signup, clearError, router]);
 
-  const errorText = localError || storeError;
+    if (signupStatus === 'loading') return;
+    goToStep(step - 1);
+  }, [clearFieldErrors, goToStep, router, signupStatus, step]);
+
+  const handleEmailContinue = useCallback(() => {
+    const normalizedEmail = email.trim();
+
+    if (!EMAIL_PATTERN.test(normalizedEmail)) {
+      setLocalError('Enter a valid email address.');
+      return;
+    }
+
+    setEmail(normalizedEmail);
+    clearFieldErrors();
+    goToStep(1);
+  }, [clearFieldErrors, email, goToStep]);
+
+  const handlePasswordContinue = useCallback(() => {
+    if (!passwordIsValid) {
+      setLocalError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      return;
+    }
+
+    clearFieldErrors();
+    setResendRemaining(30);
+    goToStep(2);
+  }, [clearFieldErrors, goToStep, passwordIsValid]);
+
+  const handleOtpContinue = useCallback(() => {
+    if (!otpIsComplete) {
+      setLocalError('Incorrect code');
+      setTimeout(() => {
+        setOtpDigits(['', '', '', '', '', '']);
+        setLocalError(null);
+      }, 900);
+      return;
+    }
+
+    clearFieldErrors();
+    goToStep(3);
+  }, [clearFieldErrors, goToStep, otpIsComplete]);
+
+  const handleProfileContinue = useCallback(() => {
+    if (!profileIsValid) {
+      setLocalError('Enter your full name and school.');
+      return;
+    }
+
+    clearFieldErrors();
+    goToStep(4);
+  }, [clearFieldErrors, goToStep, profileIsValid]);
+
+  const handleResend = useCallback(() => {
+    if (resendRemaining > 0) return;
+    setResendRemaining(30);
+  }, [resendRemaining]);
+
+  useEffect(() => {
+    if (step !== 2 || resendRemaining <= 0) return;
+
+    const timer = setInterval(() => {
+      setResendRemaining((remaining) => Math.max(remaining - 1, 0));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [resendRemaining, step]);
+
+  useEffect(() => {
+    if (!bannerError) return;
+
+    const timer = setTimeout(() => {
+      setBannerError(null);
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [bannerError]);
+
+  useEffect(() => {
+    if (step !== 4 || signupStartedRef.current) return;
+
+    let mounted = true;
+
+    async function completeSignup() {
+      signupStartedRef.current = true;
+      setSignupStatus('loading');
+
+      const created = await signup(email.trim(), password, fullName.trim());
+
+      if (!mounted) return;
+
+      if (!created) {
+        const message =
+          useAuthStore.getState().error ?? 'Unable to create your account.';
+        signupStartedRef.current = false;
+        setSignupStatus('idle');
+        setBannerError(message);
+        setLocalError(null);
+        setStep(0);
+        return;
+      }
+
+      setSignupStatus('success');
+    }
+
+    void completeSignup();
+
+    return () => {
+      mounted = false;
+    };
+  }, [email, fullName, password, signup, step]);
+
+  const renderAppHeader = (heading: string, subheading?: string) => (
+    <View style={styles.headerBlock}>
+      <Text style={styles.heading}>{heading}</Text>
+      {subheading ? (
+        <Text style={styles.subheading}>{subheading}</Text>
+      ) : null}
+    </View>
+  );
+
+  const renderEmailStep = () => (
+    <>
+      {renderAppHeader('Create an account')}
+      <View style={styles.stack}>
+        <FloatingInput
+          autoCapitalize="none"
+          autoCorrect={false}
+          error={Boolean(localError)}
+          inputMode="email"
+          keyboardType="email-address"
+          label="Email address"
+          onChangeText={(value) => {
+            setEmail(value);
+            clearFieldErrors();
+          }}
+          onSubmitEditing={handleEmailContinue}
+          returnKeyType="next"
+          textContentType="emailAddress"
+          value={email}
+        />
+        {localError ? <InlineError>{localError}</InlineError> : null}
+        <PrimaryButton
+          disabled={!emailIsValid}
+          onPress={handleEmailContinue}
+          title="Continue"
+        />
+      </View>
+      <Text style={styles.switchLine}>
+        Already have an account?{' '}
+        <Text
+          onPress={() => router.replace('/(auth)/login')}
+          style={styles.inlineLink}
+        >
+          Log in
+        </Text>
+      </Text>
+      <OrDivider />
+      <SsoButton kind="apple" title="Continue with Apple" />
+      <SsoButton kind="google" title="Continue with Google" />
+      <SsoButton kind="microsoft" title="Continue with Microsoft" />
+      <SsoButton kind="phone" title="Continue with phone" />
+    </>
+  );
+
+  const renderPasswordStep = () => (
+    <>
+      {renderAppHeader(
+        'Create your account',
+        'Set your password for Clio to continue'
+      )}
+      <View style={styles.stack}>
+        <FloatingInput
+          editable={false}
+          label="Email address"
+          rightElement={
+            <Pressable accessibilityRole="button" onPress={() => goToStep(0)}>
+              <Text style={styles.editText}>Edit</Text>
+            </Pressable>
+          }
+          value={email}
+        />
+        <FloatingInput
+          autoCapitalize="none"
+          autoCorrect={false}
+          error={Boolean(localError)}
+          label="Password"
+          onChangeText={(value) => {
+            setPassword(value);
+            clearFieldErrors();
+          }}
+          onSubmitEditing={handlePasswordContinue}
+          returnKeyType="next"
+          rightElement={
+            <EyeButton
+              isVisible={isPasswordVisible}
+              onPress={() => setIsPasswordVisible((visible) => !visible)}
+            />
+          }
+          secureTextEntry={!isPasswordVisible}
+          textContentType="newPassword"
+          value={password}
+        />
+        {password.length > 0 ? <RequirementRow met={passwordIsValid} /> : null}
+        {localError ? <InlineError>{localError}</InlineError> : null}
+        <PrimaryButton
+          disabled={!passwordIsValid}
+          onPress={handlePasswordContinue}
+          title="Continue"
+        />
+      </View>
+      <Text style={styles.switchLine}>
+        Already have an account?{' '}
+        <Text
+          onPress={() => router.replace('/(auth)/login')}
+          style={styles.inlineLink}
+        >
+          Log in
+        </Text>
+      </Text>
+    </>
+  );
+
+  const renderVerificationStep = () => (
+    <>
+      {renderAppHeader(
+        'Check your inbox',
+        `Enter the verification code we sent to ${clampEmail(email)}`
+      )}
+      <View style={styles.stack}>
+        <OtpInput
+          digits={otpDigits}
+          error={localError === 'Incorrect code'}
+          onChange={(nextDigits) => {
+            setOtpDigits(nextDigits);
+            clearFieldErrors();
+          }}
+        />
+        {localError === 'Incorrect code' ? (
+          <View style={styles.otpErrorRow}>
+            <SmallErrorIcon />
+            <InlineError>Incorrect code</InlineError>
+          </View>
+        ) : null}
+        <PrimaryButton
+          disabled={!otpIsComplete}
+          onPress={handleOtpContinue}
+          title="Continue"
+        />
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        disabled={resendRemaining > 0}
+        onPress={handleResend}
+        style={styles.resendButton}
+      >
+        <Text style={styles.resendText}>
+          {resendRemaining > 0
+            ? `Resend in 0:${String(resendRemaining).padStart(2, '0')}`
+            : 'Resend email'}
+        </Text>
+      </Pressable>
+    </>
+  );
+
+  const renderProfileStep = () => (
+    <>
+      {renderAppHeader('Tell us about you')}
+      <View style={styles.stack}>
+        <FloatingInput
+          autoCapitalize="words"
+          autoCorrect={false}
+          error={Boolean(localError)}
+          label="Full name"
+          onChangeText={(value) => {
+            setFullName(value);
+            clearFieldErrors();
+          }}
+          returnKeyType="next"
+          textContentType="name"
+          value={fullName}
+        />
+        <FloatingInput
+          autoCapitalize="words"
+          autoCorrect={false}
+          error={Boolean(localError)}
+          label="School"
+          onChangeText={(value) => {
+            setSchool(value);
+            clearFieldErrors();
+          }}
+          returnKeyType="done"
+          value={school}
+        />
+        <TermsText />
+        {localError ? <InlineError>{localError}</InlineError> : null}
+        <PrimaryButton
+          disabled={!profileIsValid}
+          onPress={handleProfileContinue}
+          title="Continue"
+        />
+      </View>
+    </>
+  );
+
+  const renderWelcomeStep = () => {
+    if (signupStatus !== 'success') {
+      return (
+        <View style={styles.loadingState}>
+          <PulseWordmark />
+        </View>
+      );
+    }
+
+    return (
+      <>
+        {renderAppHeader(
+          'Welcome to Clio.',
+          `${firstName}'s account is ready.`
+        )}
+        <View style={styles.features}>
+          <FeatureRow
+            body="Request costumes, props, scripts, and gear from any BSD school."
+            icon="borrow"
+            title="Borrow from the district"
+          />
+          <FeatureRow
+            body="Share your inventory and help other theatre programs find what they need."
+            icon="box"
+            title="List what you have"
+          />
+          <FeatureRow
+            body="Message lending schools and track requests from start to finish."
+            icon="message"
+            title="Coordinate directly"
+          />
+        </View>
+        <PrimaryButton
+          onPress={() => router.replace(MAIN_ROUTE)}
+          title="Get started"
+        />
+      </>
+    );
+  };
+
+  const renderStep = () => {
+    switch (step) {
+      case 0:
+        return renderEmailStep();
+      case 1:
+        return renderPasswordStep();
+      case 2:
+        return renderVerificationStep();
+      case 3:
+        return renderProfileStep();
+      default:
+        return renderWelcomeStep();
+    }
+  };
+
+  const enteringAnimation =
+    transitionDirection > 0
+      ? SlideInRight.duration(250).easing(Easing.out(Easing.quad))
+      : SlideInLeft.duration(250).easing(Easing.out(Easing.quad));
+  const exitingAnimation =
+    transitionDirection > 0
+      ? SlideOutLeft.duration(250).easing(Easing.out(Easing.quad))
+      : SlideOutRight.duration(250).easing(Easing.out(Easing.quad));
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[authSharedStyles.flex, { backgroundColor: theme.canvas }]}
-    >
-      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-      <SafeAreaView
-        edges={['top', 'bottom']}
-        style={[authSharedStyles.flex, { backgroundColor: theme.canvas }]}
+    <AuthScreen contentStyle={styles.content}>
+      {bannerError ? <ErrorBanner message={bannerError} /> : null}
+      <BackButton onPress={handleBack} />
+      <Animated.View
+        entering={enteringAnimation}
+        exiting={exitingAnimation}
+        key={step}
+        style={styles.stepFrame}
       >
-        <ScrollView
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-        >
-          <LogoBlock style={styles.logo} theme={theme} />
-
-          <AuthHeading theme={theme}>Create an account</AuthHeading>
-          <AuthSubtext theme={theme}>
-            Set up your Clio account to continue
-          </AuthSubtext>
-
-          <View style={styles.form}>
-            <AuthInput
-              autoCapitalize="words"
-              autoCorrect={false}
-              editable={!isLoading}
-              error={Boolean(errorText)}
-              onChangeText={(value) => {
-                setFullName(value);
-                setLocalError(null);
-                clearError();
-              }}
-              placeholder="Full name"
-              returnKeyType="next"
-              textContentType="name"
-              theme={theme}
-              value={fullName}
-            />
-            <AuthInput
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-              error={Boolean(errorText)}
-              inputMode="email"
-              keyboardType="email-address"
-              onChangeText={(value) => {
-                setEmail(value);
-                setLocalError(null);
-                clearError();
-              }}
-              placeholder="Email address"
-              returnKeyType="next"
-              textContentType="emailAddress"
-              theme={theme}
-              value={email}
-            />
-            <AuthInput
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-              error={Boolean(errorText)}
-              onChangeText={(value) => {
-                setPassword(value);
-                setLocalError(null);
-                clearError();
-              }}
-              onSubmitEditing={handleSignup}
-              placeholder="Password"
-              returnKeyType="go"
-              secureTextEntry
-              textContentType="newPassword"
-              theme={theme}
-              value={password}
-            />
-
-            {errorText ? (
-              <AuthErrorText theme={theme}>{errorText}</AuthErrorText>
-            ) : null}
-
-            <AuthButton
-              loading={isLoading}
-              onPress={handleSignup}
-              style={styles.primaryAction}
-              theme={theme}
-              title="Continue"
-            />
-          </View>
-
-          <Text style={[styles.switchText, { color: theme.textSec }]}>
-            Already have an account?{' '}
-            <Text
-              onPress={() => router.replace('/login')}
-              style={{ color: theme.link }}
-            >
-              Log in
-            </Text>
-          </Text>
-
-          <View style={styles.termsWrap}>
-            <Text style={[styles.agreementText, { color: theme.textSec }]}>
-              By tapping Continue, you agree to our terms and privacy policy.
-            </Text>
-            <TermsLinks theme={theme} />
-          </View>
-
-          <AuthButton
-            onPress={() => router.replace('/(auth)')}
-            style={styles.backButton}
-            theme={theme}
-            title="Back to sign in options"
-            variant="ghost"
-          />
-        </ScrollView>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+        {renderStep()}
+      </Animated.View>
+    </AuthScreen>
   );
 }
 
 const styles = StyleSheet.create({
   content: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingBottom: 40,
-    paddingHorizontal: 24,
-    paddingTop: 46,
+    paddingTop: 18,
   },
-  logo: {
-    marginBottom: 46,
+  stepFrame: {
+    width: '100%',
   },
-  form: {
-    gap: 14,
+  headerBlock: {
+    marginBottom: 32,
+    marginTop: 48,
   },
-  primaryAction: {
-    marginTop: 18,
+  heading: {
+    color: AUTH_COLORS.ink,
+    fontSize: 32,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+    lineHeight: 38,
+    textAlign: 'left',
   },
-  switchText: {
+  subheading: {
+    color: AUTH_COLORS.ink2,
     fontSize: 15,
     fontWeight: '400',
-    letterSpacing: -0.1,
     lineHeight: 22,
-    marginTop: 28,
+    marginTop: 6,
+    textAlign: 'left',
+  },
+  stack: {
+    gap: 0,
+  },
+  switchLine: {
+    color: AUTH_COLORS.ink2,
+    fontSize: 15,
+    fontWeight: '400',
+    lineHeight: 22,
+    marginTop: 22,
     textAlign: 'center',
   },
-  termsWrap: {
-    gap: 12,
-    marginTop: 24,
+  inlineLink: {
+    color: AUTH_COLORS.ink,
+    fontWeight: '600',
   },
-  agreementText: {
+  editText: {
+    color: AUTH_COLORS.ink,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  requirementCard: {
+    backgroundColor: '#F0EEE9',
+    borderRadius: 12,
+    marginTop: 12,
+    padding: 12,
+  },
+  requirementRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  requirementText: {
+    color: AUTH_COLORS.muted,
+    fontSize: 13,
+    fontWeight: '400',
+    lineHeight: 18,
+  },
+  requirementTextMet: {
+    color: AUTH_COLORS.success,
+  },
+  termsText: {
+    color: AUTH_COLORS.muted,
     fontSize: 13,
     fontWeight: '400',
     lineHeight: 19,
+    marginTop: 14,
     textAlign: 'center',
   },
-  backButton: {
-    marginTop: 10,
+  termsLink: {
+    color: AUTH_COLORS.ink,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
+  },
+  resendButton: {
+    alignItems: 'center',
+    marginTop: 20,
+    paddingVertical: 8,
+  },
+  resendText: {
+    color: AUTH_COLORS.ink,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  otpErrorRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 8,
+  },
+  loadingState: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 420,
+  },
+  features: {
+    gap: 24,
+    marginBottom: 10,
+    marginTop: 24,
+  },
+  featureRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 14,
+  },
+  featureIcon: {
+    alignItems: 'center',
+    height: 28,
+    justifyContent: 'center',
+    width: 28,
+  },
+  featureText: {
+    flex: 1,
+  },
+  featureTitle: {
+    color: AUTH_COLORS.ink,
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 20,
+  },
+  featureBody: {
+    color: AUTH_COLORS.ink2,
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 20,
+    marginTop: 2,
+  },
+  errorBanner: {
+    backgroundColor: AUTH_COLORS.ink,
+    borderRadius: 12,
+    marginBottom: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+  },
+  errorBannerText: {
+    color: AUTH_COLORS.white,
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 19,
   },
 });

@@ -1,27 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { useAuthStore } from '@/stores';
 import {
-  AuthButton,
-  AuthErrorText,
-  AuthHeading,
-  AuthInput,
-  AuthSubtext,
-  LogoBlock,
-  authSharedStyles,
-  useAuthTheme,
-} from '@/components/auth/auth-ui';
+  AUTH_COLORS,
+  AuthScreen,
+  BackButton,
+  EyeButton,
+  FloatingInput,
+  InlineError,
+  OrDivider,
+  PrimaryButton,
+  SsoButton,
+} from '@/components/AuthFlowPrimitives';
+import { useAuthStore } from '@/stores';
+
+const MAIN_ROUTE = '/(tabs)/catalogue';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -30,18 +24,31 @@ export default function LoginScreen() {
   const isLoading = useAuthStore((state) => state.isLoading);
   const storeError = useAuthStore((state) => state.error);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const { scheme, theme } = useAuthTheme();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
-  // Redirect authenticated users away from login
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace('/(tabs)/catalogue');
+      router.replace(MAIN_ROUTE);
     }
   }, [isAuthenticated, router]);
+
+  const clearFieldErrors = useCallback(() => {
+    setLocalError(null);
+    clearError();
+  }, [clearError]);
+
+  const handleBack = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace('/');
+  }, [router]);
 
   const handleLogin = useCallback(async () => {
     if (!email.trim() || !password) {
@@ -51,135 +58,136 @@ export default function LoginScreen() {
 
     setLocalError(null);
     clearError();
+
     const didLogin = await login(email.trim(), password);
-    if (!didLogin) {
-      setPassword('');
+
+    if (didLogin) {
+      router.replace(MAIN_ROUTE);
+      return;
     }
-  }, [email, password, login, clearError]);
+
+    setPassword('');
+  }, [clearError, email, login, password, router]);
 
   const errorText = localError || storeError;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[authSharedStyles.flex, { backgroundColor: theme.canvas }]}
-    >
-      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-      <SafeAreaView
-        edges={['top', 'bottom']}
-        style={[authSharedStyles.flex, { backgroundColor: theme.canvas }]}
-      >
-        <ScrollView
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
+    <AuthScreen contentStyle={styles.content}>
+      <BackButton onPress={handleBack} />
+      <View style={styles.headerBlock}>
+        <Text style={styles.heading}>Welcome back</Text>
+      </View>
+
+      <View style={styles.stack}>
+        <FloatingInput
+          autoCapitalize="none"
+          autoCorrect={false}
+          editable={!isLoading}
+          error={Boolean(errorText)}
+          inputMode="email"
+          keyboardType="email-address"
+          label="Email address"
+          onChangeText={(value) => {
+            setEmail(value);
+            clearFieldErrors();
+          }}
+          returnKeyType="next"
+          textContentType="emailAddress"
+          value={email}
+        />
+        <FloatingInput
+          autoCapitalize="none"
+          autoCorrect={false}
+          editable={!isLoading}
+          error={Boolean(errorText)}
+          label="Password"
+          onChangeText={(value) => {
+            setPassword(value);
+            clearFieldErrors();
+          }}
+          onSubmitEditing={handleLogin}
+          returnKeyType="go"
+          rightElement={
+            <EyeButton
+              isVisible={isPasswordVisible}
+              onPress={() => setIsPasswordVisible((visible) => !visible)}
+            />
+          }
+          secureTextEntry={!isPasswordVisible}
+          textContentType="password"
+          value={password}
+        />
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {}}
+          style={styles.forgotButton}
         >
-          <LogoBlock style={styles.logo} theme={theme} />
+          <Text style={styles.forgotText}>Forgot password?</Text>
+        </Pressable>
+        <PrimaryButton
+          loading={isLoading}
+          onPress={handleLogin}
+          title="Continue"
+        />
+        {errorText ? <InlineError>{errorText}</InlineError> : null}
+      </View>
 
-          <AuthHeading theme={theme}>Log in</AuthHeading>
-          <AuthSubtext theme={theme}>
-            Enter your email and password to continue
-          </AuthSubtext>
-
-          <View style={styles.form}>
-            <AuthInput
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-              error={Boolean(errorText)}
-              inputMode="email"
-              keyboardType="email-address"
-              onChangeText={(value) => {
-                setEmail(value);
-                setLocalError(null);
-                clearError();
-              }}
-              placeholder="Email address"
-              returnKeyType="next"
-              textContentType="emailAddress"
-              theme={theme}
-              value={email}
-            />
-            <AuthInput
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-              error={Boolean(errorText)}
-              onChangeText={(value) => {
-                setPassword(value);
-                setLocalError(null);
-                clearError();
-              }}
-              onSubmitEditing={handleLogin}
-              placeholder="Password"
-              returnKeyType="go"
-              secureTextEntry
-              textContentType="password"
-              theme={theme}
-              value={password}
-            />
-
-            {errorText ? (
-              <AuthErrorText theme={theme}>{errorText}</AuthErrorText>
-            ) : null}
-
-            <AuthButton
-              loading={isLoading}
-              onPress={handleLogin}
-              style={styles.primaryAction}
-              theme={theme}
-              title="Continue"
-            />
-          </View>
-
-          <Text style={[styles.switchText, { color: theme.textSec }]}>
-            {"Don't have an account? "}
-            <Text
-              onPress={() => router.replace('/register')}
-              style={{ color: theme.link }}
-            >
-              Sign up
-            </Text>
-          </Text>
-
-          <AuthButton
-            onPress={() => router.replace('/(auth)')}
-            style={styles.backButton}
-            theme={theme}
-            title="Back to sign in options"
-            variant="ghost"
-          />
-        </ScrollView>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+      <Text style={styles.switchLine}>
+        {"Don't have an account? "}
+        <Text
+          onPress={() => router.replace('/(auth)/register')}
+          style={styles.inlineLink}
+        >
+          Sign up
+        </Text>
+      </Text>
+      <OrDivider />
+      <SsoButton kind="apple" title="Continue with Apple" />
+      <SsoButton kind="google" title="Continue with Google" />
+      <SsoButton kind="microsoft" title="Continue with Microsoft" />
+      <SsoButton kind="phone" title="Continue with phone" />
+    </AuthScreen>
   );
 }
 
 const styles = StyleSheet.create({
   content: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingBottom: 48,
-    paddingHorizontal: 24,
-    paddingTop: 58,
+    paddingTop: 18,
   },
-  logo: {
-    marginBottom: 54,
+  headerBlock: {
+    marginBottom: 32,
+    marginTop: 48,
   },
-  form: {
-    gap: 14,
+  heading: {
+    color: AUTH_COLORS.ink,
+    fontSize: 32,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+    lineHeight: 38,
+    textAlign: 'left',
   },
-  primaryAction: {
-    marginTop: 18,
+  stack: {
+    gap: 0,
   },
-  switchText: {
+  forgotButton: {
+    alignSelf: 'flex-end',
+    paddingTop: 10,
+  },
+  forgotText: {
+    color: AUTH_COLORS.ink,
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  switchLine: {
+    color: AUTH_COLORS.ink2,
     fontSize: 15,
     fontWeight: '400',
-    letterSpacing: -0.1,
     lineHeight: 22,
-    marginTop: 28,
+    marginTop: 22,
     textAlign: 'center',
   },
-  backButton: {
-    marginTop: 8,
+  inlineLink: {
+    color: AUTH_COLORS.ink,
+    fontWeight: '600',
   },
 });
