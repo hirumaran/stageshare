@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
   },
   headerBlock: {
     marginBottom: 32,
-    marginTop: 48,
+    marginTop: 24,
   },
   heading: {
     color: AUTH_COLORS.ink,
