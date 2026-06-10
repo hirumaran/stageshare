@@ -115,6 +115,7 @@ export default function LoginScreen() {
             />
           }
           secureTextEntry={!isPasswordVisible}
+          shellStyle={styles.passwordInput}
           textContentType="password"
           value={password}
         />
@@ -157,23 +158,26 @@ const styles = StyleSheet.create({
     paddingTop: 18,
   },
   headerBlock: {
-    marginBottom: 32,
-    marginTop: 48,
+    marginBottom: 30,
+    marginTop: 42,
   },
   heading: {
     color: AUTH_COLORS.ink,
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: '700',
-    letterSpacing: -0.5,
-    lineHeight: 38,
+    letterSpacing: -0.3,
+    lineHeight: 36,
     textAlign: 'left',
   },
   stack: {
     gap: 0,
   },
+  passwordInput: {
+    marginTop: 12,
+  },
   forgotButton: {
     alignSelf: 'flex-end',
-    paddingTop: 10,
+    paddingTop: 12,
   },
   forgotText: {
     color: AUTH_COLORS.ink2,
@@ -185,7 +189,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '400',
     lineHeight: 22,
-    marginTop: 22,
+    marginTop: 20,
     textAlign: 'center',
   },
   inlineLink: {
