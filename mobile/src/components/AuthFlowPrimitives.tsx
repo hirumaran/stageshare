@@ -182,19 +182,13 @@ export function FloatingInput({
   const isFloating = isFocused || Boolean(value && value.length > 0);
 
   const labelStyle = useAnimatedStyle(() => ({
-    color: error
-      ? AUTH_COLORS.error
-      : isFocused
-        ? AUTH_COLORS.ink
-        : AUTH_COLORS.muted,
-    fontSize: withTiming(isFloating ? 12 : 15, {
-      duration: 150,
-      easing: Easing.out(Easing.quad),
-    }),
-    top: withTiming(isFloating ? 6 : 17, {
-      duration: 150,
-      easing: Easing.out(Easing.quad),
-    }),
+    color: isFloating ? AUTH_COLORS.ink : AUTH_COLORS.muted,
+    fontSize: withTiming(isFloating ? 11 : 15, { duration: 150 }),
+    transform: [
+      {
+        translateY: withTiming(isFloating ? 8 : 18, { duration: 150 }),
+      },
+    ],
   }));
 
   return (
@@ -644,9 +638,8 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     borderWidth: 1.5,
     height: 56,
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     paddingHorizontal: 18,
-    paddingVertical: 5,
   },
   inputShellFocused: {
     borderColor: AUTH_COLORS.activeBorder,
@@ -661,21 +654,24 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     left: 18,
     position: 'absolute',
+    top: 0,
   },
   inputRow: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 10,
-    minHeight: 31,
+    height: '100%',
   },
   textInput: {
     color: AUTH_COLORS.ink,
     flex: 1,
     fontSize: 16,
     fontWeight: '400',
-    height: 32,
+    height: '100%',
     includeFontPadding: false,
-    padding: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 0,
+    paddingTop: 24,
   },
   textInputDisabled: {
     color: AUTH_COLORS.ink,

@@ -70,6 +70,7 @@ export default function LoginScreen() {
   }, [clearError, email, login, password, router]);
 
   const errorText = localError || storeError;
+  const canSubmit = email.trim().length > 0 && password.length > 0;
 
   return (
     <AuthScreen contentStyle={styles.content}>
@@ -125,6 +126,7 @@ export default function LoginScreen() {
           <Text style={styles.forgotText}>Forgot password?</Text>
         </Pressable>
         <PrimaryButton
+          disabled={!canSubmit}
           loading={isLoading}
           onPress={handleLogin}
           title="Continue"
@@ -174,9 +176,9 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   forgotText: {
-    color: AUTH_COLORS.ink,
+    color: AUTH_COLORS.ink2,
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '400',
   },
   switchLine: {
     color: AUTH_COLORS.ink2,
