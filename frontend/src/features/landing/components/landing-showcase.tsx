@@ -1,88 +1,198 @@
 import { motion } from "framer-motion"
-import { Link } from "react-router-dom"
-import { ArrowRight } from "lucide-react"
-import { Eyebrow } from "./landing-primitives"
+import { Search, SlidersHorizontal, Camera, Compass, Send, RotateCcw } from "lucide-react"
+import { Container, Section, Eyebrow } from "./landing-primitives"
+import { Reveal } from "./landing-motion"
+import { ResourceCard, CATEGORIES, type Resource, type CategoryKey } from "./landing-ui"
 
-const EASE = [0.22, 1, 0.36, 1] as const
-
-type Item = {
-  name: string
-  category: string
-  school: string
-  status: "available" | "on-loan"
-  detail: string
-}
-
-const ITEMS: Item[] = [
-  { name: "Victorian gown", category: "Costumes", school: "Newport HS", status: "available", detail: "Available now" },
-  { name: "Wireless lav mics ×4", category: "Sound", school: "Sammamish HS", status: "on-loan", detail: "Due Mar 14" },
-  { name: "Forest backdrop", category: "Set pieces", school: "Big Picture", status: "available", detail: "Available now" },
-  { name: "Edwardian tea set", category: "Props", school: "Newport HS", status: "available", detail: "Available now" },
+const CATALOGUE: Resource[] = [
+  { title: "Victorian Frock Coat", category: "costumes", school: "Lincoln High", condition: "Excellent", status: "Available" },
+  { title: "Fog Machine X-400", category: "sound", school: "Roosevelt Middle", condition: "Good", status: "On loan" },
+  { title: "Gilded Throne", category: "sets", school: "Edison Arts", condition: "Fair", status: "Available" },
+  { title: "LED PAR Wash Kit ×6", category: "lighting", school: "Lincoln High", condition: "Excellent", status: "Reserved" },
+  { title: "Hamlet — 24 scripts", category: "scripts", school: "Jefferson High", condition: "Good", status: "Available" },
+  { title: "Fairy Wings, pair", category: "props", school: "Edison Arts", condition: "Good", status: "Available" },
 ]
 
-/**
- * Catalogue preview — text-based "project tile" cards on white.
- * Hairline borders define the edges (no shadow); coral is used functionally
- * to flag availability, paired with a text label so meaning never relies on
- * color alone.
- */
+const STEPS = [
+  {
+    icon: Camera,
+    title: "Digitize the closet",
+    body: "Snap a photo, log condition, location, and category. Your whole storage room becomes a searchable catalogue in an afternoon.",
+  },
+  {
+    icon: Compass,
+    title: "Discover across schools",
+    body: "Search one shared district catalogue. See what's available right now — and who has the thing you've been about to buy.",
+  },
+  {
+    icon: Send,
+    title: "Request & hand off",
+    body: "Request a borrow in a tap. Message the owning teacher, agree on a handoff, and Clio tracks the whole conversation.",
+  },
+  {
+    icon: RotateCcw,
+    title: "Track & return",
+    body: "Due dates, reminders, and condition checks keep every loan accountable — so things come back the way they left.",
+  },
+]
+
+const FILTER_KEYS: CategoryKey[] = ["costumes", "props", "scripts", "sets", "lighting", "sound"]
+
 export function LandingShowcase() {
   return (
-    <section className="w-full">
-      <div className="container">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.6, ease: EASE }}
-          className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
-        >
-          <div>
-            <Eyebrow className="mb-4">The catalogue</Eyebrow>
-            <h2 className="max-w-md text-[clamp(1.6rem,3.5vw,2.5rem)] leading-[1.1] tracking-[-0.03em] font-medium text-[var(--text-primary)]">
-              Browse what every school can share.
+    <Section id="how" className="scroll-mt-24">
+      <Container>
+        <div className="max-w-2xl">
+          <Reveal>
+            <Eyebrow>How it works</Eyebrow>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <h2 className="mt-5 text-[clamp(2rem,4.6vw,3.4rem)] font-semibold leading-[1.02] tracking-[-0.035em] text-[var(--text-primary)]">
+              From dark storage room to district-wide stage.
             </h2>
-          </div>
-          <Link
-            to="/catalogue"
-            className="group inline-flex items-center gap-2 text-[14px] tracking-[-0.01em] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
-          >
-            Browse the full catalogue
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" strokeWidth={1.5} />
-          </Link>
-        </motion.div>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <p className="mt-6 text-[17px] leading-[1.65] text-[var(--text-secondary)]">
+              Clio gives every department one connected catalogue. The gear stops hiding,
+              the borrowing gets simple, and every production starts with what the district
+              already owns.
+            </p>
+          </Reveal>
+        </div>
 
-        <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--border-subtle)] border border-[var(--border-subtle)] rounded-[4px] overflow-hidden">
-          {ITEMS.map((item, i) => (
-            <motion.article
-              key={item.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.5, ease: EASE, delay: i * 0.06 }}
-              className="landing-lift flex flex-col justify-between gap-10 bg-[var(--background)] p-6 hover:bg-[var(--bg-subtle)]"
-            >
-              <p className="text-[12px] tracking-[-0.01em] text-[var(--primary)]">{item.category}</p>
-              <div>
-                <h3 className="text-[18px] leading-[1.2] tracking-[-0.02em] font-medium text-[var(--text-primary)]">
-                  {item.name}
-                </h3>
-                <div className="mt-3 flex items-center gap-2">
-                  <span
-                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                      item.status === "available" ? "bg-[var(--primary)]" : "bg-[var(--text-muted)]"
-                    }`}
-                    aria-hidden="true"
-                  />
-                  <span className="text-[13px] tracking-[-0.01em] text-[var(--text-muted)]">
-                    {item.detail} · {item.school}
-                  </span>
+        {/* ── Crafted product UI: the district catalogue ── */}
+        <Reveal delay={0.1}>
+          <div className="landing-float-card mt-12 overflow-hidden p-0">
+            {/* window chrome */}
+            <div className="flex items-center gap-3 border-b border-[var(--border-default)] px-4 py-3 sm:px-5">
+              <div className="flex gap-1.5">
+                <span className="h-3 w-3 rounded-full bg-[#e7e0d2]" />
+                <span className="h-3 w-3 rounded-full bg-[#e7e0d2]" />
+                <span className="h-3 w-3 rounded-full bg-[#e7e0d2]" />
+              </div>
+              <div className="mx-auto flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-subtle)] px-3 py-1 text-[12px] text-[var(--text-muted)]">
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--ember)" }} />
+                clio.app / catalogue
+              </div>
+            </div>
+
+            <div className="grid lg:grid-cols-[200px_1fr]">
+              {/* category rail */}
+              <aside className="hidden flex-col gap-1 border-r border-[var(--border-default)] p-4 lg:flex">
+                <span className="lp-eyebrow mb-2 px-2">Categories</span>
+                {FILTER_KEYS.map((key, i) => {
+                  const cat = CATEGORIES[key]
+                  const Icon = cat.icon
+                  const active = i === 0
+                  return (
+                    <div
+                      key={key}
+                      className="flex items-center justify-between rounded-xl px-2.5 py-2 text-[13.5px] transition-colors"
+                      style={{
+                        background: active ? "var(--bg-subtle)" : "transparent",
+                        color: active ? "var(--text-primary)" : "var(--text-secondary)",
+                        fontWeight: active ? 600 : 500,
+                      }}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <Icon size={16} strokeWidth={1.6} />
+                        {cat.label}
+                      </span>
+                      <span className="lp-tnum text-[11px] text-[var(--text-muted)]">
+                        {[214, 96, 58, 41, 73, 39][i]}
+                      </span>
+                    </div>
+                  )
+                })}
+              </aside>
+
+              {/* content */}
+              <div className="p-4 sm:p-5">
+                {/* toolbar */}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <div className="flex flex-1 items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-subtle)] px-3.5 py-2.5 text-[13.5px] text-[var(--text-muted)]">
+                    <Search size={15} strokeWidth={1.8} />
+                    Search 521 resources across 12 schools…
+                  </div>
+                  <div className="flex items-center gap-2 rounded-full border border-[var(--border-default)] px-3.5 py-2.5 text-[13px] font-medium text-[var(--text-secondary)]">
+                    <SlidersHorizontal size={14} strokeWidth={1.8} />
+                    Filters
+                  </div>
+                </div>
+
+                {/* status chips */}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {["Available now", "Within 5 miles", "Excellent condition"].map((c, i) => (
+                    <span
+                      key={c}
+                      className="rounded-full border px-3 py-1 text-[12px] font-medium tracking-[-0.01em]"
+                      style={
+                        i === 0
+                          ? { background: "var(--ember-wash)", color: "#b23a26", borderColor: "#f6cabd" }
+                          : { borderColor: "var(--border-default)", color: "var(--text-secondary)" }
+                      }
+                    >
+                      {c}
+                    </span>
+                  ))}
+                </div>
+
+                {/* grid */}
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {CATALOGUE.map((r, i) => (
+                    <motion.div
+                      key={r.title}
+                      initial={{ opacity: 0, y: 16 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: "-40px" }}
+                      transition={{ duration: 0.5, delay: i * 0.06 }}
+                    >
+                      <ResourceCard resource={r} compact />
+                    </motion.div>
+                  ))}
                 </div>
               </div>
-            </motion.article>
-          ))}
+            </div>
+          </div>
+        </Reveal>
+
+        {/* ── Borrow lifecycle ── */}
+        <div className="relative mt-16 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+          {/* connector line on desktop */}
+          <div
+            className="absolute left-0 right-0 top-7 hidden h-px lg:block"
+            style={{ background: "var(--border-default)" }}
+            aria-hidden
+          />
+          {STEPS.map((s, i) => {
+            const Icon = s.icon
+            return (
+              <Reveal key={s.title} delay={i * 0.08} className="relative">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="relative z-10 flex h-14 w-14 items-center justify-center rounded-2xl"
+                    style={{ background: "var(--bg-raised)", border: "1px solid var(--border-default)" }}
+                  >
+                    <Icon size={22} strokeWidth={1.6} style={{ color: "var(--text-primary)" }} />
+                    <span
+                      className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold text-white"
+                      style={{ background: "var(--ember)" }}
+                    >
+                      {i + 1}
+                    </span>
+                  </div>
+                </div>
+                <h3 className="mt-5 text-[18px] font-semibold tracking-[-0.025em] text-[var(--text-primary)]">
+                  {s.title}
+                </h3>
+                <p className="mt-2 text-[14.5px] leading-[1.6] text-[var(--text-secondary)]">
+                  {s.body}
+                </p>
+              </Reveal>
+            )
+          })}
         </div>
-      </div>
-    </section>
+      </Container>
+    </Section>
   )
 }

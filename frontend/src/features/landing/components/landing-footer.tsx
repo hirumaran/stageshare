@@ -1,68 +1,85 @@
 import { Link } from "react-router-dom"
+import { Container } from "./landing-primitives"
+import { Wordmark } from "./landing-brand"
 
-type NavItem =
-  | { label: string; href: string }
-  | { label: string; to: string }
-
-const NAV: NavItem[] = [
-  { label: "Platform", href: "#platform" },
-  { label: "Impact", href: "#impact" },
-  { label: "Contact", href: "#contact" },
-  { label: "Privacy", to: "/privacy" },
-  { label: "Terms", to: "/terms" },
+const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
+  {
+    title: "Product",
+    links: [
+      { label: "How it works", href: "#how" },
+      { label: "Insights", href: "#insights" },
+      { label: "Catalogue", href: "/signup" },
+      { label: "Pricing", href: "/signup" },
+    ],
+  },
+  {
+    title: "Who it's for",
+    links: [
+      { label: "Teachers", href: "#teachers" },
+      { label: "Directors", href: "#teachers" },
+      { label: "Districts", href: "#districts" },
+      { label: "Arts coordinators", href: "#districts" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { label: "About", href: "/" },
+      { label: "Contact", href: "/" },
+      { label: "Privacy", href: "/" },
+      { label: "Terms", href: "/" },
+    ],
+  },
 ]
 
 export function LandingFooter() {
   return (
-    <footer className="bg-[var(--foreground)] text-[var(--background)]">
-      <div className="container py-16 md:py-24">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8">
-          <div className="md:col-span-5">
-            <p className="text-2xl font-semibold tracking-[-0.04em]">clio</p>
-            <p className="mt-6 max-w-sm text-[15px] leading-relaxed opacity-70">
-              A shared resource library built for drama teachers, departments, and districts.
+    <footer className="border-t border-[var(--border-default)] pb-10 pt-16">
+      <Container>
+        <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+          <div className="max-w-xs">
+            <Wordmark />
+            <p className="mt-4 text-[14px] leading-[1.6] text-[var(--text-muted)]">
+              The resource network for K-12 theatre. Turning scattered storage rooms into a
+              connected, collaborative stage.
             </p>
           </div>
-
-          <div className="md:col-span-3 md:col-start-7">
-            <p className="text-[13px] tracking-[-0.01em] opacity-50 mb-6">Navigation</p>
-            <ul className="space-y-4">
-              {NAV.map((item) => (
-                <li key={item.label}>
-                  {"to" in item ? (
-                    <Link
-                      to={item.to}
-                      className="text-[14px] opacity-70 hover:opacity-100 transition-opacity"
-                    >
-                      {item.label}
-                    </Link>
-                  ) : (
-                    <a
-                      href={item.href}
-                      className="text-[14px] opacity-70 hover:opacity-100 transition-opacity"
-                    >
-                      {item.label}
-                    </a>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="md:col-span-4">
-            <p className="text-[13px] tracking-[-0.01em] opacity-50 mb-6">Contact</p>
-            <p className="text-[14px] opacity-70">hello@clio.app</p>
-            <p className="mt-2 text-[14px] opacity-70">Seattle, Washington</p>
-          </div>
+          {COLUMNS.map((col) => (
+            <div key={col.title}>
+              <h4 className="lp-eyebrow">{col.title}</h4>
+              <ul className="mt-4 space-y-3">
+                {col.links.map((l) => {
+                  const isAnchor = l.href.startsWith("#")
+                  const cls =
+                    "text-[14.5px] tracking-[-0.01em] text-[var(--text-secondary)] transition-colors hover:text-[var(--ember)]"
+                  return (
+                    <li key={l.label}>
+                      {isAnchor ? (
+                        <a href={l.href} className={cls}>
+                          {l.label}
+                        </a>
+                      ) : (
+                        <Link to={l.href} className={cls}>
+                          {l.label}
+                        </Link>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        <div className="mt-16 md:mt-24 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-[12px] opacity-50">
-            &copy; {new Date().getFullYear()} Clio. All rights reserved.
+        <div className="mt-14 flex flex-col items-start justify-between gap-4 border-t border-[var(--border-default)] pt-6 sm:flex-row sm:items-center">
+          <p className="text-[13px] text-[var(--text-muted)]">
+            © {new Date().getFullYear()} Clio. Made for theatre educators.
           </p>
-          <p className="text-[12px] opacity-50">Built for drama teachers.</p>
+          <p className="text-[13px] text-[var(--text-muted)]">
+            Named for the muse — built for the makers.
+          </p>
         </div>
-      </div>
+      </Container>
     </footer>
   )
 }

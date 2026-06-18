@@ -1,242 +1,220 @@
-import { useRef } from "react"
-import {
-  motion,
-  useMotionValue,
-  useSpring,
-  useTransform,
-  useReducedMotion,
-  type MotionValue,
-} from "framer-motion"
-import { ArrowDown, ArrowRight, Check } from "lucide-react"
-import { Link } from "react-router-dom"
-import { SectionWrapper, LandingLinkButton } from "./landing-primitives"
-import { CountUp } from "./landing-motion"
+import { motion } from "framer-motion"
+import { ArrowRight, ArrowDown } from "lucide-react"
+import { DotPattern } from "@/registry/aliimam/components/dot-pattern"
+import { Container, Button } from "./landing-primitives"
+import { ResourceCard, Float, SchoolDot, type Resource } from "./landing-ui"
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
-const METRICS = [
-  { value: "2,200+", label: "Shared resources" },
-  { value: "3", label: "District schools" },
-  { value: "95%", label: "Fulfillment rate" },
+const HERO_CARDS: { resource: Resource; style: string; float: number; delay: number }[] = [
+  {
+    resource: {
+      title: "Victorian Frock Coat",
+      category: "costumes",
+      school: "Lincoln High",
+      condition: "Excellent",
+      status: "Available",
+    },
+    style: "left-0 top-6 w-[210px]",
+    float: 10,
+    delay: 0,
+  },
+  {
+    resource: {
+      title: "LED PAR Wash Kit ×6",
+      category: "lighting",
+      school: "Roosevelt Middle",
+      condition: "Good",
+      status: "Reserved",
+    },
+    style: "right-2 top-0 w-[212px]",
+    float: 13,
+    delay: 0.6,
+  },
+  {
+    resource: {
+      title: "Hamlet — 24 scripts",
+      category: "scripts",
+      school: "Jefferson High",
+      condition: "Good",
+      status: "Available",
+    },
+    style: "right-10 bottom-2 w-[204px]",
+    float: 9,
+    delay: 1.1,
+  },
 ]
 
-/* ─── Floating catalogue card cluster — the hero's focal eye-candy ─── */
-function CardCluster({ mx, my }: { mx: MotionValue<number>; my: MotionValue<number> }) {
-  // Each card drifts at a different depth for parallax.
-  const useDrift = (range: number) => ({
-    x: useSpring(useTransform(mx, [-0.5, 0.5], [-range, range]), { stiffness: 120, damping: 18 }),
-    y: useSpring(useTransform(my, [-0.5, 0.5], [-range * 0.6, range * 0.6]), { stiffness: 120, damping: 18 }),
-  })
-  const back = useDrift(14)
-  const mid = useDrift(26)
-  const front = useDrift(40)
-  const chip = useDrift(54)
-
-  return (
-    <div className="relative mx-auto aspect-square w-full max-w-[460px]" style={{ perspective: 1000 }}>
-      {/* Back card — quiet listing */}
-      <motion.div
-        style={{ x: back.x, y: back.y }}
-        initial={{ opacity: 0, y: 40, rotate: -10 }}
-        animate={{ opacity: 1, y: 0, rotate: -7 }}
-        transition={{ duration: 0.8, ease: EASE, delay: 0.35 }}
-        className="landing-float-card absolute left-[2%] top-[12%] w-[52%] p-5"
-      >
-        <p className="text-[11px] tracking-[-0.01em] text-[var(--primary)]">Set pieces</p>
-        <p className="mt-2 text-[15px] font-medium tracking-[-0.02em] text-[var(--text-primary)]">Forest backdrop</p>
-        <div className="mt-3 flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
-          <span className="text-[11px] text-[var(--text-muted)]">Available · Big Picture</span>
-        </div>
-      </motion.div>
-
-      {/* Mid card — gold-accented listing */}
-      <motion.div
-        style={{ x: mid.x, y: mid.y }}
-        initial={{ opacity: 0, y: 48, rotate: 8 }}
-        animate={{ opacity: 1, y: 0, rotate: 5 }}
-        transition={{ duration: 0.8, ease: EASE, delay: 0.45 }}
-        className="landing-float-card absolute right-[3%] top-[4%] w-[50%] overflow-hidden p-0"
-      >
-        <div className="landing-swatch h-20 w-full" />
-        <div className="p-5">
-          <p className="text-[11px] tracking-[-0.01em] text-[var(--primary)]">Costumes</p>
-          <p className="mt-2 text-[15px] font-medium tracking-[-0.02em] text-[var(--text-primary)]">Victorian gown</p>
-          <div className="mt-3 flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--gold)]" />
-            <span className="text-[11px] text-[var(--text-muted)]">Newport HS</span>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Front card — featured, with request action */}
-      <motion.div
-        style={{ x: front.x, y: front.y }}
-        initial={{ opacity: 0, y: 56, rotate: -4 }}
-        animate={{ opacity: 1, y: 0, rotate: -2 }}
-        transition={{ duration: 0.8, ease: EASE, delay: 0.55 }}
-        className="landing-float-card absolute bottom-[6%] left-[14%] w-[62%] p-5"
-      >
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] tracking-[-0.01em] text-[var(--primary)]">Props</p>
-          <span className="text-[10px] text-[var(--text-muted)]">3 mi away</span>
-        </div>
-        <p className="mt-2 text-[17px] font-medium tracking-[-0.02em] text-[var(--text-primary)]">Edwardian tea set</p>
-        <p className="mt-1 text-[12px] text-[var(--text-muted)]">12 pieces · porcelain</p>
-        <div className="mt-4 flex items-center gap-2">
-          <span className="inline-flex items-center justify-center rounded-[6px] bg-[var(--foreground)] px-3 py-1.5 text-[12px] font-medium text-[var(--background)]">
-            Request
-          </span>
-          <span className="inline-flex items-center gap-1 text-[12px] text-[var(--text-muted)]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary)]" /> Available
-          </span>
-        </div>
-      </motion.div>
-
-      {/* Floating confirmation chip */}
-      <motion.div
-        style={{ x: chip.x, y: chip.y }}
-        initial={{ opacity: 0, scale: 0.8, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: EASE, delay: 0.8 }}
-        className="landing-float-card absolute right-[0%] bottom-[24%] flex items-center gap-2 !rounded-full px-3.5 py-2"
-      >
-        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--gold)]">
-          <Check className="h-2.5 w-2.5 text-[var(--wine)]" strokeWidth={3} />
-        </span>
-        <span className="text-[12px] font-medium tracking-[-0.01em] text-[var(--text-primary)]">Loan approved</span>
-      </motion.div>
-    </div>
-  )
-}
-
 export function LandingHero() {
-  const sectionRef = useRef<HTMLElement>(null)
-  const reduce = useReducedMotion()
-  const mx = useMotionValue(0)
-  const my = useMotionValue(0)
-
-  const handleMove = (e: React.MouseEvent<HTMLElement>) => {
-    if (reduce) return
-    const el = sectionRef.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    mx.set((e.clientX - rect.left) / rect.width - 0.5)
-    my.set((e.clientY - rect.top) / rect.height - 0.5)
-  }
-
   return (
-    <SectionWrapper
-      ref={sectionRef}
-      onMouseMove={handleMove}
-      className="relative flex min-h-screen items-center overflow-hidden pt-28 pb-16"
-    >
-      <div className="landing-hero-glow" aria-hidden="true" />
-      <div className="landing-grain" aria-hidden="true" />
-
-      <div className="container relative z-10">
-        <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2 lg:gap-10">
-          {/* Left — copy */}
-          <div className="order-2 lg:order-1">
+    <header className="relative overflow-hidden pt-32 sm:pt-40 lg:pt-44">
+      {/* Warm, radially-faded dot texture behind the hero */}
+      <DotPattern
+        width={22}
+        height={22}
+        cx={1}
+        cy={1}
+        cr={1.2}
+        className="z-0 fill-[var(--foreground)]/[0.08] [mask-image:radial-gradient(ellipse_75%_65%_at_50%_30%,#000_0%,transparent_72%)]"
+      />
+      <Container className="relative z-10">
+        <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
+          {/* ── Copy ── */}
+          <div className="max-w-xl">
             <motion.span
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: EASE, delay: 0.1 }}
-              className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] py-1.5 pl-2.5 pr-3.5 text-[12px] font-medium tracking-[-0.01em] text-[var(--text-secondary)]"
+              transition={{ duration: 0.6, ease: EASE }}
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-raised)] px-3 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] text-[var(--text-secondary)]"
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
-              Drama Teacher Resource Library
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--ember)" }} />
+              The resource network for K-12 theatre
             </motion.span>
 
-            <h1 className="mt-7 text-[clamp(2.75rem,7vw,5rem)] leading-[0.98] tracking-[-0.04em] font-medium text-[var(--text-primary)]">
-              {["Built for", "the "].map((line, i) => (
-                <span key={line} className="block overflow-hidden">
-                  <motion.span
-                    className="block"
-                    initial={{ y: "115%" }}
-                    animate={{ y: 0 }}
-                    transition={{ duration: 0.7, ease: EASE, delay: 0.2 + i * 0.1 }}
-                  >
-                    {line === "the " ? (
-                      <>
-                        the <span className="landing-accent-text">stage.</span>
-                      </>
-                    ) : (
-                      line
-                    )}
-                  </motion.span>
-                </span>
-              ))}
-            </h1>
+            <motion.h1
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: EASE, delay: 0.06 }}
+              className="mt-6 text-[clamp(2.6rem,6.4vw,4.6rem)] font-semibold leading-[0.98] tracking-[-0.04em] text-[var(--text-primary)]"
+            >
+              The theatre your
+              <br />
+              district already
+              <br />
+              <span className="relative whitespace-nowrap">
+                owns.
+                <svg
+                  className="absolute -bottom-2 left-0 w-[2.6em]"
+                  viewBox="0 0 120 12"
+                  fill="none"
+                  aria-hidden
+                >
+                  <motion.path
+                    d="M2 8C28 3 92 3 118 7"
+                    stroke="var(--ember)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.9, ease: EASE, delay: 0.7 }}
+                  />
+                </svg>
+              </span>
+            </motion.h1>
 
             <motion.p
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: EASE, delay: 0.5 }}
-              className="mt-7 max-w-md text-[18px] leading-[1.6] tracking-[-0.01em] text-[var(--text-secondary)]"
+              transition={{ duration: 0.7, ease: EASE, delay: 0.16 }}
+              className="mt-7 max-w-md text-[17px] leading-[1.6] tracking-[-0.01em] text-[var(--text-secondary)]"
             >
-              Borrow, lend, and track props, costumes, and set pieces across your district.
-              One shared catalogue for every production.
+              Clio connects every drama department in your district into one shared
+              inventory — so the costume one school is storing is the prop another
+              school needs opening night. Borrow, lend, and track it all.
             </motion.p>
 
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: EASE, delay: 0.62 }}
+              transition={{ duration: 0.7, ease: EASE, delay: 0.24 }}
               className="mt-9 flex flex-wrap items-center gap-3"
             >
-              <LandingLinkButton to="/signup" variant="primary" className="group">
-                Create a free account
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" strokeWidth={1.5} />
-              </LandingLinkButton>
-              <LandingLinkButton to="/catalogue" variant="outline">
-                Browse catalogue
-              </LandingLinkButton>
+              <Button to="/signup" className="px-7 py-3.5 text-[15px]">
+                Get started free
+                <ArrowRight size={17} strokeWidth={2} className="transition-transform group-hover:translate-x-0.5" />
+              </Button>
+              <Button variant="secondary" to="#how" className="px-6 py-3.5 text-[15px]">
+                See how it works
+              </Button>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: EASE, delay: 0.74 }}
-              className="mt-12 grid max-w-md grid-cols-3 gap-6 border-t border-[var(--border-default)] pt-8"
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="mt-6 text-[13px] tracking-[-0.01em] text-[var(--text-muted)]"
             >
-              {METRICS.map((m) => (
-                <div key={m.label}>
-                  <CountUp
-                    value={m.value}
-                    className="block text-2xl font-medium tracking-[-0.03em] text-[var(--text-primary)] md:text-3xl"
-                  />
-                  <span className="mt-2 block text-[12px] tracking-[-0.01em] text-[var(--text-muted)]">
-                    {m.label}
-                  </span>
-                </div>
-              ))}
-            </motion.div>
+              Built for drama teachers · No setup fees · District-ready in a day
+            </motion.p>
           </div>
 
-          {/* Right — focal visual */}
-          <div className="order-1 lg:order-2">
-            <CardCluster mx={mx} my={my} />
+          {/* ── Crafted floating catalogue cluster ── */}
+          <div className="relative hidden h-[440px] lg:block" aria-hidden>
+            {/* connector lines — emanate from the district node (lower-left) */}
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 480 440" fill="none">
+              {[
+                "M120 360 C 118 300, 118 230, 118 185",
+                "M150 360 C 240 320, 300 180, 360 110",
+                "M155 365 C 250 360, 310 345, 360 330",
+              ].map((d, i) => (
+                <motion.path
+                  key={d}
+                  d={d}
+                  stroke="var(--border-strong)"
+                  strokeWidth="1.5"
+                  strokeDasharray="4 5"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ duration: 1, delay: 0.9 + i * 0.15 }}
+                />
+              ))}
+            </svg>
+
+            {/* district network node — anchored lower-left, clear of cards */}
+            <Float amplitude={6} duration={7} className="absolute bottom-4 left-0 z-10">
+              <div className="landing-float-card flex items-center gap-3 px-4 py-3">
+                <div className="flex -space-x-2">
+                  {["Lincoln High", "Roosevelt Middle", "Jefferson High", "Edison Arts"].map(
+                    (s) => (
+                      <div key={s} className="rounded-full ring-2 ring-[var(--bg-raised)]">
+                        <SchoolDot name={s} size={26} />
+                      </div>
+                    )
+                  )}
+                </div>
+                <div className="leading-tight">
+                  <div className="text-[13px] font-semibold tracking-[-0.02em] text-[var(--text-primary)]">
+                    Mapleton District
+                  </div>
+                  <div className="text-[11px] text-[var(--text-muted)]">12 schools connected</div>
+                </div>
+              </div>
+            </Float>
+
+            {HERO_CARDS.map((c, i) => (
+              <motion.div
+                key={c.resource.title}
+                initial={{ opacity: 0, y: 28, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.7, ease: EASE, delay: 0.35 + i * 0.12 }}
+                className={`absolute ${c.style}`}
+              >
+                <Float amplitude={c.float} delay={c.delay} duration={6 + i}>
+                  <ResourceCard resource={c.resource} compact />
+                </Float>
+              </motion.div>
+            ))}
           </div>
         </div>
-      </div>
+      </Container>
 
-      <motion.div
+      {/* scroll cue */}
+      <motion.a
+        href="#proof"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 1.1 }}
-        className="container absolute bottom-8 left-0 right-0 z-10 hidden lg:flex"
+        transition={{ delay: 1.4 }}
+        className="relative z-10 mx-auto mt-16 flex w-fit flex-col items-center gap-2 text-[var(--text-muted)] sm:mt-20"
+        aria-label="Scroll down"
       >
-        <Link
-          to="#platform"
-          className="group inline-flex items-center gap-2 text-[12px] tracking-[-0.01em] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+        <span className="lp-eyebrow">Scroll</span>
+        <motion.span
+          animate={{ y: [0, 5, 0] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
         >
-          Scroll
-          <motion.span animate={{ y: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}>
-            <ArrowDown className="h-3.5 w-3.5" strokeWidth={1.5} />
-          </motion.span>
-        </Link>
-      </motion.div>
-    </SectionWrapper>
+          <ArrowDown size={16} strokeWidth={1.5} />
+        </motion.span>
+      </motion.a>
+    </header>
   )
 }

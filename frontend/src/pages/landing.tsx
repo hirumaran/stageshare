@@ -2,38 +2,42 @@ import { MotionConfig } from "framer-motion"
 import { ScrollProgress } from "@/features/landing/components/landing-motion"
 import { LandingNav } from "@/features/landing/components/landing-nav"
 import { LandingHero } from "@/features/landing/components/landing-hero"
-import { LandingFilters } from "@/features/landing/components/landing-filters"
-import { LandingShowcase } from "@/features/landing/components/landing-showcase"
-import { LandingMission } from "@/features/landing/components/landing-mission"
-import { LandingImpact } from "@/features/landing/components/landing-impact"
-import { LandingTrust } from "@/features/landing/components/landing-trust"
-import { LandingTestimonial } from "@/features/landing/components/landing-testimonial"
 import { LandingLogos } from "@/features/landing/components/landing-logos"
-import { LandingContact } from "@/features/landing/components/landing-contact"
+import { LandingProblem } from "@/features/landing/components/landing-problem"
+import { LandingShowcase } from "@/features/landing/components/landing-showcase"
+import { LandingAudiences } from "@/features/landing/components/landing-audiences"
+import { LandingAnalytics } from "@/features/landing/components/landing-analytics"
+import { LandingTestimonial } from "@/features/landing/components/landing-testimonial"
+import { LandingCta } from "@/features/landing/components/landing-cta"
 import { LandingFooter } from "@/features/landing/components/landing-footer"
 
 /**
- * Public landing page for Clio.
- * White-gallery aesthetic: pure white canvas, a single coral accent,
- * tightly-tracked Geist type, 1px hairline borders, and vast whitespace.
- * Theme tokens are scoped to .landing-root (see index.css).
+ * Public landing page for Clio — "The Working Theatre".
+ *
+ * A cinematic performing-arts gallery: warm cream canvas, obsidian editorial
+ * type, white elevated product cards, hairline warm borders, and one ember
+ * accent that reads as stage light. The page tells a story — valuable theatre
+ * resources sitting in the dark, the coordination chaos, Clio connecting every
+ * department, and every production becoming easier to plan.
+ *
+ * Theme tokens are scoped to .landing-root (see index.css) so the landing
+ * never inverts with the app's dark mode.
  */
 export default function LandingPage() {
   return (
     <MotionConfig reducedMotion="user">
-      <div className="landing-root min-h-screen overflow-x-hidden bg-[var(--background)] text-[var(--text-secondary)]">
+      <div className="landing-root min-h-screen">
         <ScrollProgress />
         <LandingNav />
         <main className="relative z-10">
           <LandingHero />
-          <LandingFilters />
-          <LandingShowcase />
-          <LandingMission />
-          <LandingImpact />
-          <LandingTrust />
-          <LandingTestimonial />
           <LandingLogos />
-          <LandingContact />
+          <LandingProblem />
+          <LandingShowcase />
+          <LandingAudiences />
+          <LandingAnalytics />
+          <LandingTestimonial />
+          <LandingCta />
         </main>
         <LandingFooter />
       </div>

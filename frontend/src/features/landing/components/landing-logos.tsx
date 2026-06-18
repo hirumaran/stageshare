@@ -1,30 +1,38 @@
-import { Eyebrow } from "./landing-primitives"
-import { Marquee } from "./landing-motion"
+import { Marquee, Reveal } from "./landing-motion"
+import { Container } from "./landing-primitives"
 
-const PARTNERS = [
-  "Big Picture",
-  "Newport",
-  "Sammamish",
-  "Edmonds",
-  "Lake Washington",
+const DISTRICTS = [
+  "Mapleton District",
+  "Riverside USD",
+  "Northgate Schools",
+  "Cedar Valley",
+  "Harborview ISD",
+  "Westbrook County",
+  "Summit Public",
+  "Fairhaven Arts",
 ]
 
 export function LandingLogos() {
   return (
-    <section className="py-16 md:py-24 border-t border-b border-[var(--border-subtle)]">
-      <div className="container">
-        <Eyebrow className="mb-10 md:mb-14 text-center">Partner districts</Eyebrow>
-      </div>
-      <Marquee speed={32} className="[mask-image:linear-gradient(90deg,transparent,#000_12%,#000_88%,transparent)]">
-        {PARTNERS.map((name) => (
-          <span
-            key={name}
-            className="school-watermark shrink-0 text-lg md:text-xl text-[var(--text-muted)] transition-opacity duration-300 hover:!opacity-100"
-          >
-            {name}
-          </span>
-        ))}
-      </Marquee>
+    <section id="proof" className="border-y border-[var(--border-default)] py-12 sm:py-14">
+      <Container>
+        <Reveal>
+          <p className="mb-9 text-center text-[13px] tracking-[-0.01em] text-[var(--text-muted)]">
+            Trusted by drama departments across{" "}
+            <span className="font-medium text-[var(--text-secondary)]">40+ school districts</span>
+          </p>
+        </Reveal>
+        <Marquee speed={48}>
+          {DISTRICTS.map((d) => (
+            <span
+              key={d}
+              className="select-none whitespace-nowrap text-[19px] font-semibold tracking-[-0.03em] text-[var(--text-primary)] opacity-45 transition-opacity duration-300 hover:opacity-100"
+            >
+              {d}
+            </span>
+          ))}
+        </Marquee>
+      </Container>
     </section>
   )
 }

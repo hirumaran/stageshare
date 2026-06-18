@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Lora:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Spline+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Lora:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;600&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -298,32 +298,6 @@
   }
 }
 
-/* ─── Editorial design utilities ─── */
-
-/* Task 1: Hollow outline text for overlapping editorial headings.
-   Uses current text color so it inverts automatically in dark mode. */
-.text-outline-stroke {
-  color: transparent;
-  -webkit-text-stroke: 2px var(--text-primary);
-}
-
-/* Task 2: Premium watermark / logo styling for partner/school names.
-   Quiet, uppercase, widely tracked — reads as a logo rather than body copy. */
-.school-watermark {
-  font-family: var(--font-display);
-  text-transform: uppercase;
-  font-weight: 500;
-  letter-spacing: 0.15em;
-  opacity: 0.4;
-}
-
-/* Task 3: Subtle step cards — theme-aware background. */
-.step-card {
-  background-color: var(--bg-muted);
-  border-radius: 8px;
-  padding: 2rem;
-}
-
 ::-webkit-scrollbar {
   width: 4px;
   height: 4px;
@@ -359,97 +333,42 @@
   }
 }
 
-.footer-graphic {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40vh;
-}
-
-.footer-bg-text {
-  position: absolute;
-  font-size: 20vw;
-  white-space: nowrap;
-  color: color-mix(in srgb, var(--text-primary) 25%, transparent);
-  z-index: 1;
-  user-select: none;
-  pointer-events: none;
-  line-height: 1;
-  font-family: "Lexend Zetta", ui-sans-serif, system-ui, sans-serif;
-  font-weight: 500;
-}
-
-/* Spotlight glow for CTA section */
-.cta-dim-overlay {
-  position: absolute;
-  inset: 0;
-  background: #000;
-  opacity: 0;
-  z-index: 0;
-  transition: opacity 0.4s ease;
-  pointer-events: none;
-}
-
-.cta-spotlight-glow {
-  position: absolute;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-  z-index: 1;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  background: radial-gradient(
-    circle,
-    var(--spotlight-glow) 0%,
-    rgba(255, 255, 255, 0) 70%
-  );
-}
-
-/* ─── Landing page — "Aaron Poe" white-gallery theme ───
-   A quiet white canvas with a single coral accent, tight Geist type,
-   and 1px hairline borders instead of shadows. These tokens are scoped
-   to .landing-root and intentionally override the global (and dark)
-   theme — the white canvas is the signature, so the landing never
-   inverts with the app's dark mode. */
+/* ─── Landing page — "The Working Theatre" warm-gallery theme ───
+   A cinematic performing-arts gallery: warm cream canvas, obsidian type,
+   white elevated cards, hairline warm borders, and one ember-orange accent
+   that reads as stage light. Tokens are scoped to .landing-root and
+   intentionally override the global (and dark) theme — the cream canvas is
+   the signature, so the landing never inverts with the app's dark mode. */
 .landing-root {
   position: relative;
 
-  /* Aaron Poe palette */
-  --background: #ffffff;
-  --foreground: #121212;
-  --primary: #ea587d;
-  --primary-foreground: #ffffff;
+  /* Warm editorial palette */
+  --background: #faf6ef;       /* warm cream canvas */
+  --foreground: #14130f;       /* warm obsidian text */
+  --primary: #14130f;          /* primary action surface (high-contrast obsidian) */
+  --primary-foreground: #faf6ef;
 
-  /* Theatrical warmth carried over from the mobile app's brand
-     (wine #6B1E2E + gold #C9A84C) — used as luxe secondary accents. */
-  --gold: #c9a84c;
-  --gold-soft: #e3cf95;
-  --wine: #6b1e2e;
+  --ember: #fa5c40;            /* the single chromatic accent — stage light */
+  --ember-wash: #fde9e3;       /* soft ember surface tint */
+  --stage: #14120d;            /* deep warm-black cinematic section */
+  --stage-soft: #211e16;
 
-  --text-primary: #121212;
-  --text-secondary: #282828;
-  /* #6b6b6b ≈ 5.4:1 on white — passes WCAG AA for body text while staying
-     quiet against the ink headlines (the reference's #b3b3b3 fails at 2.1:1). */
-  --text-muted: #6b6b6b;
-  --text-accent: #ea587d;
+  --text-primary: #14130f;
+  --text-secondary: #46443c;   /* body copy — warm charcoal, strong contrast */
+  --text-muted: #8a857a;       /* labels / captions — warm pebble */
 
-  --bg-base: #ffffff;
-  --bg-raised: #ffffff;
+  --bg-base: #faf6ef;
+  --bg-raised: #ffffff;        /* elevated card surface */
   --bg-surface: #ffffff;
-  --bg-muted: #f2f2f2;
-  --bg-subtle: #f7f7f7;
+  --bg-subtle: #f3eee4;        /* recessed warm panel */
+  --bg-muted: #efe9dd;
 
-  --border-default: #e5e5e5;
-  --border-subtle: #f0f0f0;
-  --border-strong: #cccccc;
+  --border-default: #e7e0d2;   /* warm hairline */
+  --border-subtle: #efe9dd;
+  --border-strong: #d8cfbd;
 
-  font-family: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  font-feature-settings: "ss02", "lnum";
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   color: var(--text-secondary);
   background: var(--background);
 }
@@ -459,72 +378,53 @@
 .landing-root h3,
 .landing-root h4,
 .landing-root h5,
-.landing-root h6,
-.landing-root .school-watermark {
-  font-family: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  letter-spacing: -0.033em;
+.landing-root h6 {
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+}
+
+/* Editorial micro-label — uppercase, widely tracked, quiet. */
+.lp-eyebrow {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Tabular figures for analytics/metrics. */
+.lp-tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
 }
 
 /* Ensure the floating pill nav does not overlap in-page anchors. */
 .landing-root :target {
-  scroll-margin-top: 6.5rem;
+  scroll-margin-top: 7rem;
 }
 
-/* Floating pill navigation — cloud surface, no shadow, fully rounded. */
+/* Floating pill navigation — frosted cream surface. */
 .landing-pill {
-  background: var(--bg-muted);
-  border-radius: 24px;
-}
-
-/* ── Hero richness — warmth, depth, and craft on the white canvas ── */
-
-/* Coral→gold gradient applied to a single headline word. */
-.landing-accent-text {
-  background: linear-gradient(105deg, var(--primary) 0%, #e0795f 45%, var(--gold) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* Soft rose→gold glow behind the hero — gives depth without breaking white. */
-.landing-hero-glow {
-  position: absolute;
-  pointer-events: none;
-  inset: -15% -10% 25% -10%;
-  background:
-    radial-gradient(48% 55% at 70% 28%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 72%),
-    radial-gradient(42% 50% at 22% 58%, color-mix(in srgb, var(--gold) 18%, transparent), transparent 70%);
-  filter: blur(28px);
-  opacity: 0.85;
-}
-
-/* Filmic grain — subtle texture so the white reads crafted, not flat. */
-.landing-grain {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.4;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* Floating catalogue cards — layered soft light. Depth is justified here
-   because the cards are physically "lifted" off the canvas. */
-.landing-float-card {
-  background: var(--background);
+  background: rgba(250, 246, 239, 0.72);
+  backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
   border: 1px solid var(--border-default);
-  border-radius: 14px;
-  box-shadow:
-    0 1px 2px rgba(18, 18, 18, 0.04),
-    0 10px 24px -14px rgba(18, 18, 18, 0.22),
-    0 30px 64px -28px rgba(107, 30, 46, 0.20);
+  border-radius: 100px;
 }
 
-/* Coral→gold product swatch — adds warmth where stock photos would go. */
-.landing-swatch {
-  background:
-    radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, var(--gold) 55%, transparent), transparent 55%),
-    linear-gradient(135deg, var(--primary), var(--wine));
+/* Elevated product/resource cards — soft layered light. Depth is justified
+   because these cards are physically "lifted" off the canvas. */
+.landing-float-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-default);
+  border-radius: 20px;
+  box-shadow:
+    0 1px 2px rgba(20, 19, 15, 0.04),
+    0 14px 30px -18px rgba(20, 19, 15, 0.20),
+    0 40px 80px -40px rgba(20, 19, 15, 0.18);
 }
 
 /* Infinite, hover-pausable marquee track. */
@@ -545,13 +445,24 @@
   }
 }
 
-/* Tactile card lift — translate only, never a drop shadow (system is flat). */
+/* Tactile card lift. */
 .landing-lift {
-  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
-    background-color 0.4s ease, border-color 0.4s ease;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.5s ease, border-color 0.4s ease;
 }
 .landing-lift:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
+}
+
+/* Single justified spotlight cone for the stage CTA — the one place the
+   theatre metaphor earns a radial light. */
+.lp-spotlight {
+  background: radial-gradient(
+    60% 60% at 50% 0%,
+    rgba(250, 92, 64, 0.18) 0%,
+    rgba(250, 92, 64, 0.06) 38%,
+    rgba(20, 18, 13, 0) 72%
+  );
 }
 
 @media (prefers-reduced-motion: reduce) {

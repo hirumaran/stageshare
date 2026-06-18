@@ -1,45 +1,101 @@
 import { forwardRef, type ReactNode } from "react"
 import { Link } from "react-router-dom"
 import { motion, type HTMLMotionProps } from "framer-motion"
+import { cn } from "@/lib/utils"
 
-type ButtonVariant = "primary" | "outline" | "ghost"
+/* ──────────────────────────────────────────────────────────────
+   Container — 1440 max-width content rail with responsive gutters.
+   ────────────────────────────────────────────────────────────── */
+export function Container({
+  children,
+  className = "",
+}: {
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <div className={cn("mx-auto w-full max-w-[1320px] px-6 sm:px-8 lg:px-12", className)}>
+      {children}
+    </div>
+  )
+}
 
-interface LandingButtonProps extends Omit<HTMLMotionProps<"button">, "children"> {
+/* ──────────────────────────────────────────────────────────────
+   Section — vertical rhythm wrapper (~100px gaps).
+   ────────────────────────────────────────────────────────────── */
+type SectionProps = React.HTMLAttributes<HTMLElement> & { children: ReactNode }
+export const Section = forwardRef<HTMLElement, SectionProps>(
+  ({ children, className = "", ...props }, ref) => (
+    <section ref={ref} className={cn("py-20 sm:py-28 lg:py-32", className)} {...props}>
+      {children}
+    </section>
+  )
+)
+Section.displayName = "Section"
+
+/* ──────────────────────────────────────────────────────────────
+   Eyebrow — editorial micro-label with an ember tick.
+   ────────────────────────────────────────────────────────────── */
+export function Eyebrow({
+  children,
+  className = "",
+  onDark = false,
+}: {
+  children: ReactNode
+  className?: string
+  onDark?: boolean
+}) {
+  return (
+    <span className={cn("lp-eyebrow inline-flex items-center gap-2.5", className)}>
+      <span
+        className="h-1.5 w-1.5 rounded-full"
+        style={{ background: "var(--ember)" }}
+        aria-hidden
+      />
+      <span style={onDark ? { color: "rgba(250,246,239,0.6)" } : undefined}>{children}</span>
+    </span>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Button — obsidian primary, hairline secondary, ember accent,
+   ghost link. Pill geometry. Works as <button> or router <Link>.
+   ────────────────────────────────────────────────────────────── */
+type ButtonVariant = "primary" | "secondary" | "ember" | "ghost"
+
+const baseBtn =
+  "group inline-flex items-center justify-center gap-2 rounded-full text-[15px] font-medium tracking-[-0.01em] px-6 py-3 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--ember)] focus-visible:ring-offset-[var(--background)] disabled:opacity-50"
+
+const variantBtn: Record<ButtonVariant, string> = {
+  primary: "bg-[var(--foreground)] text-[var(--primary-foreground)] hover:bg-[#000]",
+  secondary:
+    "bg-transparent text-[var(--text-primary)] border border-[var(--border-strong)] hover:border-[var(--foreground)] hover:bg-[var(--bg-subtle)]",
+  ember: "bg-[var(--ember)] text-white hover:brightness-[0.94]",
+  ghost: "px-0 py-0 text-[var(--text-primary)] hover:text-[var(--ember)] rounded-none",
+}
+
+interface ButtonProps extends Omit<HTMLMotionProps<"button">, "children"> {
   variant?: ButtonVariant
-  asLink?: boolean
   to?: string
   children: ReactNode
 }
 
-const baseClasses =
-  "inline-flex items-center justify-center rounded-[4px] text-[13px] tracking-[-0.01em] font-medium px-6 py-3 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]"
-
-const variantClasses: Record<ButtonVariant, string> = {
-  primary:
-    "bg-[var(--foreground)] text-[var(--background)] hover:bg-[var(--text-secondary)]",
-  outline:
-    "border border-[var(--border-strong)] text-[var(--text-primary)] hover:border-[var(--text-primary)]",
-  ghost:
-    "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
-}
-
-export const LandingButton = forwardRef<HTMLButtonElement, LandingButtonProps>(
-  ({ variant = "primary", asLink, to, children, className = "", ...props }, ref) => {
-    const classes = `${baseClasses} ${variantClasses[variant]} ${className}`
-
-    if (asLink && to) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ variant = "primary", to, children, className = "", ...props }, ref) => {
+    const classes = cn(baseBtn, variantBtn[variant], className)
+    if (to) {
       return (
         <Link to={to} className={classes}>
           {children}
         </Link>
       )
     }
-
     return (
       <motion.button
         ref={ref}
         whileHover={{ y: -1 }}
-        transition={{ duration: 0.2 }}
+        whileTap={{ y: 0 }}
+        transition={{ duration: 0.18 }}
         className={classes}
         {...props}
       >
@@ -48,70 +104,34 @@ export const LandingButton = forwardRef<HTMLButtonElement, LandingButtonProps>(
     )
   }
 )
-LandingButton.displayName = "LandingButton"
+Button.displayName = "Button"
 
-interface LandingLinkButtonProps {
-  to: string
-  variant?: ButtonVariant
-  children: ReactNode
-  className?: string
-}
-
-export const LandingLinkButton = ({
-  to,
-  variant = "primary",
+/* ──────────────────────────────────────────────────────────────
+   Tag — small category / status pill used on resource cards.
+   ────────────────────────────────────────────────────────────── */
+export function Tag({
   children,
+  tone = "neutral",
   className = "",
-}: LandingLinkButtonProps) => {
-  const classes = `${baseClasses} ${variantClasses[variant]} ${className}`
-  return (
-    <Link to={to} className={classes}>
-      {children}
-    </Link>
-  )
-}
-
-export const LandingInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
-  ({ className = "", ...props }, ref) => {
-    return (
-      <input
-        ref={ref}
-        className={`w-full bg-transparent border-b border-[var(--border-default)] px-0 py-3 text-[16px] tracking-[-0.01em] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--primary)] focus:outline-none transition-colors ${className}`}
-        {...props}
-      />
-    )
+}: {
+  children: ReactNode
+  tone?: "neutral" | "ember" | "available"
+  className?: string
+}) {
+  const tones = {
+    neutral: "bg-[var(--bg-subtle)] text-[var(--text-secondary)] border-[var(--border-default)]",
+    ember: "bg-[var(--ember-wash)] text-[#b23a26] border-[#f6cabd]",
+    available: "bg-[#e9f3ec] text-[#2f7d4f] border-[#cbe6d3]",
   }
-)
-LandingInput.displayName = "LandingInput"
-
-export const LandingLabel = ({ children, htmlFor, className = "" }: { children: ReactNode; htmlFor?: string; className?: string }) => {
   return (
-    <label
-      htmlFor={htmlFor}
-      className={`block text-[12px] tracking-[-0.01em] text-[var(--text-muted)] mb-2 ${className}`}
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium tracking-[-0.01em]",
+        tones[tone],
+        className
+      )}
     >
       {children}
-    </label>
-  )
-}
-
-type SectionWrapperProps = React.HTMLAttributes<HTMLElement> & { children: ReactNode }
-
-export const SectionWrapper = forwardRef<HTMLElement, SectionWrapperProps>(
-  ({ children, className = "", ...props }, ref) => {
-    return (
-      <section ref={ref} className={`py-24 md:py-36 lg:py-44 ${className}`} {...props}>
-        {children}
-      </section>
-    )
-  }
-)
-SectionWrapper.displayName = "SectionWrapper"
-
-export const Eyebrow = ({ children, className = "" }: { children: ReactNode; className?: string }) => {
-  return (
-    <p className={`text-[13px] tracking-[-0.01em] font-medium text-[var(--primary)] ${className}`}>
-      {children}
-    </p>
+    </span>
   )
 }
