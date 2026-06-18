@@ -47,7 +47,7 @@ function TeacherVisual() {
         <div className="flex flex-row-reverse items-start gap-2.5">
           <SchoolDot name="Lincoln High" size={26} />
           <div
-            className="rounded-2xl rounded-tr-md px-3.5 py-2.5 text-[13.5px] leading-snug text-white"
+            className="rounded-2xl rounded-tr-md px-3.5 py-2.5 text-[13.5px] leading-snug text-[var(--primary-foreground)]"
             style={{ background: "var(--foreground)" }}
           >
             Of course — it's yours. Pickup at the costume shop?
