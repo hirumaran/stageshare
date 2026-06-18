@@ -425,9 +425,17 @@
   --primary: #ea587d;
   --primary-foreground: #ffffff;
 
+  /* Theatrical warmth carried over from the mobile app's brand
+     (wine #6B1E2E + gold #C9A84C) — used as luxe secondary accents. */
+  --gold: #c9a84c;
+  --gold-soft: #e3cf95;
+  --wine: #6b1e2e;
+
   --text-primary: #121212;
   --text-secondary: #282828;
-  --text-muted: #9a9a9a;
+  /* #6b6b6b ≈ 5.4:1 on white — passes WCAG AA for body text while staying
+     quiet against the ink headlines (the reference's #b3b3b3 fails at 2.1:1). */
+  --text-muted: #6b6b6b;
   --text-accent: #ea587d;
 
   --bg-base: #ffffff;
@@ -466,6 +474,57 @@
 .landing-pill {
   background: var(--bg-muted);
   border-radius: 24px;
+}
+
+/* ── Hero richness — warmth, depth, and craft on the white canvas ── */
+
+/* Coral→gold gradient applied to a single headline word. */
+.landing-accent-text {
+  background: linear-gradient(105deg, var(--primary) 0%, #e0795f 45%, var(--gold) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Soft rose→gold glow behind the hero — gives depth without breaking white. */
+.landing-hero-glow {
+  position: absolute;
+  pointer-events: none;
+  inset: -15% -10% 25% -10%;
+  background:
+    radial-gradient(48% 55% at 70% 28%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 72%),
+    radial-gradient(42% 50% at 22% 58%, color-mix(in srgb, var(--gold) 18%, transparent), transparent 70%);
+  filter: blur(28px);
+  opacity: 0.85;
+}
+
+/* Filmic grain — subtle texture so the white reads crafted, not flat. */
+.landing-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.4;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Floating catalogue cards — layered soft light. Depth is justified here
+   because the cards are physically "lifted" off the canvas. */
+.landing-float-card {
+  background: var(--background);
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  box-shadow:
+    0 1px 2px rgba(18, 18, 18, 0.04),
+    0 10px 24px -14px rgba(18, 18, 18, 0.22),
+    0 30px 64px -28px rgba(107, 30, 46, 0.20);
+}
+
+/* Coral→gold product swatch — adds warmth where stock photos would go. */
+.landing-swatch {
+  background:
+    radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, var(--gold) 55%, transparent), transparent 55%),
+    linear-gradient(135deg, var(--primary), var(--wine));
 }
 
 /* Infinite, hover-pausable marquee track. */
