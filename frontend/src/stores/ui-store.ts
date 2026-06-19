@@ -260,6 +260,12 @@ export const useUIStore = create<UIState>((set, get) => ({
     try {
       const json = await apiFetch("/requests", {
         method: "POST",
+        // Deterministic key so an accidental double-submit of the same borrow
+        // (same item + dates) replays the stored response instead of creating a
+        // duplicate request (B2). Without this header the server middleware is a no-op.
+        headers: {
+          "Idempotency-Key": `create-${data.itemId}-${data.requestedDate}-${data.returnDate}`,
+        },
         body: JSON.stringify({
           itemId: parseInt(data.itemId, 10),
           quantityRequested: data.quantityRequested ?? 1,
@@ -295,6 +301,11 @@ export const useUIStore = create<UIState>((set, get) => ({
 
       const json = await apiFetch(`/requests/${id}/${endpoint}`, {
         method: "PATCH",
+        // Deterministic key so double-tapping the same transition (e.g. approving
+        // the same request twice) replays the stored response (B2).
+        headers: {
+          "Idempotency-Key": `transition-${id}-${status}`,
+        },
         body: JSON.stringify(body),
       })
       const updated = mapBorrowRequest(json as Record<string, unknown>)

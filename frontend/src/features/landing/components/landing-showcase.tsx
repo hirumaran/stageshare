@@ -27,7 +27,7 @@ const STEPS = [
   {
     icon: Send,
     title: "Request & hand off",
-    body: "Request a borrow in a tap. Message the owning teacher, agree on a handoff, and Clio tracks the whole conversation.",
+    body: "Request a borrow in a tap. Message the owning teacher, agree on a handoff, and keep the whole conversation tied to the loan.",
   },
   {
     icon: RotateCcw,

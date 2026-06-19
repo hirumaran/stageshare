@@ -12,7 +12,6 @@ export function useConversations() {
   const matrixReady = useMatrixStore((s) => s.isReady)
   const matrixActiveRoomId = useMatrixStore((s) => s.activeRoomId)
   const setMatrixActiveRoom = useMatrixStore((s) => s.setActiveRoom)
-  const createOrGetDMRoom = useMatrixStore((s) => s.createOrGetDMRoom)
   const currentUser = useAuthStore((s) => s.user)
 
   const borrowRequests = useUIStore((s) => s.borrowRequests)
@@ -115,12 +114,14 @@ export function useConversations() {
   }
 
   /**
-   * FIX 2 — Retry room setup for approved/active requests whose matrix_room_id is null.
-   * Calls createOrGetDMRoom → PATCH /requests/:id/room → updates ui-store in-place.
-   * On failure, stores an inline error keyed by requestId.
+   * Retry room setup for an approved/active request whose matrix_room_id is null.
+   * Room creation is server-side (Workstream A1/A2), so EITHER party can trigger
+   * it — the backend re-enqueues a deduped job under the server actor. If the
+   * room is already ready, the response carries its id; otherwise it's pending
+   * and the next borrow-requests refresh will surface it.
    */
   const retryRoomSetup = useCallback(
-    async (requestId: string, borrowerMatrixUserId: string) => {
+    async (requestId: string) => {
       // Clear any prior error for this request
       setRetryErrors((prev) => {
         const next = { ...prev }
@@ -129,13 +130,20 @@ export function useConversations() {
       })
 
       try {
-        const roomId = await createOrGetDMRoom(borrowerMatrixUserId)
-        await apiFetch(`/requests/${requestId}/room`, {
-          method: "PATCH",
-          body: JSON.stringify({ matrixRoomId: roomId }),
+        // apiFetch returns the parsed JSON body (and throws on non-2xx).
+        const data = await apiFetch(`/requests/${requestId}/room/retry`, {
+          method: "POST",
         })
-        // Update ui-store so conversation flips to isReady: true
-        setRequestMatrixRoomId(requestId, roomId)
+        if (data?.matrixRoomId) {
+          // Already ready — flip the conversation to isReady: true immediately.
+          setRequestMatrixRoomId(requestId, data.matrixRoomId)
+        } else {
+          // Pending — the server worker is creating it; surface a non-error hint.
+          setRetryErrors((prev) => ({
+            ...prev,
+            [requestId]: "Setting up chat… refresh in a moment.",
+          }))
+        }
       } catch (err) {
         console.error("[Matrix] Retry room setup failed:", err)
         setRetryErrors((prev) => ({
@@ -144,7 +152,7 @@ export function useConversations() {
         }))
       }
     },
-    [createOrGetDMRoom, setRequestMatrixRoomId]
+    [setRequestMatrixRoomId]
   )
 
   return {

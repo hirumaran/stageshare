@@ -18,5 +18,6 @@ router.patch  ('/:id/cancel',    idempotency, controller.cancelRequest)
 router.patch  ('/:id/pickup',    idempotency, controller.pickupItem)
 router.patch  ('/:id/return',    idempotency, controller.returnItem)
 router.patch  ('/:id/room',      controller.setRequestRoom)
+router.post   ('/:id/room/retry', controller.retryRoomSetup)
 
 module.exports = router

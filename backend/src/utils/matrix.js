@@ -168,34 +168,32 @@ async function refreshMatrixToken(localpart, password) {
 }
 
 /**
- * Regenerates a Matrix access token for a user via the Synapse admin API.
- * Does not require the user's password — uses an admin token instead.
+ * Extracts the localpart from a full Matrix user id.
+ * "@rebecca_davis:domain" → "rebecca_davis"
+ */
+function localpartOf(matrixUserId) {
+  return matrixUserId.replace(/^@/, '').replace(/:.*$/, '');
+}
+
+/**
+ * Mints a fresh access token for an existing user via the Synapse admin API,
+ * without the user's password and WITHOUT persisting it. This is the
+ * server-side actor primitive: the backend can act as any provisioned user
+ * (e.g. to create a borrow room on the owner's behalf) regardless of whether
+ * that user has a live browser session.
  *
  * Synapse admin endpoint (>= 1.64.0):
  *   POST /_synapse/admin/v1/users/<localpart>/login
  */
-async function regenerateMatrixToken(dbUserId) {
-  // 1. Fetch the user's Matrix identity
-  const result = await query(
-    'SELECT matrix_user_id, matrix_device_id FROM users WHERE id = $1',
-    [dbUserId]
-  );
-  if (result.rows.length === 0 || !result.rows[0].matrix_user_id) {
-    throw new Error('User has no Matrix account');
+async function adminLoginAsUser(localpart) {
+  if (!HOMESERVER_URL) {
+    throw new Error('MATRIX_HOMESERVER_URL is not configured');
   }
-
-  const matrixUserId = result.rows[0].matrix_user_id;
-  const matrixDeviceId = result.rows[0].matrix_device_id;
-
-  // Extract localpart from full MXID: "@rebecca_davis:domain" → "rebecca_davis"
-  const localpart = matrixUserId.replace(/^@/, '').replace(/:.*$/, '');
-
   const adminToken = process.env.MATRIX_ADMIN_TOKEN;
   if (!adminToken) {
     throw new Error('MATRIX_ADMIN_TOKEN is not configured');
   }
 
-  // 2. Generate a new access token via Synapse admin API
   const loginRes = await fetch(
     `${HOMESERVER_URL}/_synapse/admin/v1/users/${encodeURIComponent(localpart)}/login`,
     {
@@ -216,18 +214,175 @@ async function regenerateMatrixToken(dbUserId) {
   }
 
   const data = await loginRes.json();
+  return data.access_token;
+}
 
-  // 3. Persist the new token
+/**
+ * Regenerates a Matrix access token for a user via the Synapse admin API and
+ * persists it. Used to recover a user whose stored token expired.
+ */
+async function regenerateMatrixToken(dbUserId) {
+  const result = await query(
+    'SELECT matrix_user_id, matrix_device_id FROM users WHERE id = $1',
+    [dbUserId]
+  );
+  if (result.rows.length === 0 || !result.rows[0].matrix_user_id) {
+    throw new Error('User has no Matrix account');
+  }
+
+  const matrixUserId = result.rows[0].matrix_user_id;
+  const matrixDeviceId = result.rows[0].matrix_device_id;
+
+  const accessToken = await adminLoginAsUser(localpartOf(matrixUserId));
+
   await query(
     'UPDATE users SET matrix_access_token = $1 WHERE id = $2',
-    [data.access_token, dbUserId]
+    [accessToken, dbUserId]
   );
 
-  // 4. Return fresh credentials
   return {
-    matrixAccessToken: data.access_token,
+    matrixAccessToken: accessToken,
     matrixDeviceId,
   };
 }
 
-module.exports = { toMatrixUserId, provisionMatrixUser, refreshMatrixToken, regenerateMatrixToken };
+/**
+ * Creates a fresh, per-borrow DM room on the server side, acting as the item
+ * owner via an admin-minted token. Removes the dependency on the owner's live
+ * browser Matrix session (Workstream A1) and gives one room per borrow request
+ * (A3). Rooms are intentionally UNENCRYPTED (A4 decision): DMs are not E2EE so
+ * reported content can be reviewed and redacted by staff (C4). This is a
+ * single-tenant, non-federated homeserver, so E2EE bought little here.
+ *
+ * Returns the new room_id. Caller is responsible for idempotent persistence
+ * (one room per request).
+ */
+async function createBorrowRoom({ ownerMatrixUserId, borrowerMatrixUserId, name, topic }) {
+  if (!HOMESERVER_URL) {
+    throw new Error('MATRIX_HOMESERVER_URL is not configured');
+  }
+  if (!ownerMatrixUserId || !borrowerMatrixUserId) {
+    throw new Error('createBorrowRoom requires both owner and borrower Matrix user IDs');
+  }
+
+  const ownerToken = await adminLoginAsUser(localpartOf(ownerMatrixUserId));
+
+  const createRes = await fetch(
+    `${HOMESERVER_URL}/_matrix/client/v3/createRoom`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${ownerToken}`,
+      },
+      body: JSON.stringify({
+        preset: 'trusted_private_chat',
+        is_direct: true,
+        invite: [borrowerMatrixUserId],
+        name,
+        topic,
+        // NOTE: deliberately no m.room.encryption initial_state — DMs are
+        // unencrypted by policy (A4) so moderation/redaction is possible (C4).
+      }),
+    }
+  );
+
+  if (!createRes.ok) {
+    const err = await createRes.json().catch(() => ({}));
+    throw new Error(
+      `Matrix createRoom failed: ${createRes.status} ${err.error || ''} (${err.errcode || ''})`
+    );
+  }
+
+  const data = await createRes.json();
+  return data.room_id;
+}
+
+/**
+ * Redacts a single message event in a room (Workstream C4 enforcement).
+ * Acts as a room member (admin-minted token) so the redaction is authoritative.
+ * Requires the actor to be joined to the room (the item owner always is).
+ */
+async function redactRoomEvent({ roomId, eventId, actorMatrixUserId, reason }) {
+  if (!HOMESERVER_URL) {
+    throw new Error('MATRIX_HOMESERVER_URL is not configured');
+  }
+  if (!roomId || !eventId || !actorMatrixUserId) {
+    throw new Error('redactRoomEvent requires roomId, eventId and actorMatrixUserId');
+  }
+
+  const token = await adminLoginAsUser(localpartOf(actorMatrixUserId));
+  const txnId = `clio_redact_${eventId}`;
+
+  const res = await fetch(
+    `${HOMESERVER_URL}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/redact/${encodeURIComponent(eventId)}/${encodeURIComponent(txnId)}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(reason ? { reason } : {}),
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Matrix redact failed: ${res.status} ${err.error || ''}`);
+  }
+
+  const data = await res.json();
+  return data.event_id;
+}
+
+/**
+ * Shuts down (and purges) a room via the Synapse admin API — the heavy-hammer
+ * takedown for C4. Blocks re-joins and removes the room from the server.
+ *
+ * Synapse admin endpoint:
+ *   POST /_synapse/admin/v1/rooms/<room_id>/delete
+ */
+async function shutdownRoom(roomId, { reason } = {}) {
+  if (!HOMESERVER_URL) {
+    throw new Error('MATRIX_HOMESERVER_URL is not configured');
+  }
+  const adminToken = process.env.MATRIX_ADMIN_TOKEN;
+  if (!adminToken) {
+    throw new Error('MATRIX_ADMIN_TOKEN is not configured');
+  }
+
+  const res = await fetch(
+    `${HOMESERVER_URL}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/delete`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify({
+        block: true,
+        purge: true,
+        message: reason || 'This conversation was removed by Clio moderation.',
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Matrix room shutdown failed: ${res.status} ${err.error || ''}`);
+  }
+
+  return await res.json().catch(() => ({}));
+}
+
+module.exports = {
+  toMatrixUserId,
+  provisionMatrixUser,
+  refreshMatrixToken,
+  regenerateMatrixToken,
+  adminLoginAsUser,
+  localpartOf,
+  createBorrowRoom,
+  redactRoomEvent,
+  shutdownRoom,
+};

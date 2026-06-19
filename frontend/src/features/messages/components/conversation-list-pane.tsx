@@ -11,7 +11,7 @@ interface ConversationListPaneProps {
   searchQuery: string
   onSearchChange: (q: string) => void
   totalUnread: number
-  onRetryRoomSetup: (requestId: string, borrowerMatrixUserId: string) => void
+  onRetryRoomSetup: (requestId: string) => void
   retryErrors: Record<string, string>
 }
 
@@ -99,9 +99,7 @@ export function ConversationListPane({
                     }
                   }}
                   onRetryRoomSetup={
-                    !c.isReady && c.borrowerMatrixUserId
-                      ? () => onRetryRoomSetup(c.requestId, c.borrowerMatrixUserId!)
-                      : undefined
+                    !c.isReady ? () => onRetryRoomSetup(c.requestId) : undefined
                   }
                   retryError={retryErrors[c.requestId]}
                 />

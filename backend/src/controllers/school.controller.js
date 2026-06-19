@@ -104,7 +104,6 @@ async function getUsersBySchool(req, res) {
         u.role,
         u.avatar_url,
         u.matrix_user_id,
-        u.last_login,
         u.created_at,
         s.name AS school_name,
         s.slug AS school_slug

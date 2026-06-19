@@ -14,7 +14,6 @@ import {
 import { useUIStore } from "@/stores/ui-store"
 import { useAuthStore } from "@/stores/auth-store"
 import { useMatrixStore } from "@/stores/matrix-store"
-import { apiFetch } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -69,36 +68,26 @@ const statusConfig: Record<
 export default function BorrowingPage() {
   const { user } = useAuthStore()
   const { borrowRequests, fetchBorrowRequests, updateBorrowRequest } = useUIStore()
-  const { createOrGetDMRoom, setActiveRoom, sendMessage } = useMatrixStore()
+  const { setActiveRoom } = useMatrixStore()
   const navigate = useNavigate()
 
   // Per-request error state for the approve flow
   const [approveErrors, setApproveErrors] = useState<Record<string, string | null>>({})
-  const [roomSetupFailed, setRoomSetupFailed] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     fetchBorrowRequests()
   }, [fetchBorrowRequests])
 
-  const handleMessageAboutRequest = async (request: BorrowRequest) => {
-    if (!request.ownerMatrixUserId) {
-      toast.error("This user is not yet on the messaging system.")
+  // The chat room is created server-side after approval (Workstream A1); opening
+  // the conversation just selects this borrow's room. If it isn't ready yet, the
+  // server worker is still creating it — the user can retry from the Messages page.
+  const handleMessageAboutRequest = (request: BorrowRequest) => {
+    if (!request.matrixRoomId) {
+      toast.error("Chat is still being set up for this loan. Please try again in a moment.")
       return
     }
-
-    try {
-      const roomId = await createOrGetDMRoom(request.ownerMatrixUserId)
-      await sendMessage(
-        roomId,
-        `Hi! Following up on my borrow request for **${request.resource.title}** ` +
-          `(${formatDate(request.startDate)} – ${formatDate(request.endDate)}).`
-      )
-      setActiveRoom(roomId)
-      navigate("/messages")
-    } catch (err) {
-      console.error("[Messages] Failed to start conversation:", err)
-      toast.error("Could not start conversation. Please try again.")
-    }
+    setActiveRoom(request.matrixRoomId)
+    navigate("/messages")
   }
 
   // Requests where I am the borrower
@@ -112,11 +101,12 @@ export default function BorrowingPage() {
   )
 
   const handleApprove = async (request: BorrowRequest) => {
-    // Clear any prior errors for this request
+    // Clear any prior error for this request
     setApproveErrors((prev) => ({ ...prev, [request.id]: null }))
-    setRoomSetupFailed((prev) => ({ ...prev, [request.id]: false }))
 
-    // Step 1 — approve the request; stop entirely on failure
+    // Approve the request. The chat room is then created server-side (A1):
+    // the backend enqueues room creation and retries on its own, so approval no
+    // longer depends on the owner's live Matrix session.
     try {
       await updateBorrowRequest(request.id, "approved", "Approved! Let me know when you can pick it up.")
     } catch {
@@ -128,21 +118,6 @@ export default function BorrowingPage() {
     }
 
     toast.success("Request approved")
-
-    // Step 2 — create Matrix room; approval already committed, failure is non-blocking
-    const borrowerMatrixId = request.borrower.matrixUserId
-    if (borrowerMatrixId) {
-      try {
-        const roomId = await createOrGetDMRoom(borrowerMatrixId)
-        await apiFetch(`/requests/${request.id}/room`, {
-          method: "PATCH",
-          body: JSON.stringify({ matrixRoomId: roomId }),
-        })
-      } catch (roomErr) {
-        console.error("[Matrix] Room creation after approve failed:", roomErr)
-        setRoomSetupFailed((prev) => ({ ...prev, [request.id]: true }))
-      }
-    }
   }
 
   const handleReject = (requestId: string) => {
@@ -270,11 +245,6 @@ export default function BorrowingPage() {
                     <p className="text-xs text-destructive font-medium flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
                       {approveErrors[request.id]}
-                    </p>
-                  )}
-                  {roomSetupFailed[request.id] && (
-                    <p className="text-xs text-yellow-600 bg-yellow-500/15 border border-yellow-500 rounded px-2 py-1">
-                      Request approved. Chat setup failed — you can retry from the conversation.
                     </p>
                   )}
                 </div>

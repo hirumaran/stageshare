@@ -33,9 +33,10 @@ app.use('/api/v1', routes);
 // Start background workers
 // TODO Phase 5: move workers to separate process with PM2
 require('./src/workers/matrix.worker');
+require('./src/workers/room.worker');
 require('./src/workers/notification.worker');
 require('./src/workers/cleanup.worker');
-console.log('[Workers] Matrix, notification, and cleanup workers started');
+console.log('[Workers] Matrix, room, notification, and cleanup workers started');
 
 const server = app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);

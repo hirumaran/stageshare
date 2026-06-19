@@ -11,6 +11,19 @@ const matrixQueue = new Queue('matrix-provisioning', {
   },
 });
 
+// Server-side borrow-room creation (Workstream A1). Approving a request enqueues
+// a job here so the chat room is created by the server actor with automatic
+// retries, rather than depending on the owner's live browser Matrix session.
+const roomQueue = new Queue('matrix-rooms', {
+  connection: redis,
+  defaultJobOptions: {
+    attempts: 5,
+    backoff: { type: 'exponential', delay: 3000 },
+    removeOnComplete: 100,
+    removeOnFail: 200,
+  },
+});
+
 const notificationQueue = new Queue('notifications', {
   connection: redis,
   defaultJobOptions: {
@@ -33,4 +46,4 @@ cleanupQueue.add(
   console.error('[Cleanup] Failed to schedule repeating job:', err.message);
 });
 
-module.exports = { matrixQueue, notificationQueue, cleanupQueue };
+module.exports = { matrixQueue, roomQueue, notificationQueue, cleanupQueue };

@@ -25,8 +25,12 @@ function idempotency(req, res, next) {
   })
 }
 
+// A STARTED key older than this is treated as orphaned by a crashed/aborted
+// request and may be reclaimed, so a mid-operation crash never wedges the key.
+const STALE_STARTED_MS = 60 * 1000
+
 async function run(req, res, next, key, payloadHash) {
-  // Try to claim the key; ON CONFLICT means this key was seen before (replay).
+  // Try to claim the key; ON CONFLICT means this key was seen before.
   const claim = await pool.query(
     `INSERT INTO idempotency_keys (user_id, idempotency_key, payload_hash, status)
      VALUES ($1, $2, $3, 'STARTED')
@@ -46,14 +50,33 @@ async function run(req, res, next, key, payloadHash) {
     if (row && row.payload_hash !== payloadHash) {
       return res.status(409).json({ error: 'Idempotency-Key reused with different parameters' })
     }
+    // A completed op replays its stored response (the happy idempotent path).
     if (row && row.status === 'COMPLETED' && row.response_status != null) {
       return res.status(row.response_status).json(row.response_body)
     }
-    // Original request is still STARTED (in flight) or FAILED — ask the client to retry later.
-    return res.status(409).json({ error: 'A request with this Idempotency-Key is already in progress' })
+
+    // A previously FAILED op, or a STARTED op orphaned by a crash, is reclaimable:
+    // atomically reset it to STARTED (resetting the clock) and re-execute, so a
+    // transient 5xx or mid-op crash does not permanently block a legitimate retry.
+    const reclaimed = await pool.query(
+      `UPDATE idempotency_keys
+       SET status = 'STARTED', payload_hash = $3,
+           response_status = NULL, response_body = NULL,
+           completed_at = NULL, created_at = NOW()
+       WHERE user_id = $1 AND idempotency_key = $2
+         AND (status = 'FAILED'
+              OR (status = 'STARTED' AND created_at < NOW() - ($4 || ' milliseconds')::interval))
+       RETURNING id`,
+      [req.user.userId, key, payloadHash, STALE_STARTED_MS]
+    )
+    if (reclaimed.rows.length === 0) {
+      // Still genuinely in flight (recent STARTED) — ask the client to retry later.
+      return res.status(409).json({ error: 'A request with this Idempotency-Key is already in progress' })
+    }
+    // Fall through: reclaimed, re-execute with response capture.
   }
 
-  // First time we have seen this key: run the handler, capturing its response to persist.
+  // Run the handler, capturing its response to persist (COMPLETED on 2xx, else FAILED).
   const originalJson = res.json.bind(res)
   res.json = (body) => {
     const status = res.statusCode || 200

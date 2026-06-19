@@ -46,7 +46,6 @@ import {
   RoomEvent,
   EventType,
   MsgType,
-  Preset,
 } from "matrix-js-sdk"
 import type { MatrixConversation, MatrixMessage } from "@/types"
 import { getConfig } from "@/lib/config"
@@ -69,7 +68,6 @@ interface MatrixStore {
   stopClient: () => void
   setActiveRoom: (roomId: string) => void
   sendMessage: (roomId: string, content: string) => Promise<void>
-  createOrGetDMRoom: (targetMatrixUserId: string) => Promise<string>
   loadMessagesForRoom: (roomId: string) => void
   getUnreadCount: () => number
 }
@@ -302,47 +300,6 @@ export const useMatrixStore = create<MatrixStore>((set, get) => ({
     const { client } = get()
     if (!client || !content.trim()) return
     await client.sendTextMessage(roomId, content.trim())
-  },
-
-  createOrGetDMRoom: async (targetMatrixUserId) => {
-    const { client } = get()
-    if (!client) throw new Error("Matrix client not initialized")
-
-    const myId = client.getUserId() ?? ""
-
-    const existingRoom = client.getRooms().find((room) => {
-      const members = room.getJoinedMembers()
-      return (
-        members.length === 2 &&
-        members.some((m) => m.userId === targetMatrixUserId) &&
-        members.some((m) => m.userId === myId)
-      )
-    })
-
-    if (existingRoom) return existingRoom.roomId
-
-    const result = await client.createRoom({
-      invite: [targetMatrixUserId],
-      is_direct: true,
-      preset: Preset.TrustedPrivateChat as any,
-      initial_state: [
-        {
-          type: "m.room.encryption",
-          state_key: "",
-          content: { algorithm: "m.megolm.v1.aes-sha2" },
-        },
-      ],
-    })
-
-    const dmRooms =
-      (client.getAccountData("m.direct" as any)?.getContent() as any) ?? {}
-    dmRooms[targetMatrixUserId] = [
-      ...(dmRooms[targetMatrixUserId] ?? []),
-      result.room_id,
-    ]
-    await client.setAccountData("m.direct" as any, dmRooms)
-
-    return result.room_id
   },
 
   loadMessagesForRoom: (roomId) => {

@@ -1,5 +1,25 @@
 const { pool } = require('../config/db')
 const { createNotification } = require('./notification.controller')
+const { roomQueue } = require('../queues')
+
+/**
+ * Enqueues server-side creation of the borrow chat room (Workstream A1).
+ * Keyed by request id so concurrent enqueues (approve + retry) dedupe to one job
+ * and the worker only ever creates one room per request (A3). Best-effort:
+ * failures here never block the borrow lifecycle — the job retries on its own
+ * and either party can trigger a retry.
+ */
+function enqueueRoomCreation(requestId) {
+  return roomQueue
+    .add(
+      'create-borrow-room',
+      { requestId },
+      { jobId: `room-${requestId}` }
+    )
+    .catch((err) => {
+      console.error(`[approveRequest] Failed to enqueue room creation for ${requestId}:`, err.message)
+    })
+}
 
 /**
  * POST /api/v1/requests
@@ -52,6 +72,47 @@ async function createRequest(req, res) {
       return res.status(400).json({
         error: 'You cannot borrow items from your own school',
       })
+    }
+
+    // 3b. Block check (C2) — a block in EITHER direction between the requester
+    // and the item owner prevents a new borrow pairing (and therefore chat).
+    if (item.added_by) {
+      const blocked = await pool.query(
+        `SELECT 1 FROM user_blocks
+         WHERE (blocker_id = $1 AND blocked_id = $2)
+            OR (blocker_id = $2 AND blocked_id = $1)
+         LIMIT 1`,
+        [req.user.userId, item.added_by]
+      )
+      if (blocked.rows.length > 0) {
+        return res.status(403).json({
+          error: 'A block is in place between you and this item owner',
+        })
+      }
+
+      // 3c. Adult↔minor safeguarding gate (C3). Clio has no cold-contact DMs —
+      // chat only exists after an approved borrow — so gating the *pairing*
+      // gates the channel. By default a staff member (adult) and a student
+      // (minor) may not form a borrow pairing (and therefore a DM); enable
+      // ALLOW_ADULT_MINOR_BORROW only for staff-mediated programs. Inert when
+      // either side's type is 'unknown' (roster age data not yet imported) — see
+      // the deploy runbook: launch must be staff-only/mediated until roster
+      // populates user_type.
+      const types = await pool.query(
+        `SELECT id, user_type FROM users WHERE id = ANY($1::int[])`,
+        [[req.user.userId, item.added_by]]
+      )
+      const typeById = Object.fromEntries(types.rows.map((r) => [r.id, r.user_type]))
+      const requesterType = typeById[req.user.userId]
+      const ownerType = typeById[item.added_by]
+      const isAdultMinorPair =
+        (requesterType === 'staff' && ownerType === 'student') ||
+        (requesterType === 'student' && ownerType === 'staff')
+      if (isAdultMinorPair && process.env.ALLOW_ADULT_MINOR_BORROW !== 'true') {
+        return res.status(403).json({
+          error: 'Borrowing between staff and students must be staff-mediated and is currently disabled',
+        })
+      }
     }
 
     // 4. Availability check
@@ -312,6 +373,10 @@ async function approveRequest(req, res) {
       body: `${actorName} approved your request for "${request.item_name}"`,
       link: `clio://requests/${requestId}`,
     })
+
+    // Create the chat room server-side (A1) — no dependency on the owner's
+    // browser Matrix session; the worker retries on transient failure.
+    enqueueRoomCreation(requestId)
   } catch (err) {
     await client.query('ROLLBACK')
     if (err.status) {
@@ -739,6 +804,58 @@ async function setRequestRoom(req, res) {
   }
 }
 
+/**
+ * POST /api/v1/requests/:id/room/retry
+ * Re-trigger server-side room creation for an approved request whose room
+ * setup did not complete (Workstream A2). Available to EITHER party (owner or
+ * borrower) — since room creation runs under the server actor, the borrower is
+ * no longer dead-ended by the owner-only setRequestRoom path. Idempotent: if a
+ * room already exists, returns it; otherwise re-enqueues the (deduped) job.
+ */
+async function retryRoomSetup(req, res) {
+  try {
+    const requestId = parseInt(req.params.id, 10)
+    if (Number.isNaN(requestId)) {
+      return res.status(400).json({ error: 'Invalid request ID' })
+    }
+
+    const { rows } = await pool.query(
+      `SELECT br.id, br.status, br.matrix_room_id, br.requester_id, i.added_by AS item_owner_id
+       FROM borrow_requests br
+       JOIN items i ON br.item_id = i.id
+       WHERE br.id = $1`,
+      [requestId]
+    )
+    const request = rows[0]
+    if (!request) {
+      return res.status(404).json({ error: 'Request not found' })
+    }
+
+    // Either the borrower or the item owner may retry.
+    const isParty =
+      request.requester_id === req.user.userId ||
+      request.item_owner_id === req.user.userId
+    if (!isParty) {
+      return res.status(403).json({ error: 'Only the borrower or item owner can retry chat setup' })
+    }
+
+    // Chat only exists for active loan states.
+    if (!['approved', 'active', 'returned', 'overdue'].includes(request.status)) {
+      return res.status(409).json({ error: 'Chat is only available after a request is approved' })
+    }
+
+    if (request.matrix_room_id) {
+      return res.status(200).json({ id: request.id, matrixRoomId: request.matrix_room_id, status: 'ready' })
+    }
+
+    await enqueueRoomCreation(requestId)
+    return res.status(202).json({ id: request.id, matrixRoomId: null, status: 'pending' })
+  } catch (err) {
+    console.error('[retryRoomSetup] Error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+}
+
 module.exports = {
   createRequest,
   getIncomingRequests,
@@ -750,4 +867,5 @@ module.exports = {
   pickupItem,
   returnItem,
   setRequestRoom,
+  retryRoomSetup,
 }
