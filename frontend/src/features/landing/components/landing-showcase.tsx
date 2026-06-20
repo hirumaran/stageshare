@@ -5,12 +5,12 @@ import { Reveal } from "./landing-motion"
 import { ResourceCard, CATEGORIES, type Resource, type CategoryKey } from "./landing-ui"
 
 const CATALOGUE: Resource[] = [
-  { title: "Victorian Frock Coat", category: "costumes", school: "Lincoln High", condition: "Excellent", status: "Available" },
-  { title: "Fog Machine X-400", category: "sound", school: "Roosevelt Middle", condition: "Good", status: "On loan" },
-  { title: "Gilded Throne", category: "sets", school: "Edison Arts", condition: "Fair", status: "Available" },
-  { title: "LED PAR Wash Kit ×6", category: "lighting", school: "Lincoln High", condition: "Excellent", status: "Reserved" },
-  { title: "Hamlet — 24 scripts", category: "scripts", school: "Jefferson High", condition: "Good", status: "Available" },
-  { title: "Fairy Wings, pair", category: "props", school: "Edison Arts", condition: "Good", status: "Available" },
+  { title: "Victorian Frock Coat", category: "costumes", school: "Lincoln High", condition: "Excellent", status: "Available", distance: "2.1 mi" },
+  { title: "Fog Machine X-400", category: "sound", school: "Roosevelt Middle", condition: "Good", status: "On loan", distance: "4.0 mi" },
+  { title: "Gilded Throne", category: "sets", school: "Edison Arts", condition: "Fair", status: "Available", distance: "1.3 mi" },
+  { title: "LED PAR Wash Kit ×6", category: "lighting", school: "Lincoln High", condition: "Excellent", status: "Reserved", distance: "2.1 mi" },
+  { title: "Hamlet — 24 scripts", category: "scripts", school: "Jefferson High", condition: "Good", status: "Available", distance: "3.4 mi" },
+  { title: "Fairy Wings, pair", category: "props", school: "Edison Arts", condition: "Good", status: "Available", distance: "0.8 mi" },
 ]
 
 const STEPS = [
@@ -147,7 +147,7 @@ export function LandingShowcase() {
                       viewport={{ once: true, margin: "-40px" }}
                       transition={{ duration: 0.5, delay: i * 0.06 }}
                     >
-                      <ResourceCard resource={r} compact />
+                      <ResourceCard resource={r} compact href="/signup" />
                     </motion.div>
                   ))}
                 </div>
