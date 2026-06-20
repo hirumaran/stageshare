@@ -3,7 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
-    "@expo/html-elements": "^0.12.5",
+    "@expo/html-elements": "^56.0.1",
     "@expo/ui": "~56.0.15",
     "@gluestack-ui/core": "^5.0.0-alpha.0",
     "@gluestack-ui/utils": "^5.0.1-alpha.0",
