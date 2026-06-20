@@ -202,7 +202,7 @@ export function LandingCta() {
                     now
                   </span>
                 </div>
-                <p className="mt-4 text-[13px]" style={{ color: "rgba(250,246,239,0.4)" }}>
+                <p className="mt-4 text-[13px]" style={{ color: "rgba(250,246,239,0.5)" }}>
                   Built for drama teachers · No setup fees · District-ready in a day
                 </p>
               </StaggerItem>
@@ -212,14 +212,28 @@ export function LandingCta() {
                  with an open slot inviting the visitor's school to join. Hidden
                  on small screens so the action path stays the focus. ── */}
             <Reveal delay={0.15} className="hidden lg:block">
-              <div className="relative mx-auto h-[300px] w-full max-w-[380px]" aria-hidden>
-                {/* depth — a faint playbill behind, tilted */}
+              <div className="relative mx-auto w-full max-w-[380px] lg:-translate-y-4" aria-hidden>
+                {/* the backdrop, lit — two soft washes of warm stage light, no
+                    edges and no stripes: a cream glow the marquee is lit against,
+                    and an ember footlight pool grounding it from the floor, so the
+                    card reads as standing on a lit stage rather than in void. */}
                 <div
-                  className="absolute inset-x-6 top-6 h-full -rotate-[4deg] rounded-[22px] border"
+                  className="pointer-events-none absolute -inset-x-6 top-2 -bottom-3"
                   style={{
-                    borderColor: "rgba(250,246,239,0.08)",
-                    background: "rgba(250,246,239,0.02)",
+                    background:
+                      "radial-gradient(58% 46% at 50% 64%, rgba(250,92,64,0.08), transparent 72%)",
                   }}
+                />
+                <motion.div
+                  className="pointer-events-none absolute -inset-x-2 top-1 bottom-6 blur-2xl"
+                  style={{
+                    background:
+                      "radial-gradient(62% 56% at 50% 34%, rgba(250,246,239,0.07), transparent 72%)",
+                  }}
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true, margin: "-80px" }}
+                  transition={{ duration: 1, ease: EASE, delay: 0.2 }}
                 />
                 <Float amplitude={9} duration={7}>
                   <div
@@ -242,21 +256,21 @@ export function LandingCta() {
                       Your district
                     </p>
 
-                    {/* the cast, connected — plus an open slot for the visitor */}
-                    <div className="mt-6 flex items-center">
-                      <div className="flex -space-x-2.5">
-                        {CAST.map((s) => (
-                          <div
-                            key={s}
-                            className="rounded-full"
-                            style={{ boxShadow: "0 0 0 2px var(--stage)" }}
-                          >
-                            <SchoolDot name={s} size={34} />
-                          </div>
-                        ))}
-                      </div>
+                    {/* the cast, connected — plus an open slot for the visitor,
+                        seated in the same overlapping row so it reads as the
+                        next seat, not a detached button */}
+                    <div className="mt-6 flex items-center -space-x-2.5">
+                      {CAST.map((s) => (
+                        <div
+                          key={s}
+                          className="rounded-full"
+                          style={{ boxShadow: "0 0 0 2px var(--stage)" }}
+                        >
+                          <SchoolDot name={s} size={34} />
+                        </div>
+                      ))}
                       <span
-                        className="ml-1.5 flex h-[34px] w-[34px] items-center justify-center rounded-full border border-dashed"
+                        className="flex h-[34px] w-[34px] items-center justify-center rounded-full border border-dashed"
                         style={{
                           borderColor: "var(--ember)",
                           background: "rgba(250,92,64,0.10)",
