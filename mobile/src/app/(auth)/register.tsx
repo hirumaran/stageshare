@@ -26,6 +26,7 @@ import {
   SsoButton,
 } from '@/components/AuthFlowPrimitives';
 import { useAuthStore } from '@/stores';
+import { apiFetch } from '@/lib/api';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
@@ -133,6 +134,9 @@ export default function RegisterScreen() {
   const [resendRemaining, setResendRemaining] = useState(0);
   const [signupStatus, setSignupStatus] = useState<SignupStatus>('idle');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [emailVerifiedToken, setEmailVerifiedToken] = useState<string | null>(null);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const signupStartedRef = useRef(false);
 
   const emailIsValid = EMAIL_PATTERN.test(email.trim());
@@ -186,18 +190,51 @@ export default function RegisterScreen() {
     goToStep(1);
   }, [clearFieldErrors, email, goToStep]);
 
-  const handlePasswordContinue = useCallback(() => {
+  // Requests a fresh verification code. Returns a result rather than throwing so
+  // callers can branch on the failure mode (personal email vs rate-limited).
+  const requestOtp = useCallback(async (targetEmail: string) => {
+    try {
+      await apiFetch('/auth/send-otp', {
+        method: 'POST',
+        body: JSON.stringify({ email: targetEmail }),
+      });
+      return { ok: true as const };
+    } catch (err) {
+      const e = err as Error & { code?: string };
+      return { ok: false as const, message: e.message, code: e.code };
+    }
+  }, []);
+
+  const handlePasswordContinue = useCallback(async () => {
     if (!passwordIsValid) {
       setLocalError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
       return;
     }
 
     clearFieldErrors();
+    setIsSendingOtp(true);
+    const result = await requestOtp(email.trim());
+    setIsSendingOtp(false);
+
+    // A personal-email rejection means the email itself must change — send the
+    // user back to the email step instead of stranding them on the code screen.
+    if (!result.ok && result.code === 'personal_email') {
+      setBannerError(result.message ?? 'Please use your school or institutional email.');
+      goToStep(0);
+      return;
+    }
+
+    // Any other send failure (rate limit, network): still show the code screen
+    // so they can use Resend, but surface why nothing arrived.
+    if (!result.ok) {
+      setBannerError(result.message ?? 'Could not send a code. Try Resend in a moment.');
+    }
+
     setResendRemaining(30);
     goToStep(2);
-  }, [clearFieldErrors, goToStep, passwordIsValid]);
+  }, [clearFieldErrors, email, goToStep, passwordIsValid, requestOtp]);
 
-  const handleOtpContinue = useCallback(() => {
+  const handleOtpContinue = useCallback(async () => {
     if (!otpIsComplete) {
       setLocalError('Incorrect code');
       setTimeout(() => {
@@ -207,9 +244,26 @@ export default function RegisterScreen() {
       return;
     }
 
-    clearFieldErrors();
-    goToStep(3);
-  }, [clearFieldErrors, goToStep, otpIsComplete]);
+    setIsVerifyingOtp(true);
+    try {
+      const data = await apiFetch('/auth/verify-otp', {
+        method: 'POST',
+        body: JSON.stringify({ email: email.trim(), otp: otpValue }),
+      });
+      setEmailVerifiedToken(
+        typeof data?.emailVerifiedToken === 'string' ? data.emailVerifiedToken : null
+      );
+      clearFieldErrors();
+      setIsVerifyingOtp(false);
+      goToStep(3);
+    } catch (err) {
+      setIsVerifyingOtp(false);
+      // Server returns a human message per failure mode (incorrect / expired /
+      // too many attempts); show it directly and clear the boxes to retry.
+      setLocalError((err as Error).message || 'Incorrect code');
+      setOtpDigits(['', '', '', '', '', '']);
+    }
+  }, [clearFieldErrors, email, goToStep, otpIsComplete, otpValue]);
 
   const handleProfileContinue = useCallback(() => {
     if (!profileIsValid) {
@@ -221,10 +275,19 @@ export default function RegisterScreen() {
     goToStep(4);
   }, [clearFieldErrors, goToStep, profileIsValid]);
 
-  const handleResend = useCallback(() => {
-    if (resendRemaining > 0) return;
+  const handleResend = useCallback(async () => {
+    if (resendRemaining > 0 || isSendingOtp) return;
+    setIsSendingOtp(true);
+    const result = await requestOtp(email.trim());
+    setIsSendingOtp(false);
+    if (!result.ok) {
+      setBannerError(result.message ?? 'Could not resend the code. Try again shortly.');
+      return;
+    }
+    setOtpDigits(['', '', '', '', '', '']);
+    setLocalError(null);
     setResendRemaining(30);
-  }, [resendRemaining]);
+  }, [email, isSendingOtp, requestOtp, resendRemaining]);
 
   useEffect(() => {
     if (step !== 2 || resendRemaining <= 0) return;
@@ -255,7 +318,12 @@ export default function RegisterScreen() {
       signupStartedRef.current = true;
       setSignupStatus('loading');
 
-      const created = await signup(email.trim(), password, fullName.trim());
+      const created = await signup(
+        email.trim(),
+        password,
+        fullName.trim(),
+        emailVerifiedToken ?? undefined
+      );
 
       if (!mounted) return;
 
@@ -278,7 +346,7 @@ export default function RegisterScreen() {
     return () => {
       mounted = false;
     };
-  }, [email, fullName, password, signup, step]);
+  }, [email, emailVerifiedToken, fullName, password, signup, step]);
 
   const renderAppHeader = (heading: string, subheading?: string) => (
     <View style={styles.headerBlock}>
@@ -375,6 +443,7 @@ export default function RegisterScreen() {
         {localError ? <InlineError>{localError}</InlineError> : null}
         <PrimaryButton
           disabled={!passwordIsValid}
+          loading={isSendingOtp}
           onPress={handlePasswordContinue}
           title="Continue"
         />
@@ -400,20 +469,21 @@ export default function RegisterScreen() {
       <View style={styles.stack}>
         <OtpInput
           digits={otpDigits}
-          error={localError === 'Incorrect code'}
+          error={Boolean(localError)}
           onChange={(nextDigits) => {
             setOtpDigits(nextDigits);
             clearFieldErrors();
           }}
         />
-        {localError === 'Incorrect code' ? (
+        {localError ? (
           <View style={styles.otpErrorRow}>
             <SmallErrorIcon />
-            <InlineError>Incorrect code</InlineError>
+            <InlineError>{localError}</InlineError>
           </View>
         ) : null}
         <PrimaryButton
           disabled={!otpIsComplete}
+          loading={isVerifyingOtp}
           onPress={handleOtpContinue}
           title="Continue"
         />

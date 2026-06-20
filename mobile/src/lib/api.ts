@@ -57,8 +57,18 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   }
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error ?? 'Request failed');
+    const body = await res.json().catch(() => ({ error: 'Request failed' }));
+    // Preserve the server's message AND its structured fields so callers can
+    // branch on status/code (e.g. OTP expired vs incorrect) instead of string-matching.
+    const error = new Error(body.error ?? 'Request failed') as Error & {
+      status?: number;
+      code?: string;
+      retryAfterSeconds?: number;
+    };
+    error.status = res.status;
+    error.code = body.code;
+    error.retryAfterSeconds = body.retryAfterSeconds;
+    throw error;
   }
 
   // 204 No Content — no body to parse

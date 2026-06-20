@@ -9,8 +9,10 @@ const {
   verifyRefreshToken,
   revokeRefreshToken,
   revokeAllUserTokens,
+  generateEmailVerificationToken,
+  verifyEmailVerificationToken,
 } = require('../utils/tokens');
-const { sendPasswordResetEmail } = require('../utils/email');
+const { sendPasswordResetEmail, sendOtpEmail } = require('../utils/email');
 const { writeAuditBestEffort } = require('../utils/audit');
 const { recordFailedLogin, recordRegistration } = require('../utils/alerts');
 
@@ -23,12 +25,39 @@ const LOGIN_LOCKOUT_MINUTES = parseInt(process.env.LOGIN_LOCKOUT_MINUTES, 10) ||
 
 const normalizeEmail = (email) => String(email).trim().toLowerCase();
 
+// --- Email OTP verification (signup) -------------------------------------
+const OTP_TTL_MINUTES = 10;
+const OTP_MAX_VERIFY_ATTEMPTS = 5;   // per issued code, before it's burned
+const OTP_SEND_WINDOW_MINUTES = 10;  // sliding window for the per-email send cap
+const OTP_MAX_SENDS_PER_WINDOW = 3;
+
+// Personal/consumer providers are rejected — Clio onboarding is institutional
+// (.edu + school/work domains). Denylist, not allowlist: anything not listed
+// (incl. .edu and district domains) is permitted.
+const PERSONAL_EMAIL_DOMAINS = new Set([
+  'gmail.com', 'googlemail.com',
+  'yahoo.com', 'yahoo.co.uk', 'ymail.com',
+  'hotmail.com', 'hotmail.co.uk', 'outlook.com', 'live.com', 'msn.com',
+  'icloud.com', 'me.com', 'mac.com',
+  'aol.com', 'gmx.com', 'mail.com', 'zoho.com',
+  'proton.me', 'protonmail.com', 'pm.me',
+  'yandex.com', 'qq.com', '163.com', '126.com',
+]);
+
+const sha256 = (value) => crypto.createHash('sha256').update(value).digest('hex');
+
+function isInstitutionalEmail(normalizedEmail) {
+  const domain = normalizedEmail.split('@')[1] || '';
+  if (!domain) return false;
+  return !PERSONAL_EMAIL_DOMAINS.has(domain);
+}
+
 /**
  * POST /api/v1/auth/register
  */
 async function register(req, res) {
   try {
-    const { email, password, firstName, lastName, schoolId } = req.body;
+    const { email, password, firstName, lastName, schoolId, emailVerifiedToken } = req.body;
 
     if (!email || !password || !firstName || !lastName) {
       return res.status(400).json({ error: 'Email, password, firstName, and lastName are required' });
@@ -43,6 +72,19 @@ async function register(req, res) {
     // Normalize email on write (E1b): store and match lowercase so login,
     // forgot-password, and the UNIQUE/lower() index all resolve to one account.
     const normalizedEmail = normalizeEmail(email);
+
+    // Optional email-verification proof (mobile signup sends it; the web flow
+    // does not, so this stays backward-compatible). When present it MUST be
+    // valid and bound to this exact email; an invalid token is a hard error so
+    // a client can't pass a bogus token and look "verified".
+    let emailVerified = false;
+    if (emailVerifiedToken) {
+      const verified = verifyEmailVerificationToken(emailVerifiedToken);
+      if (!verified || normalizeEmail(verified.email) !== normalizedEmail) {
+        return res.status(400).json({ error: 'Email verification is invalid or expired' });
+      }
+      emailVerified = true;
+    }
 
     // Check if user already exists
     const existing = await query('SELECT id FROM users WHERE lower(email) = $1', [normalizedEmail]);
@@ -74,10 +116,10 @@ async function register(req, res) {
 
     // Insert user
     const userResult = await query(
-      `INSERT INTO users (email, password_hash, first_name, last_name, school_id)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO users (email, password_hash, first_name, last_name, school_id, email_verified)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, email, first_name, last_name, school_id, role, avatar_url, bio, created_at`,
-      [normalizedEmail, passwordHash, firstName, lastName, schoolId || null]
+      [normalizedEmail, passwordHash, firstName, lastName, schoolId || null, emailVerified]
     );
     const user = userResult.rows[0];
 
@@ -542,4 +584,145 @@ async function resetPassword(req, res) {
   }
 }
 
-module.exports = { register, login, refreshToken, logout, me, refreshMatrix, forgotPassword, resetPassword };
+/**
+ * POST /api/v1/auth/send-otp
+ * Issues a 6-digit email-verification code for the signup flow.
+ * Institutional emails only; per-email send throttle on top of the IP limiter.
+ */
+async function sendOtp(req, res) {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const normalizedEmail = normalizeEmail(email);
+
+    if (!isInstitutionalEmail(normalizedEmail)) {
+      return res.status(400).json({
+        error: 'Please use your school or institutional email address.',
+        code: 'personal_email',
+      });
+    }
+
+    // Per-email send throttle (defends the per-IP limiter against IP rotation).
+    const { rows: recent } = await query(
+      `SELECT MIN(created_at) AS oldest, COUNT(*)::int AS count
+         FROM email_verification_otps
+        WHERE lower(email) = $1
+          AND created_at > NOW() - ($2 || ' minutes')::interval`,
+      [normalizedEmail, String(OTP_SEND_WINDOW_MINUTES)]
+    );
+    if (recent[0] && recent[0].count >= OTP_MAX_SENDS_PER_WINDOW) {
+      const oldest = new Date(recent[0].oldest).getTime();
+      const retryAfterSeconds = Math.max(
+        1,
+        Math.ceil((oldest + OTP_SEND_WINDOW_MINUTES * 60 * 1000 - Date.now()) / 1000)
+      );
+      return res.status(429).json({
+        error: 'Too many codes requested. Please wait before trying again.',
+        code: 'rate_limited',
+        retryAfterSeconds,
+      });
+    }
+
+    // Generate a cryptographically random 6-digit code; store only its hash.
+    const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
+    const codeHash = sha256(code);
+    const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
+
+    // Overwrite: invalidate any still-active codes for this email so only the
+    // newest one verifies (mirrors the password-reset invalidation pattern).
+    await query(
+      `UPDATE email_verification_otps SET consumed = TRUE
+        WHERE lower(email) = $1 AND consumed = FALSE`,
+      [normalizedEmail]
+    );
+
+    await query(
+      `INSERT INTO email_verification_otps (email, code_hash, expires_at)
+       VALUES ($1, $2, $3)`,
+      [normalizedEmail, codeHash, expiresAt]
+    );
+
+    // Send (tolerates missing SMTP in dev). Awaited so a hard send failure
+    // surfaces, but a {skipped:true} soft-success does not block signup.
+    try {
+      await sendOtpEmail(normalizedEmail, code);
+    } catch (mailErr) {
+      console.error('[Auth] send-otp email failed:', mailErr.message);
+    }
+
+    return res.status(200).json({ message: 'A verification code has been sent.' });
+  } catch (err) {
+    console.error('[Auth] send-otp error:', err);
+    return res.status(500).json({ error: 'Failed to send verification code' });
+  }
+}
+
+/**
+ * POST /api/v1/auth/verify-otp
+ * Validates a code and returns a short-lived emailVerifiedToken to attach to
+ * the subsequent /auth/register call. Distinct error codes per failure mode.
+ */
+async function verifyOtp(req, res) {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and code are required' });
+    }
+
+    const normalizedEmail = normalizeEmail(email);
+
+    const { rows } = await query(
+      `SELECT id, code_hash, expires_at, attempts
+         FROM email_verification_otps
+        WHERE lower(email) = $1 AND consumed = FALSE
+        ORDER BY created_at DESC
+        LIMIT 1`,
+      [normalizedEmail]
+    );
+    const record = rows[0];
+
+    if (!record) {
+      return res.status(400).json({ error: 'No active code. Request a new one.', code: 'invalid_code' });
+    }
+
+    if (new Date(record.expires_at) <= new Date()) {
+      await query('UPDATE email_verification_otps SET consumed = TRUE WHERE id = $1', [record.id]);
+      return res.status(400).json({ error: 'This code has expired. Request a new one.', code: 'expired' });
+    }
+
+    const nextAttempts = record.attempts + 1;
+    if (nextAttempts > OTP_MAX_VERIFY_ATTEMPTS) {
+      await query('UPDATE email_verification_otps SET consumed = TRUE WHERE id = $1', [record.id]);
+      return res.status(429).json({ error: 'Too many attempts. Request a new code.', code: 'too_many_attempts' });
+    }
+
+    await query('UPDATE email_verification_otps SET attempts = $1 WHERE id = $2', [nextAttempts, record.id]);
+
+    // Constant-time compare on the hashes to avoid leaking timing on the code.
+    const provided = sha256(String(otp).trim());
+    const matches =
+      provided.length === record.code_hash.length &&
+      crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(record.code_hash));
+
+    if (!matches) {
+      return res.status(400).json({ error: 'Incorrect code.', code: 'invalid_code' });
+    }
+
+    // Success: burn the code (single use) and stamp verification time.
+    await query(
+      'UPDATE email_verification_otps SET consumed = TRUE, verified_at = NOW() WHERE id = $1',
+      [record.id]
+    );
+
+    const emailVerifiedToken = generateEmailVerificationToken(normalizedEmail);
+    return res.status(200).json({ verified: true, emailVerifiedToken });
+  } catch (err) {
+    console.error('[Auth] verify-otp error:', err);
+    return res.status(500).json({ error: 'Failed to verify code' });
+  }
+}
+
+module.exports = { register, login, refreshToken, logout, me, refreshMatrix, forgotPassword, resetPassword, sendOtp, verifyOtp };

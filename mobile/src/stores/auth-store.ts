@@ -53,7 +53,7 @@ interface AuthState {
 
   // Actions
   login: (email: string, password: string) => Promise<boolean>
-  signup: (email: string, password: string, name: string) => Promise<boolean>
+  signup: (email: string, password: string, name: string, emailVerifiedToken?: string) => Promise<boolean>
   loadUser: () => Promise<void>
   logout: () => Promise<void>
   updateProfile: (updates: Partial<User>) => void
@@ -198,7 +198,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      signup: async (email: string, password: string, name: string) => {
+      signup: async (email: string, password: string, name: string, emailVerifiedToken?: string) => {
         set({ isLoading: true, error: null })
         try {
           const nameParts = name.trim().split(" ")
@@ -207,7 +207,13 @@ export const useAuthStore = create<AuthState>()(
 
           const data = await apiFetch("/auth/register", {
             method: "POST",
-            body: JSON.stringify({ email, password, firstName, lastName }),
+            body: JSON.stringify({
+              email,
+              password,
+              firstName,
+              lastName,
+              ...(emailVerifiedToken ? { emailVerifiedToken } : {}),
+            }),
           })
           const user = mapBackendUser(getUserRecord(data))
           const { token, refreshToken } = getTokenPair(data)

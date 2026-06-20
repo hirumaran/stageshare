@@ -50,6 +50,31 @@ async function sendPasswordResetEmail(toEmail, resetToken) {
   return { sent: true };
 }
 
+async function sendOtpEmail(toEmail, code) {
+  const t = getTransporter();
+  // Tolerate a missing SMTP config in dev: do NOT throw/500 — the caller treats
+  // {skipped:true} as a soft success so signup still works without email set up.
+  if (!t) {
+    console.log(`[Email] SMTP not configured — OTP for ${toEmail} would be: ${code}`);
+    return { skipped: true };
+  }
+
+  await t.sendMail({
+    from: process.env.SMTP_FROM ?? 'noreply@clio.app',
+    to: toEmail,
+    subject: `${code} is your Clio verification code`,
+    text: `Your Clio verification code is ${code}. It expires in 10 minutes. If you didn't request this, ignore this email.`,
+    html: `
+      <p>Your Clio verification code is:</p>
+      <p style="font-size:28px;font-weight:700;letter-spacing:4px;">${code}</p>
+      <p>It expires in 10 minutes.</p>
+      <p>If you didn't request this, ignore this email.</p>
+    `,
+  });
+
+  return { sent: true };
+}
+
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -93,4 +118,4 @@ async function sendContactSubmissionEmail({ name, email, organization, role, mes
   return { sent: true };
 }
 
-module.exports = { sendPasswordResetEmail, sendContactSubmissionEmail };
+module.exports = { sendPasswordResetEmail, sendContactSubmissionEmail, sendOtpEmail };

@@ -13,6 +13,29 @@ function generateAccessToken(userId, schoolId, role) {
   );
 }
 
+// Short-lived proof that an email passed OTP verification. Carries a distinct
+// `purpose` claim so it can never be replayed as an access token, and is bound
+// to the verified email so it can only complete registration for that address.
+function generateEmailVerificationToken(email) {
+  return jwt.sign(
+    { email: String(email).trim().toLowerCase(), purpose: 'email_verification' },
+    process.env.JWT_SECRET,
+    { algorithm: 'HS256', expiresIn: process.env.EMAIL_VERIFICATION_EXPIRES_IN || '20m' }
+  );
+}
+
+// Returns the decoded payload ({ email }) when valid, or null on any failure
+// (bad signature, expired, wrong purpose). Never throws.
+function verifyEmailVerificationToken(token) {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
+    if (!decoded || decoded.purpose !== 'email_verification' || !decoded.email) return null;
+    return { email: decoded.email };
+  } catch {
+    return null;
+  }
+}
+
 async function generateRefreshToken(userId, deviceInfo = null) {
   // Generate a cryptographically random token
   const rawToken = crypto.randomBytes(64).toString('hex');
@@ -105,4 +128,6 @@ module.exports = {
   verifyRefreshToken,
   revokeRefreshToken,
   revokeAllUserTokens,
+  generateEmailVerificationToken,
+  verifyEmailVerificationToken,
 };
