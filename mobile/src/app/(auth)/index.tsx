@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -18,6 +19,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { useAuthStore } from '@/stores';
 import { authSharedStyles } from '@/components/auth/auth-ui';
+import { useOAuthSignIn } from '@/lib/oauth';
 
 const CLIO_FONT_WEIGHT = '360' as unknown as TextStyle['fontWeight'];
 
@@ -75,7 +77,19 @@ function GoogleLogo() {
   );
 }
 
+function MicrosoftLogo() {
+  return (
+    <Svg height={18} viewBox="0 0 18 18" width={18}>
+      <Path d="M0 0h8.5v8.5H0z" fill="#F25022" />
+      <Path d="M9.5 0H18v8.5H9.5z" fill="#7FBA00" />
+      <Path d="M0 9.5h8.5V18H0z" fill="#00A4EF" />
+      <Path d="M9.5 9.5H18V18H9.5z" fill="#FFB900" />
+    </Svg>
+  );
+}
+
 function AuthButton({
+  disabled = false,
   icon,
   label,
   onPress,
@@ -83,33 +97,32 @@ function AuthButton({
   textColor,
   variant,
 }: {
+  disabled?: boolean;
   icon?: ReactNode;
   label: string;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
   textColor: string;
-  variant: 'apple' | 'dark' | 'outline';
+  variant: 'light' | 'dark' | 'outline';
 }) {
   return (
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
         styles.authButton,
-        variant === 'apple' && styles.appleButton,
+        variant === 'light' && styles.lightButton,
         variant === 'dark' && styles.darkButton,
         variant === 'outline' && styles.outlineButton,
         pressed && styles.pressed,
+        disabled && styles.disabled,
         style,
       ]}
     >
-      <View
-        style={[
-          styles.authButtonContent,
-          variant === 'apple' && styles.appleButtonContent,
-        ]}
-      >
+      <View style={styles.authButtonContent}>
         {icon ? (
           typeof icon === 'string' ? (
             <View style={styles.sheetButtonIconFrame}>
@@ -141,12 +154,21 @@ export default function AuthLandingScreen() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const sheetPaddingBottom = Math.max(insets.bottom + 4, 26);
 
+  const { signInWithGoogle, signInWithMicrosoft, busy, error } = useOAuthSignIn();
+
   // Redirect authenticated users away from auth landing
   useEffect(() => {
     if (isAuthenticated) {
       router.replace('/(tabs)/catalogue');
     }
   }, [isAuthenticated, router]);
+
+  // Surface OAuth failures (cancellations resolve silently with no error set).
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Sign-in', error);
+    }
+  }, [error]);
 
   return (
     <KeyboardAvoidingView
@@ -163,16 +185,22 @@ export default function AuthLandingScreen() {
 
         <View style={[styles.sheet, { paddingBottom: sheetPaddingBottom }]}>
           <AuthButton
-            icon=""
-            label="Continue with Apple"
-            onPress={() => {}}
+            disabled={busy !== null}
+            icon={<MicrosoftLogo />}
+            label="Continue with Microsoft"
+            onPress={() => {
+              void signInWithMicrosoft();
+            }}
             textColor={LAUNCH_COLORS.black}
-            variant="apple"
+            variant="light"
           />
           <AuthButton
+            disabled={busy !== null}
             icon={<GoogleLogo />}
             label="Continue with Google"
-            onPress={() => {}}
+            onPress={() => {
+              void signInWithGoogle();
+            }}
             style={styles.authButtonGap}
             textColor={LAUNCH_COLORS.white}
             variant="dark"
@@ -316,13 +344,10 @@ const styles = StyleSheet.create({
     gap: 10,
     justifyContent: 'center',
   },
-  appleButtonContent: {
-    transform: [{ translateX: 8 }],
-  },
   authButtonGap: {
     marginTop: 10,
   },
-  appleButton: {
+  lightButton: {
     backgroundColor: LAUNCH_COLORS.white,
   },
   darkButton: {
@@ -335,6 +360,9 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.72,
+  },
+  disabled: {
+    opacity: 0.5,
   },
   sheetButtonIconFrame: {
     alignItems: 'center',

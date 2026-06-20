@@ -41,12 +41,25 @@ function getApiBaseUrl() {
   return 'http://localhost:3000/api/v1';
 }
 
+// OAuth client IDs come from app.json `extra.oauth` (preferred) or EXPO_PUBLIC_*
+// env vars. Absent values simply disable that provider's button gracefully.
+function getOAuthConfig() {
+  const extra = (Constants.expoConfig?.extra?.oauth ?? {}) as Record<string, string | undefined>;
+  return {
+    googleIosClientId: extra.googleIosClientId ?? process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    googleAndroidClientId: extra.googleAndroidClientId ?? process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    googleWebClientId: extra.googleWebClientId ?? process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    microsoftClientId: extra.microsoftClientId ?? process.env.EXPO_PUBLIC_MICROSOFT_CLIENT_ID,
+  };
+}
+
 // --- Config ----------------------------------------------------------------
 // Must run before the auth store hydrates or any API call is made.
 console.log('[startup] stores/index.ts loaded');
 setConfig({
   matrixHomeserverUrl: '',
   apiBaseUrl: getApiBaseUrl(),
+  oauth: getOAuthConfig(),
 });
 console.log('[startup] config set — apiBaseUrl:', getApiBaseUrl());
 

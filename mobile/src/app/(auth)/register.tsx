@@ -216,10 +216,10 @@ export default function RegisterScreen() {
     const result = await requestOtp(email.trim());
     setIsSendingOtp(false);
 
-    // A personal-email rejection means the email itself must change — send the
+    // An invalid-email rejection means the email itself must change — send the
     // user back to the email step instead of stranding them on the code screen.
-    if (!result.ok && result.code === 'personal_email') {
-      setBannerError(result.message ?? 'Please use your school or institutional email.');
+    if (!result.ok && result.code === 'invalid_email') {
+      setBannerError(result.message ?? 'Please enter a valid email address.');
       goToStep(0);
       return;
     }

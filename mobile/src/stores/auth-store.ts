@@ -54,6 +54,7 @@ interface AuthState {
   // Actions
   login: (email: string, password: string) => Promise<boolean>
   signup: (email: string, password: string, name: string, emailVerifiedToken?: string) => Promise<boolean>
+  oauthSignIn: (provider: "google" | "microsoft", idToken: string) => Promise<boolean>
   loadUser: () => Promise<void>
   logout: () => Promise<void>
   updateProfile: (updates: Partial<User>) => void
@@ -214,6 +215,30 @@ export const useAuthStore = create<AuthState>()(
               lastName,
               ...(emailVerifiedToken ? { emailVerifiedToken } : {}),
             }),
+          })
+          const user = mapBackendUser(getUserRecord(data))
+          const { token, refreshToken } = getTokenPair(data)
+          await persistAuthState({
+            user,
+            token,
+            refreshToken,
+            isAuthenticated: true,
+            isLoading: false,
+          })
+          bootMatrix(user)
+          return true
+        } catch (err) {
+          set({ isLoading: false, error: (err as Error).message })
+          return false
+        }
+      },
+
+      oauthSignIn: async (provider: "google" | "microsoft", idToken: string) => {
+        set({ isLoading: true, error: null })
+        try {
+          const data = await apiFetch("/auth/oauth", {
+            method: "POST",
+            body: JSON.stringify({ provider, idToken }),
           })
           const user = mapBackendUser(getUserRecord(data))
           const { token, refreshToken } = getTokenPair(data)

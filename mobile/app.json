@@ -45,6 +45,12 @@
       "router": {},
       "eas": {
         "projectId": "c51133fb-ce0a-4679-adc6-a3fad88396ee"
+      },
+      "oauth": {
+        "googleIosClientId": "",
+        "googleAndroidClientId": "",
+        "googleWebClientId": "",
+        "microsoftClientId": ""
       }
     },
     "owner": "tiramiisus-team"

@@ -1,6 +1,6 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
-const { register, login, refreshToken, logout, me, refreshMatrix, forgotPassword, resetPassword, sendOtp, verifyOtp } = require('../controllers/auth.controller');
+const { register, login, refreshToken, logout, me, refreshMatrix, forgotPassword, resetPassword, sendOtp, verifyOtp, oauthLogin } = require('../controllers/auth.controller');
 const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
@@ -49,6 +49,8 @@ router.post('/login', loginLimiter, login);
 // Email verification OTP (signup) — unauthenticated by design
 router.post('/send-otp', otpSendLimiter, sendOtp);
 router.post('/verify-otp', otpVerifyLimiter, verifyOtp);
+// OAuth sign-in (Google / Microsoft) — verifies a provider id_token, mints Clio tokens
+router.post('/oauth', loginLimiter, oauthLogin);
 // refresh and logout use the refresh token as auth — no authenticateToken middleware
 router.post('/refresh', refreshLimiter, refreshToken);
 router.post('/logout', logout);

@@ -13,6 +13,7 @@ const {
   verifyEmailVerificationToken,
 } = require('../utils/tokens');
 const { sendPasswordResetEmail, sendOtpEmail } = require('../utils/email');
+const { verifyOAuthIdToken, OAuthNotConfiguredError } = require('../utils/oauth');
 const { writeAuditBestEffort } = require('../utils/audit');
 const { recordFailedLogin, recordRegistration } = require('../utils/alerts');
 
@@ -31,26 +32,11 @@ const OTP_MAX_VERIFY_ATTEMPTS = 5;   // per issued code, before it's burned
 const OTP_SEND_WINDOW_MINUTES = 10;  // sliding window for the per-email send cap
 const OTP_MAX_SENDS_PER_WINDOW = 3;
 
-// Personal/consumer providers are rejected — Clio onboarding is institutional
-// (.edu + school/work domains). Denylist, not allowlist: anything not listed
-// (incl. .edu and district domains) is permitted.
-const PERSONAL_EMAIL_DOMAINS = new Set([
-  'gmail.com', 'googlemail.com',
-  'yahoo.com', 'yahoo.co.uk', 'ymail.com',
-  'hotmail.com', 'hotmail.co.uk', 'outlook.com', 'live.com', 'msn.com',
-  'icloud.com', 'me.com', 'mac.com',
-  'aol.com', 'gmx.com', 'mail.com', 'zoho.com',
-  'proton.me', 'protonmail.com', 'pm.me',
-  'yandex.com', 'qq.com', '163.com', '126.com',
-]);
+// Any well-formed email is accepted (Apple/Google/Outlook/personal/work/.edu) —
+// we deliberately do NOT gate on provider so signup flow isn't restricted.
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const sha256 = (value) => crypto.createHash('sha256').update(value).digest('hex');
-
-function isInstitutionalEmail(normalizedEmail) {
-  const domain = normalizedEmail.split('@')[1] || '';
-  if (!domain) return false;
-  return !PERSONAL_EMAIL_DOMAINS.has(domain);
-}
 
 /**
  * POST /api/v1/auth/register
@@ -598,10 +584,10 @@ async function sendOtp(req, res) {
 
     const normalizedEmail = normalizeEmail(email);
 
-    if (!isInstitutionalEmail(normalizedEmail)) {
+    if (!EMAIL_PATTERN.test(normalizedEmail)) {
       return res.status(400).json({
-        error: 'Please use your school or institutional email address.',
-        code: 'personal_email',
+        error: 'Please enter a valid email address.',
+        code: 'invalid_email',
       });
     }
 
@@ -725,4 +711,128 @@ async function verifyOtp(req, res) {
   }
 }
 
-module.exports = { register, login, refreshToken, logout, me, refreshMatrix, forgotPassword, resetPassword, sendOtp, verifyOtp };
+/**
+ * POST /api/v1/auth/oauth
+ * Sign in (or auto-register) via a Google/Microsoft OpenID Connect id_token.
+ * The mobile client obtains the id_token through expo-auth-session; here we
+ * verify it against the provider JWKS and mint Clio's own token pair.
+ */
+async function oauthLogin(req, res) {
+  try {
+    const { provider, idToken } = req.body;
+    if (!provider || !idToken) {
+      return res.status(400).json({ error: 'provider and idToken are required' });
+    }
+    if (provider !== 'google' && provider !== 'microsoft') {
+      return res.status(400).json({ error: 'Unsupported provider' });
+    }
+
+    let identity;
+    try {
+      identity = await verifyOAuthIdToken(provider, idToken);
+    } catch (verifyErr) {
+      if (verifyErr instanceof OAuthNotConfiguredError) {
+        return res.status(501).json({ error: verifyErr.message, code: 'oauth_not_configured' });
+      }
+      console.warn(`[Auth] oauth ${provider} verify failed:`, verifyErr.message);
+      return res.status(401).json({ error: `Could not verify your ${provider} sign-in` });
+    }
+
+    const USER_COLUMNS =
+      'id, email, first_name, last_name, school_id, role, avatar_url, bio, matrix_user_id, matrix_access_token, matrix_device_id, is_active';
+
+    let user = (await query(
+      `SELECT ${USER_COLUMNS} FROM users WHERE lower(email) = $1`,
+      [identity.email]
+    )).rows[0];
+
+    let created = false;
+    if (!user) {
+      // OAuth accounts have no usable password; store a random hash so the
+      // NOT NULL column is satisfied and the password-login path can never match.
+      const randomHash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 12);
+      try {
+        user = (await query(
+          `INSERT INTO users (email, password_hash, first_name, last_name, email_verified)
+           VALUES ($1, $2, $3, $4, TRUE)
+           RETURNING ${USER_COLUMNS}`,
+          [identity.email, randomHash, identity.firstName, identity.lastName]
+        )).rows[0];
+        created = true;
+      } catch (insErr) {
+        // 23505 = unique_violation: a concurrent request created the account; re-read it.
+        if (insErr.code === '23505') {
+          user = (await query(
+            `SELECT ${USER_COLUMNS} FROM users WHERE lower(email) = $1`,
+            [identity.email]
+          )).rows[0];
+        } else {
+          throw insErr;
+        }
+      }
+
+      if (created && user) {
+        try {
+          await matrixQueue.add('provision', { userId: user.id }, { jobId: `provision-${user.id}` });
+        } catch (queueErr) {
+          console.error('[Matrix] Failed to enqueue provisioning job:', queueErr.message);
+        }
+        recordRegistration(req.ip);
+      }
+    }
+
+    if (!user) {
+      return res.status(500).json({ error: 'Sign-in failed' });
+    }
+
+    // C1: a deactivated account must not be able to sign back in via OAuth either.
+    if (user.is_active === false) {
+      return res.status(403).json({ error: 'Account deactivated' });
+    }
+
+    await query(
+      'UPDATE users SET last_login = NOW(), failed_login_attempts = 0, locked_until = NULL WHERE id = $1',
+      [user.id]
+    ).catch((err) => console.error('[Auth] oauth last_login update failed:', err.message));
+
+    const accessToken = generateAccessToken(user.id, user.school_id, user.role);
+    const refreshToken = await generateRefreshToken(user.id, req.headers['user-agent'] ?? null);
+
+    writeAuditBestEffort({
+      actorUserId: user.id,
+      actorRole: user.role,
+      actorSchoolId: user.school_id,
+      correlationId: req.id ?? null,
+      ip: req.ip ?? null,
+      action: created ? 'auth.oauth.register' : 'auth.oauth.login',
+      targetType: 'user',
+      targetId: user.id,
+      metadata: { provider },
+    });
+
+    return res.status(created ? 201 : 200).json({
+      token: accessToken,
+      refreshToken,
+      expiresIn: 15 * 60,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        name: `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim(),
+        schoolId: user.school_id,
+        role: user.role,
+        avatarUrl: user.avatar_url,
+        bio: user.bio,
+        matrixUserId: user.matrix_user_id,
+        matrixAccessToken: user.matrix_access_token,
+        matrixDeviceId: user.matrix_device_id,
+      },
+    });
+  } catch (err) {
+    console.error('[Auth] oauthLogin error:', err);
+    return res.status(500).json({ error: 'Sign-in failed' });
+  }
+}
+
+module.exports = { register, login, refreshToken, logout, me, refreshMatrix, forgotPassword, resetPassword, sendOtp, verifyOtp, oauthLogin };
