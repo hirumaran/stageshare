@@ -29,6 +29,21 @@ export default function LandingPage() {
     <MotionConfig reducedMotion="user">
       <div className="landing-root min-h-screen">
         <ScrollProgress />
+        {/* Top fade scrim — dissolves page content into the canvas before it
+            reaches the floating nav, so the full-bleed proof marquee (and any
+            bright section) can't bleed through the frosted glass or flicker
+            behind its backdrop-blur as it scrolls past. Sits above the content
+            (z-10) but below the pull-chain (z-40) and nav (z-50), so it masks
+            the bleed without clipping either. Pure page-bg, so it's invisible
+            over the dark canvas and only reads as a fade where content meets it. */}
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-x-0 top-0 z-30 h-32"
+          style={{
+            background:
+              "linear-gradient(to bottom, var(--bg-base) 0%, var(--bg-base) 56%, transparent 100%)",
+          }}
+        />
         <ThemePullChain />
         <LandingNav />
         <main className="relative z-10">
