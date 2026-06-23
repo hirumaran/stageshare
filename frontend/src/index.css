@@ -313,6 +313,22 @@
   }
 }
 
+/* Dissolve the marquee field into the page on every edge so the sign reads as
+   part of the background rather than a block dropped onto it. The ember letters
+   sit inside the opaque core (~16–84% vertical, ~20–80% horizontal) and stay
+   fully lit; only the surrounding greyscale watermark fades out toward the
+   edges. Two gradients intersected so all four sides — and the corners — fade. */
+.lp-clio-grid {
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 20%, #000 80%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 20%, #000 80%, transparent 100%);
+  mask-composite: intersect;
+}
+
 /* Clio footer marquee — the field is visible by default (so it degrades to a
    static sign if JS never runs); once the grid scrolls into view and gains
    .is-playing, every pixel strikes on in a diagonal wave driven by its
