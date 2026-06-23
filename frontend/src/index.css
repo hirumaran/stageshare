@@ -313,17 +313,13 @@
   }
 }
 
-/* Clio footer marquee — every pixel sits hidden (paused at the keyframe's
-   first frame) until the grid scrolls into view and gains .is-playing, then
-   strikes on in a diagonal wave driven by its per-cell animation-delay.
-   The .landing-root reduced-motion rule cancels the animation, leaving the
-   cells at their natural (fully visible) state. */
-.lp-clio-cell {
-  animation: clioCellIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-play-state: paused;
-}
+/* Clio footer marquee — the field is visible by default (so it degrades to a
+   static sign if JS never runs); once the grid scrolls into view and gains
+   .is-playing, every pixel strikes on in a diagonal wave driven by its
+   per-cell animation-delay. The .landing-root reduced-motion rule cancels the
+   animation, leaving the cells at their natural (fully visible) state. */
 .lp-clio-grid.is-playing .lp-clio-cell {
-  animation-play-state: running;
+  animation: clioCellIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 ::-webkit-scrollbar {

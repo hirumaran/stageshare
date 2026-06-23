@@ -1,89 +1,45 @@
+import { Fragment } from "react"
 import { Link } from "react-router-dom"
 import { Container } from "./landing-primitives"
-import { Wordmark, ClioGrid } from "./landing-brand"
+import { ClioGrid } from "./landing-brand"
 
-const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
-  {
-    title: "Product",
-    links: [
-      { label: "How it works", href: "#how" },
-      { label: "Insights", href: "#insights" },
-      { label: "Catalogue", href: "/signup" },
-      { label: "Pricing", href: "/signup" },
-    ],
-  },
-  {
-    title: "Who it's for",
-    links: [
-      { label: "Teachers", href: "#teachers" },
-      { label: "Directors", href: "#teachers" },
-      { label: "Districts", href: "#districts" },
-      { label: "Arts coordinators", href: "#districts" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { label: "About", href: "/" },
-      { label: "Contact", href: "/" },
-      { label: "Privacy", href: "/" },
-      { label: "Terms", href: "/" },
-    ],
-  },
+const LINKS: { label: string; href: string }[] = [
+  { label: "About", href: "/" },
+  { label: "Contact", href: "/" },
+  { label: "Privacy", href: "/" },
+  { label: "Terms", href: "/" },
 ]
 
 export function LandingFooter() {
   return (
-    <footer className="border-t border-[var(--border-default)] pb-10 pt-16">
-      <Container>
-        <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
-          <div className="max-w-xs">
-            <Wordmark />
-            <p className="mt-4 text-[14px] leading-[1.6] text-[var(--text-muted)]">
-              A resource network for K-12 theatre. Turning scattered storage rooms into a
-              connected, collaborative stage.
-            </p>
-          </div>
-          {COLUMNS.map((col) => (
-            <div key={col.title}>
-              <h2 className="lp-eyebrow">{col.title}</h2>
-              <ul className="mt-4 space-y-3">
-                {col.links.map((l) => {
-                  const isAnchor = l.href.startsWith("#")
-                  const cls =
-                    "text-[14px] tracking-[-0.01em] text-[var(--text-secondary)] transition-colors hover:text-[var(--ember)]"
-                  return (
-                    <li key={l.label}>
-                      {isAnchor ? (
-                        <a href={l.href} className={cls}>
-                          {l.label}
-                        </a>
-                      ) : (
-                        <Link to={l.href} className={cls}>
-                          {l.label}
-                        </Link>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
+    <footer className="border-t border-[var(--border-default)] pb-12 pt-24 sm:pt-32">
+      {/* curtain call — the name fills the full width as the page-ender */}
+      <div className="px-4 sm:px-6">
+        <ClioGrid />
+      </div>
+
+      {/* slim closing strip — essentials only */}
+      <Container className="mt-12 flex flex-col items-center gap-3 text-center">
+        <nav className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
+          {LINKS.map((l, i) => (
+            <Fragment key={l.label}>
+              {i > 0 && (
+                <span aria-hidden className="text-[var(--text-muted)] opacity-40">
+                  ·
+                </span>
+              )}
+              <Link
+                to={l.href}
+                className="text-[13px] tracking-[-0.01em] text-[var(--text-muted)] transition-colors hover:text-[var(--ember)]"
+              >
+                {l.label}
+              </Link>
+            </Fragment>
           ))}
-        </div>
-
-        {/* brand signature — the name as a full-width marquee of stage lights */}
-        <div className="mt-20">
-          <ClioGrid />
-        </div>
-
-        <div className="mt-14 flex flex-col items-start justify-between gap-4 border-t border-[var(--border-default)] pt-6 sm:flex-row sm:items-center">
-          <p className="text-[13px] text-[var(--text-muted)]">
-            © {new Date().getFullYear()} Clio. Made for theatre educators.
-          </p>
-          <p className="text-[13px] text-[var(--text-muted)]">
-            Named for the muse — built for the makers.
-          </p>
-        </div>
+        </nav>
+        <p className="text-[12px] text-[var(--text-muted)]">
+          © {new Date().getFullYear()} Clio
+        </p>
       </Container>
     </footer>
   )
