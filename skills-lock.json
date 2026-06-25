@@ -31,6 +31,12 @@
       "skillPath": "interaction-design/skills/animation-principles/SKILL.md",
       "computedHash": "09ee44becaf8d48638166a9af1d09bf041c2d7fa74496740a2cac05f9cdd0225"
     },
+    "bencium-controlled-ux-designer": {
+      "source": "bencium/bencium-marketplace",
+      "sourceType": "github",
+      "skillPath": "bencium-controlled-ux-designer/skills/bencium-controlled-ux-designer/SKILL.md",
+      "computedHash": "4aacbb29e05d9e45600105fbdcb24b38fa7de40d29db025f05a1b121308afc5c"
+    },
     "card-sort-analysis": {
       "source": "Owl-Listener/designer-skills",
       "sourceType": "github",
@@ -127,6 +133,12 @@
       "skillPath": "designer-toolkit/skills/design-system-adoption/SKILL.md",
       "computedHash": "5835c7f5beaf56e747fa93028844644446c44b4f971b0175e017eae5d0d3df33"
     },
+    "design-taste-frontend": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/taste-skill/SKILL.md",
+      "computedHash": "6d838b246d0e35d0b53f4f23f98ba7a1dd561937e64f7d0c7553b0928e376c3e"
+    },
     "design-token": {
       "source": "Owl-Listener/designer-skills",
       "sourceType": "github",
@@ -204,6 +216,12 @@
       "sourceType": "github",
       "skillPath": "ui-design/skills/illustration-style/SKILL.md",
       "computedHash": "e132ebf617da8d26df00cd21e80ed7ec76b32debb5bd3816248a090e634ad653"
+    },
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/impeccable/SKILL.md",
+      "computedHash": "c5c260ee8333b2710285ba484ab92d5abd23cc03d03cbf984bc2f108a8a47d8a"
     },
     "interview-script": {
       "source": "Owl-Listener/designer-skills",
