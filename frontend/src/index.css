@@ -680,3 +680,152 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ── Pull-chain lamp: bulb states + four-layer glow (ThemePullChain) ───────────
+   The bulb's ON/OFF look is driven entirely by the canonical class theme:
+   html:not(.dark) = light = bulb ON, html.dark = dark = bulb OFF. So the lamp
+   lights as a consequence of the same class flip that repaints the page. Only
+   opacity / transform / filter animate, so every layer stays on the compositor
+   (60fps). The bulb sits inside .landing-root, so the reduced-motion rule above
+   already collapses these transitions to instant — a clean cross-fade with no
+   swing or bloom expansion, exactly the reduced-motion contract. */
+
+/* Warm (ON) ↔ cold (OFF) bulb crossfade — two stacked SVG layers. */
+.bulb-on-layer,
+.bulb-off-layer {
+  transition: opacity 240ms ease-out;
+}
+.bulb-on-layer {
+  opacity: 1;
+}
+.bulb-off-layer {
+  opacity: 0;
+}
+html.dark .bulb-on-layer {
+  opacity: 0;
+}
+html.dark .bulb-off-layer {
+  opacity: 1;
+}
+
+/* Sun ignites (scales up + counter-rotates to 0) as the bulb lights; the moon
+   settles in. transform-box keeps the pivot on the glyph, not the SVG origin. */
+.bulb-sun,
+.bulb-moon {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.bulb-sun {
+  transform: scale(1) rotate(0deg);
+}
+html.dark .bulb-sun {
+  transform: scale(0.7) rotate(-12deg);
+}
+.bulb-moon {
+  transform: scale(1) rotate(0deg);
+}
+html:not(.dark) .bulb-moon {
+  transform: scale(0.86) rotate(10deg);
+}
+
+/* LAYER 1 — emission bleed past the glass rim (ON only). */
+.bulb-svg {
+  filter: none;
+  transition: filter 240ms ease-out;
+}
+html:not(.dark) .bulb-svg {
+  filter: drop-shadow(0 0 3.5px rgba(255, 200, 87, 0.55));
+}
+
+/* LAYERS 2–3 — warm halo + soft bloom, centred on the glass belly (button y≈27).
+   Collapsed + invisible by default; on ON they fade in and the bloom expands. */
+.bulb-halo,
+.bulb-bloom {
+  position: absolute;
+  left: 50%;
+  top: 27px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.6);
+  transition:
+    opacity 240ms ease-out,
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.bulb-halo {
+  width: 52px;
+  height: 52px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 213, 106, 0.55) 0%,
+    rgba(255, 200, 87, 0.28) 44%,
+    rgba(255, 200, 87, 0) 70%
+  );
+}
+.bulb-bloom {
+  width: 118px;
+  height: 118px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 196, 87, 0.26) 0%,
+    rgba(255, 196, 87, 0.13) 34%,
+    rgba(255, 196, 87, 0.04) 62%,
+    rgba(255, 196, 87, 0) 78%
+  );
+}
+html:not(.dark) .bulb-halo,
+html:not(.dark) .bulb-bloom {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* LAYER 4 — environmental floor wash on the static chain container; pools the
+   warm light below the resting bulb (single-temperature, no ember tail) and
+   catches up ~60ms after the bulb lights. */
+.bulb-floor {
+  position: absolute;
+  left: 50%;
+  top: 134px;
+  width: 132px;
+  height: 92px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-50%) scaleY(0.7);
+  transform-origin: top center;
+  background: radial-gradient(
+    ellipse 50% 60% at 50% 0%,
+    rgba(255, 200, 87, 0.24) 0%,
+    rgba(255, 200, 87, 0.08) 48%,
+    rgba(255, 200, 87, 0) 76%
+  );
+  transition:
+    opacity 300ms ease-out 60ms,
+    transform 300ms ease-out 60ms;
+}
+html:not(.dark) .bulb-floor {
+  opacity: 1;
+  transform: translateX(-50%) scaleY(1);
+}
+
+/* Mechanical "clunk" seat — a 1-shot scale dip on toggle, restarted via reflow
+   in JS. Lives on .bulb-wrap (a child of the button) so it never collides with
+   the rAF loop rewriting the button's own transform every frame. */
+@keyframes bulbClunk {
+  0% {
+    transform: scaleY(1);
+  }
+  35% {
+    transform: scaleY(0.9) translateY(1px);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+.bulb-wrap {
+  transform-origin: 50% 3px;
+}
+.bulb-clunk {
+  animation: bulbClunk 170ms ease-out;
+}
