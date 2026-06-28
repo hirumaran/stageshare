@@ -65,7 +65,7 @@ export default function SignupPage() {
   return (
     <motion.div variants={container} initial="hidden" animate="show">
       <motion.div variants={item}>
-        <h1 className="text-[clamp(1.9rem,3vw,2.3rem)] font-light tracking-[-0.04em] text-[var(--av-text)]">
+        <h1 className="text-[clamp(1.9rem,3vw,2.3rem)] tracking-[-0.04em] text-[var(--av-text)]">
           Create an account
         </h1>
         <p className="mt-2 text-[15px] text-[var(--av-muted)]">
@@ -164,7 +164,7 @@ export default function SignupPage() {
             }
             disabled={isLoading}
             aria-label="I agree to the Terms of Service and Privacy Policy"
-            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-[4px] accent-[var(--av-red)]"
+            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-[4px] accent-[var(--av-ember)]"
           />
           <span>
             I agree to the{" "}
@@ -184,7 +184,7 @@ export default function SignupPage() {
           whileHover={isLoading ? undefined : { y: -1 }}
           whileTap={isLoading ? undefined : { y: 0 }}
           transition={{ duration: 0.18 }}
-          className="auth-btn group mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--av-red)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--av-canvas)]"
+          className="auth-btn group mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--av-ember)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--av-canvas)]"
         >
           {isLoading ? (
             "Creating account…"

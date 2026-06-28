@@ -82,7 +82,7 @@ export function SocialAuthButtons({ disabled = false }: { disabled?: boolean }) 
           whileHover={disabled ? undefined : { y: -1 }}
           whileTap={disabled ? undefined : { y: 0 }}
           transition={{ duration: 0.18 }}
-          className="auth-social focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--av-red)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--av-canvas)]"
+          className="auth-social focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--av-ember)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--av-canvas)]"
           aria-label={`Continue with ${p.label}`}
         >
           <p.Glyph />

@@ -59,13 +59,13 @@ export default function ForgotPasswordPage() {
           variants={item}
           className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--av-border)] bg-[var(--av-surface)]"
         >
-          <Mail className="h-5 w-5 text-[var(--av-red)]" />
+          <Mail className="h-5 w-5 text-[var(--av-ember)]" />
         </motion.div>
         <motion.h1
           ref={successHeadingRef}
           tabIndex={-1}
           variants={item}
-          className="text-[clamp(1.9rem,3vw,2.3rem)] font-light tracking-[-0.04em] text-[var(--av-text)] outline-none"
+          className="text-[clamp(1.9rem,3vw,2.3rem)] tracking-[-0.04em] text-[var(--av-text)] outline-none"
         >
           Check your email
         </motion.h1>
@@ -85,7 +85,7 @@ export default function ForgotPasswordPage() {
           whileHover={{ y: -1 }}
           whileTap={{ y: 0 }}
           transition={{ duration: 0.18 }}
-          className="auth-social mt-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--av-red)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--av-canvas)]"
+          className="auth-social mt-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--av-ember)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--av-canvas)]"
         >
           Try another email
         </motion.button>
@@ -106,7 +106,7 @@ export default function ForgotPasswordPage() {
   return (
     <motion.div variants={container} initial="hidden" animate="show">
       <motion.div variants={item}>
-        <h1 className="text-[clamp(1.9rem,3vw,2.3rem)] font-light tracking-[-0.04em] text-[var(--av-text)]">
+        <h1 className="text-[clamp(1.9rem,3vw,2.3rem)] tracking-[-0.04em] text-[var(--av-text)]">
           Forgot password?
         </h1>
         <p className="mt-2 text-[15px] text-[var(--av-muted)]">
@@ -137,7 +137,7 @@ export default function ForgotPasswordPage() {
           whileHover={isLoading ? undefined : { y: -1 }}
           whileTap={isLoading ? undefined : { y: 0 }}
           transition={{ duration: 0.18 }}
-          className="auth-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--av-red)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--av-canvas)]"
+          className="auth-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--av-ember)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--av-canvas)]"
         >
           {isLoading ? "Sending…" : "Send reset link"}
         </motion.button>

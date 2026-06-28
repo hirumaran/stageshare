@@ -830,34 +830,32 @@ html:not(.dark) .bulb-floor {
   animation: bulbClunk 170ms ease-out;
 }
 
-/* ─── Auth screens — "Stage Door" obsidian theme ───────────────────────────
-   The auth flow (login / signup / forgot-password) used to render in the
-   generic indigo shadcn palette, which read as a different product from the
-   cinematic landing page. This scoped theme closes that gap: an always-dark
-   obsidian stage with one signal-red accent, the editorial Inter type, tight
-   tracking, pill geometry, and hairline borders — the same design language as
-   the landing, in its house-lights-down register. Tokens are namespaced
-   (--av-*) and the theme is unconditional (it does NOT follow html.dark), so
-   the auth screens stay obsidian regardless of the app's light/dark setting
-   and never leak into the rest of the app. */
+/* ─── Auth screens — "Stage Door" warm-dark theme ──────────────────────────
+   An always-dark stage that shares its palette with the landing page's
+   house-lights-down register: warm near-black canvas, cream ink, one
+   ember-orange accent, the editorial Inter type, tight tracking, pill
+   geometry, and hairline borders. Tokens are namespaced (--av-*) and the
+   theme is unconditional (it does NOT follow html.dark), so the auth screens
+   stay warm-dark regardless of the app's light/dark setting and never leak
+   into the rest of the app. */
 .auth-root {
-  --av-stage: #070708;        /* deepest panel — the brand stage (left) */
-  --av-canvas: #0a0a0b;       /* obsidian canvas — the form panel (right) */
-  --av-surface: #161618;      /* inputs / social buttons */
-  --av-surface-hover: #1d1d20;
-  --av-text: #ffffff;         /* pure white — loudest tier */
-  --av-text-secondary: #cdcdcd; /* ash — body copy */
-  --av-muted: #8b8b91;        /* graphite-light — labels / placeholders (>=4.5:1 on obsidian) */
-  --av-border: rgba(255, 255, 255, 0.1);
-  --av-border-strong: rgba(255, 255, 255, 0.2);
-  --av-red: #fc1c46;          /* signal red — the sole chromatic note */
-  --av-red-bright: #ff3a5e;
-  --av-on-red: #0a0a0b;       /* obsidian ink on the red pill (≈5:1 vs white-on-red's 3.8:1) */
-  --av-focus: color-mix(in srgb, var(--av-red) 24%, transparent);
+  --av-stage: #100e0a;        /* deepest panel — the brand stage (left) */
+  --av-canvas: #161310;       /* warm near-black canvas — the form panel (right) */
+  --av-surface: #211d17;      /* inputs / social buttons */
+  --av-surface-hover: #2a251f;
+  --av-text: #f4efe5;         /* warm cream — loudest tier */
+  --av-text-secondary: #c9c1b2; /* warm light-gray — body copy */
+  --av-muted: #938b7c;        /* warm muted — labels / placeholders */
+  --av-border: #322d24;       /* warm hairline */
+  --av-border-strong: #443d30;
+  --av-ember: #ff6a4d;        /* ember orange — the sole chromatic note */
+  --av-ember-bright: #ff8a6d;
+  --av-on-ember: #161310;     /* warm near-black ink on the ember pill */
+  --av-focus: color-mix(in srgb, var(--av-ember) 24%, transparent);
 
   /* Bridge the app/base tokens used by the global stylesheet so the keyboard
-     focus ring and default border-color match the obsidian theme. */
-  --ring: var(--av-red);
+     focus ring and default border-color match the warm-dark theme. */
+  --ring: var(--av-ember);
   --border-default: var(--av-border);
 
   background: var(--av-canvas);
@@ -866,13 +864,15 @@ html:not(.dark) .bulb-floor {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* Headings drop the global Lora serif for the system's sole sans typeface. */
+/* Headings drop the global Lora serif for the system's sole sans typeface
+   and match the landing's semibold weight. */
 .auth-root h1,
 .auth-root h2,
 .auth-root h3,
 .auth-root h4 {
   font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   color: var(--av-text);
+  font-weight: 600;
   letter-spacing: -0.035em;
   line-height: 1.04;
 }
@@ -907,7 +907,7 @@ html:not(.dark) .bulb-floor {
 }
 .auth-field:focus {
   outline: none;
-  border-color: var(--av-red);
+  border-color: var(--av-ember);
   box-shadow: 0 0 0 3px var(--av-focus);
   background: var(--av-surface-hover);
 }
@@ -923,7 +923,7 @@ html:not(.dark) .bulb-floor {
   color: var(--av-text-secondary);
 }
 
-/* Primary action — the one red element. Obsidian ink keeps AA contrast. */
+/* Primary action — the one ember element. Warm near-black ink keeps AA contrast. */
 .auth-btn {
   display: inline-flex;
   align-items: center;
@@ -932,8 +932,8 @@ html:not(.dark) .bulb-floor {
   width: 100%;
   height: 50px;
   border-radius: 9999px;
-  background: var(--av-red);
-  color: var(--av-on-red);
+  background: var(--av-ember);
+  color: var(--av-on-ember);
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -973,10 +973,10 @@ html:not(.dark) .bulb-floor {
 }
 
 .auth-link {
-  color: var(--av-red);
+  color: var(--av-ember);
   font-weight: 500;
   transition: color 0.15s ease;
 }
 .auth-link:hover {
-  color: var(--av-red-bright);
+  color: var(--av-ember-bright);
 }

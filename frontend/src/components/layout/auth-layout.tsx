@@ -10,7 +10,7 @@ import { DotPattern } from "@/registry/aliimam/components/dot-pattern"
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
-/* Clio brand mark — proscenium arch with a single signal-red spotlight.
+/* Clio brand mark — proscenium arch with a single ember spotlight.
    Mirrors the landing brand mark so the auth screens read as the same product;
    inlined here (rather than imported from the landing feature) to keep the
    auth flow self-contained. */
@@ -24,7 +24,7 @@ function Mark({ size = 26 }: { size?: number }) {
         strokeLinecap="round"
       />
       <path d="M3.5 28h25" stroke="var(--av-text)" strokeWidth="2.4" strokeLinecap="round" />
-      <circle cx="16" cy="9.5" r="3" fill="var(--av-red)" />
+      <circle cx="16" cy="9.5" r="3" fill="var(--av-ember)" />
     </svg>
   )
 }
@@ -33,7 +33,7 @@ function Wordmark() {
   return (
     <Link
       to="/"
-      className="inline-flex items-center gap-2.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--av-red)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--av-stage)]"
+      className="inline-flex items-center gap-2.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--av-ember)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--av-stage)]"
       aria-label="Clio home"
     >
       <Mark />
@@ -60,7 +60,7 @@ function StageOrb() {
         className="absolute inset-[-18%] rounded-full"
         style={{
           background:
-            "radial-gradient(circle, rgba(252,28,70,0.22) 0%, rgba(252,28,70,0.05) 42%, transparent 66%)",
+            "radial-gradient(circle, rgba(255,106,77,0.22) 0%, rgba(255,106,77,0.05) 42%, transparent 66%)",
           filter: "blur(28px)",
         }}
         animate={reduce ? undefined : { scale: [1, 1.07, 1], opacity: [0.8, 1, 0.8] }}
@@ -77,7 +77,7 @@ function StageOrb() {
           className="absolute inset-0 rounded-full"
           style={{
             background:
-              "conic-gradient(from 210deg, #fc1c46, #ff5e7a, #b14bff, #4b7bff, #2bd4ff, #fc1c46)",
+              "conic-gradient(from 210deg, #ff6a4d, #ff8a6d, #b14bff, #4b7bff, #2bd4ff, #ff6a4d)",
             WebkitMaskImage:
               "radial-gradient(closest-side, transparent 68%, #000 77%, #000 93%, transparent 100%)",
             maskImage:
@@ -95,10 +95,10 @@ function StageOrb() {
           style={{
             background:
               "radial-gradient(120% 120% at 32% 26%, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 36%)," +
-              "radial-gradient(110% 110% at 72% 78%, rgba(252,28,70,0.16) 0%, rgba(252,28,70,0) 52%)," +
+              "radial-gradient(110% 110% at 72% 78%, rgba(255,106,77,0.16) 0%, rgba(255,106,77,0) 52%)," +
               "radial-gradient(120% 120% at 50% 50%, #1b1b1f 0%, #0c0c0e 56%, #050506 100%)",
             boxShadow:
-              "inset 0 0 70px rgba(0,0,0,0.85), inset -14px -18px 60px rgba(252,28,70,0.16)",
+              "inset 0 0 70px rgba(0,0,0,0.85), inset -14px -18px 60px rgba(255,106,77,0.16)",
           }}
         />
 
@@ -131,7 +131,7 @@ export default function AuthLayout() {
   const location = useLocation()
   const reduce = useReducedMotion()
 
-  // Paint the document obsidian for the lifetime of the auth flow so the area
+  // Paint the document warm-dark for the lifetime of the auth flow so the area
   // exposed by overscroll (and the brief route-chunk fallback) reads as the
   // stage rather than flashing the app's light/dark base background. --av-canvas
   // is scoped to .auth-root, so the literal is used here on <body>/<html>.
@@ -139,7 +139,7 @@ export default function AuthLayout() {
     const root = document.documentElement
     const prevBg = document.body.style.background
     const prevScheme = root.style.colorScheme
-    document.body.style.background = "#0a0a0b"
+    document.body.style.background = "#161310"
     root.style.colorScheme = "dark"
     return () => {
       document.body.style.background = prevBg
@@ -166,7 +166,7 @@ export default function AuthLayout() {
             className="pointer-events-none absolute inset-0 z-0"
             style={{
               background:
-                "radial-gradient(70% 50% at 50% -10%, rgba(252,28,70,0.10), transparent 60%)",
+                "radial-gradient(70% 50% at 50% -10%, rgba(255,106,77,0.10), transparent 60%)",
             }}
           />
           <StageOrb />
@@ -189,7 +189,7 @@ export default function AuthLayout() {
             >
               <span
                 className="h-1.5 w-1.5 rounded-full"
-                style={{ background: "var(--av-red)" }}
+                style={{ background: "var(--av-ember)" }}
                 aria-hidden
               />
               Clio for educators
@@ -218,7 +218,7 @@ export default function AuthLayout() {
                       >
                         <motion.path
                           d="M2 8C46 3 154 3 198 7"
-                          stroke="var(--av-red)"
+                          stroke="var(--av-ember)"
                           strokeWidth="3"
                           strokeLinecap="round"
                           initial={{ pathLength: reduce ? 1 : 0 }}
@@ -263,13 +263,13 @@ export default function AuthLayout() {
             className="pointer-events-none absolute inset-0"
             style={{
               background:
-                "radial-gradient(60% 45% at 50% 0%, rgba(252,28,70,0.06), transparent 60%)",
+                "radial-gradient(60% 45% at 50% 0%, rgba(255,106,77,0.06), transparent 60%)",
             }}
           />
 
           <Link
             to="/"
-            className="absolute left-6 top-6 inline-flex items-center gap-2.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--av-red)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--av-canvas)] lg:hidden"
+            className="absolute left-6 top-6 inline-flex items-center gap-2.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--av-ember)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--av-canvas)] lg:hidden"
             aria-label="Clio home"
           >
             <Mark size={22} />
